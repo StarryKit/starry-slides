@@ -45,19 +45,19 @@
   background: var(--hse-app-bg);
   font-family: var(--hse-font-family);
   line-height: var(--hse-line-height);
-	font-weight: var(--hse-font-weight);
+  font-weight: var(--hse-font-weight);
 }
 
 html,
 body,
 #root {
-	margin: 0;
-	width: 100%;
-	height: 100%;
+  margin: 0;
+  width: 100%;
+  height: 100%;
 }
 
 * {
-	box-sizing: border-box;
+  box-sizing: border-box;
 }
 
 .hse-shell {
@@ -140,25 +140,37 @@ body,
   background: var(--hse-thumb-bg);
 }
 
-.hse-slide-thumb-surface {
-  position: absolute;
-  top: 0;
-  left: 0;
-  transform-origin: top left;
-}
-
-.hse-slide-thumb-iframe {
+.hse-slide-thumb-image,
+.hse-slide-thumb-placeholder {
   width: 100%;
   height: 100%;
-  border: 0;
-  pointer-events: none;
+}
+
+.hse-slide-thumb-image {
+  display: block;
+  object-fit: cover;
   background: white;
+}
+
+.hse-slide-thumb-placeholder {
+  display: grid;
+  place-items: center;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.78), rgba(255, 255, 255, 0.36));
+}
+
+.hse-slide-thumb-spinner {
+  width: 18px;
+  height: 18px;
+  border: 1.5px solid rgba(31, 27, 22, 0.12);
+  border-top-color: rgba(31, 27, 22, 0.45);
+  border-radius: 999px;
+  animation: hse-spin 0.8s linear infinite;
 }
 
 .hse-slide-number {
   position: absolute;
-  left: 10px;
-  bottom: 10px;
+  top: 10px;
+  right: 10px;
   padding: 5px 8px;
   border-radius: var(--hse-radius-pill);
   background: var(--hse-thumb-badge-bg);
@@ -297,6 +309,12 @@ body,
   display: grid;
   place-items: center;
   min-height: 100vh;
+}
+
+@keyframes hse-spin {
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 @media (max-width: 1200px) {
