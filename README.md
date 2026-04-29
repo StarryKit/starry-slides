@@ -2,7 +2,7 @@
 
 # HTML Slides Editor
 
-**Create beautiful presentations with the power of HTML.**
+**The Best Editor for AI Agent Generated Slides.**
 
 <p>
   <a href="./idea.en.md">Project Idea</a>
