@@ -62,6 +62,10 @@ Related issues:
 
 ### Milestone 2: Editor Editing Features
 
+Status:
+
+- In progress
+
 Goal:
 
 - Use the agreed editor layering model to complete the editing pipeline
