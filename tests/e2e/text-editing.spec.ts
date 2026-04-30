@@ -55,6 +55,36 @@ test("plain click selects text only, and double click enters editing", async ({ 
   await expect(editableHeading).toHaveAttribute("contenteditable", "plaintext-only");
 });
 
+test("selection overlay adds visible padding around the selected element", async ({ page }) => {
+  await gotoEditor(page);
+
+  const frame = coverFrame(page);
+  const editableHeading = frame.locator('[data-editor-id="text-1"]');
+  const { selectionOverlay } = getHistoryControls(page);
+
+  await editableHeading.click();
+
+  const [elementBox, overlayBox] = await Promise.all([
+    editableHeading.boundingBox(),
+    selectionOverlay.boundingBox(),
+  ]);
+
+  expect(elementBox).not.toBeNull();
+  expect(overlayBox).not.toBeNull();
+
+  if (!elementBox || !overlayBox) {
+    throw new Error("Expected both the selected element and the selection overlay to have bounds.");
+  }
+
+  expect(overlayBox.x).toBeLessThan(elementBox.x);
+  expect(overlayBox.y).toBeLessThan(elementBox.y);
+  expect(overlayBox.width).toBeGreaterThan(elementBox.width);
+  expect(overlayBox.height).toBeGreaterThan(elementBox.height);
+  expect(overlayBox.height - elementBox.height).toBeGreaterThan(
+    overlayBox.width - elementBox.width
+  );
+});
+
 test("text editing commits on blur and keeps undo/redo disabled while editing", async ({
   page,
 }) => {
@@ -78,6 +108,234 @@ test("text editing commits on blur and keeps undo/redo disabled while editing", 
   await expect(editableHeading).toHaveText(nextText);
   await expect(undoButton).toBeEnabled();
   await expect(redoButton).toBeDisabled();
+});
+
+test("single clicking outside the active text element exits editing mode", async ({ page }) => {
+  await gotoEditor(page);
+
+  const frame = coverFrame(page);
+  const editableHeading = frame.locator('[data-editor-id="text-1"]');
+  const blockCard = frame.locator('[data-editor-id="block-4"]');
+  const { editingHint } = getHistoryControls(page);
+
+  await editableHeading.dblclick();
+  await expect(editingHint).toBeVisible();
+
+  await blockCard.click();
+
+  await expect(editingHint).toBeHidden();
+  await expect(editableHeading).not.toHaveAttribute("contenteditable", /.+/);
+});
+
+test("text editing preserves leading and trailing whitespace and keeps exact undo redo values", async ({
+  page,
+}) => {
+  await gotoEditor(page);
+
+  const frame = coverFrame(page);
+  const editableHeading = frame.locator('[data-editor-id="text-1"]');
+  const { undoButton, redoButton } = getHistoryControls(page);
+  const nextText = "  HTML Slides Editor  ";
+
+  await editableHeading.dblclick();
+  await selectAllAndFill(editableHeading, nextText);
+  await editableHeading.press("Enter");
+
+  await expect(editableHeading).toHaveText(nextText);
+  await expect(undoButton).toBeEnabled();
+  await expect(redoButton).toBeDisabled();
+
+  await undoButton.click();
+  await expect(editableHeading).toHaveText(HERO_KICKER);
+
+  await redoButton.click();
+  await expect(editableHeading).toHaveText(nextText);
+});
+
+test("whitespace-only surrounding changes still create a committed edit", async ({ page }) => {
+  await gotoEditor(page);
+
+  const frame = coverFrame(page);
+  const editableHeading = frame.locator('[data-editor-id="text-1"]');
+  const { undoButton, redoButton } = getHistoryControls(page);
+  const nextText = ` ${HERO_KICKER} `;
+
+  await editableHeading.dblclick();
+  await selectAllAndFill(editableHeading, nextText);
+  await editableHeading.press("Enter");
+
+  await expect(editableHeading).toHaveText(nextText);
+  await expect(undoButton).toBeEnabled();
+  await expect(redoButton).toBeDisabled();
+});
+
+test("text editing allows deleting a partial keyboard selection before commit", async ({
+  page,
+}) => {
+  await gotoEditor(page);
+
+  const frame = coverFrame(page);
+  const editableHeading = frame.locator('[data-editor-id="text-1"]');
+
+  await editableHeading.dblclick();
+  await editableHeading.press("End");
+
+  for (let index = 0; index < "Editor".length; index += 1) {
+    await editableHeading.press("Shift+ArrowLeft");
+  }
+
+  await editableHeading.press("Backspace");
+  await editableHeading.press("Enter");
+
+  await expect(editableHeading).toHaveText("HTML Slides ");
+});
+
+test("text editing preserves a real dragged partial selection inside the active element", async ({
+  page,
+}) => {
+  await gotoEditor(page);
+
+  const frame = coverFrame(page);
+  const editableHeading = frame.locator('[data-editor-id="text-1"]');
+
+  await editableHeading.dblclick();
+
+  const box = await editableHeading.boundingBox();
+  if (!box) {
+    throw new Error("Expected editable heading to have a bounding box.");
+  }
+
+  const dragStart = {
+    x: box.x + box.width * 0.26,
+    y: box.y + box.height * 0.55,
+  };
+  const dragEnd = {
+    x: box.x + box.width * 0.61,
+    y: box.y + box.height * 0.55,
+  };
+
+  await page.mouse.move(dragStart.x, dragStart.y);
+  await page.mouse.down();
+  await page.mouse.move(dragEnd.x, dragEnd.y, { steps: 8 });
+  await page.mouse.up();
+
+  const selectedText = await editableHeading.evaluate((node) => {
+    const selection = node.ownerDocument.getSelection();
+    return selection?.toString() ?? null;
+  });
+
+  expect(selectedText).toMatch(/slides/i);
+});
+
+test("text editing deletes a real dragged partial selection with backspace", async ({ page }) => {
+  await gotoEditor(page);
+
+  const frame = coverFrame(page);
+  const editableHeading = frame.locator('[data-editor-id="text-1"]');
+  const originalText = await editableHeading.textContent();
+
+  await editableHeading.dblclick();
+
+  const box = await editableHeading.boundingBox();
+  if (!box) {
+    throw new Error("Expected editable heading to have a bounding box.");
+  }
+
+  const dragStart = {
+    x: box.x + box.width * 0.26,
+    y: box.y + box.height * 0.55,
+  };
+  const dragEnd = {
+    x: box.x + box.width * 0.61,
+    y: box.y + box.height * 0.55,
+  };
+
+  await page.mouse.move(dragStart.x, dragStart.y);
+  await page.mouse.down();
+  await page.mouse.move(dragEnd.x, dragEnd.y, { steps: 8 });
+  await page.mouse.up();
+  const selectedText = await editableHeading.evaluate((node) => {
+    return node.ownerDocument.getSelection()?.toString() ?? "";
+  });
+
+  await editableHeading.press("Backspace");
+  await editableHeading.press("Enter");
+
+  if (!originalText || !selectedText) {
+    throw new Error("Expected original text and dragged selection to both be present.");
+  }
+
+  await expect(editableHeading).toHaveText("HTM Editor");
+});
+
+test("double clicking a word during text editing keeps editing active and allows deleting that word", async ({
+  page,
+}) => {
+  await gotoEditor(page);
+
+  const frame = coverFrame(page);
+  const editableHeading = frame.locator('[data-editor-id="text-1"]');
+  const { editingHint } = getHistoryControls(page);
+  const originalText = await editableHeading.textContent();
+
+  await editableHeading.dblclick();
+  await expect(editingHint).toBeVisible();
+
+  const box = await editableHeading.boundingBox();
+  if (!box || !originalText) {
+    throw new Error("Expected editable heading bounds and original text.");
+  }
+
+  const wordProbe = {
+    x: box.x + box.width * 0.48,
+    y: box.y + box.height * 0.55,
+  };
+
+  await page.mouse.dblclick(wordProbe.x, wordProbe.y);
+
+  const selectedText = await editableHeading.evaluate((node) => {
+    return node.ownerDocument.getSelection()?.toString() ?? "";
+  });
+
+  await expect(editingHint).toBeVisible();
+  await editableHeading.press("Backspace");
+  await expect(editingHint).toBeVisible();
+  await editableHeading.press("Enter");
+
+  if (!selectedText) {
+    throw new Error("Expected double click to create a word selection.");
+  }
+
+  const nextText = await editableHeading.textContent();
+  if (!nextText || !originalText) {
+    throw new Error("Expected edited text and original text.");
+  }
+
+  expect(nextText).not.toBe(originalText);
+  expect(nextText.length).toBeLessThan(originalText.length);
+  expect(nextText).toContain("HTML");
+  expect(nextText).toContain("Editor");
+});
+
+test("cursor returns to pointer after leaving text editing mode", async ({ page }) => {
+  await gotoEditor(page);
+
+  const frame = coverFrame(page);
+  const firstText = frame.locator('[data-editor-id="text-1"]');
+  const secondText = frame.locator('[data-editor-id="text-2"]');
+
+  await expect(firstText).toHaveCSS("cursor", "pointer");
+
+  await firstText.dblclick();
+  await expect(firstText).toHaveCSS("cursor", "text");
+
+  await secondText.click();
+
+  await expect(firstText).toHaveCSS("cursor", "pointer");
+  await expect(secondText).toHaveCSS("cursor", "pointer");
+
+  await firstText.dblclick();
+  await expect(firstText).toHaveCSS("cursor", "text");
 });
 
 test("pressing Enter without content changes exits editing without creating undo history", async ({
@@ -268,6 +526,25 @@ test("double clicking a text child enters editing on the correct element", async
   await expect(paragraph).toHaveAttribute("contenteditable", "plaintext-only");
   await expect(card).not.toHaveAttribute("contenteditable", /.+/);
   await expect(title).not.toHaveAttribute("contenteditable", /.+/);
+});
+
+test("text editing reuses a single visible selection border and suppresses inline editing outline", async ({
+  page,
+}) => {
+  await gotoEditor(page);
+
+  const frame = coverFrame(page);
+  const editableHeading = frame.locator('[data-editor-id="text-1"]');
+  const { selectionOverlay } = getHistoryControls(page);
+
+  await editableHeading.dblclick();
+
+  await expect(selectionOverlay).toBeVisible();
+  await expect(editableHeading).toHaveAttribute("data-hse-editing", "true");
+  await expect(editableHeading).toHaveJSProperty("contentEditable", "plaintext-only");
+  await expect(editableHeading).toHaveCSS("outline-style", "none");
+  await expect(editableHeading).toHaveCSS("box-shadow", "none");
+  await expect(editableHeading).toHaveCSS("overflow", "visible");
 });
 
 test("double clicking a non-text element does not enter text editing", async ({ page }) => {

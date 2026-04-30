@@ -205,7 +205,7 @@ export function parseSlide(html: string, slideId = "slide-1"): SlideModel {
       id: selectorValue,
       selector: `[${SELECTOR_ATTR}="${selectorValue}"]`,
       type,
-      content: node instanceof HTMLImageElement ? node.src : (node.textContent || "").trim(),
+      content: node instanceof HTMLImageElement ? node.src : node.textContent || "",
       tagName: node.tagName.toLowerCase(),
     };
   });

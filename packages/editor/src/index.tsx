@@ -21,6 +21,27 @@ interface TextEditingState {
   initialText: string;
 }
 
+const EDITING_TEXT_STYLE_ID = "hse-editing-text-style";
+const SELECTION_OVERLAY_PADDING_X = 8;
+const SELECTION_OVERLAY_PADDING_Y = 14;
+const EDITING_TEXT_STYLE = `
+[data-hse-editing="true"] {
+  outline: none !important;
+  box-shadow: none !important;
+  overflow: visible;
+  caret-color: currentColor;
+  white-space: pre-wrap;
+  user-select: text;
+  -webkit-user-select: text;
+}
+
+[data-hse-editing="true"]:focus,
+[data-hse-editing="true"]:focus-visible {
+  outline: none !important;
+  box-shadow: none !important;
+}
+`;
+
 export interface SlidesEditorProps {
   slides: SlideModel[];
   sourceLabel: string;
@@ -61,11 +82,10 @@ function SlidesEditor({ slides: loadedSlides, sourceLabel }: SlidesEditorProps) 
       return;
     }
 
-    const normalizedText = nextText.trim();
-    const previousText = editing.initialText.trim();
+    const previousText = editing.initialText;
     setTextEditing(null);
 
-    if (normalizedText === previousText) {
+    if (nextText === previousText) {
       return;
     }
 
@@ -74,7 +94,7 @@ function SlidesEditor({ slides: loadedSlides, sourceLabel }: SlidesEditorProps) 
       slideId: active.id,
       elementId,
       previousText,
-      nextText: normalizedText,
+      nextText,
       timestamp: Date.now(),
     };
 
@@ -194,6 +214,13 @@ function SlidesEditor({ slides: loadedSlides, sourceLabel }: SlidesEditorProps) 
     doc.write(activeSlide.htmlSource);
     doc.close();
 
+    if (!doc.getElementById(EDITING_TEXT_STYLE_ID)) {
+      const style = doc.createElement("style");
+      style.id = EDITING_TEXT_STYLE_ID;
+      style.textContent = EDITING_TEXT_STYLE;
+      doc.head.appendChild(style);
+    }
+
     const beginTextEdit = (node: HTMLElement) => {
       const elementId = node.getAttribute("data-editor-id");
       if (!elementId) {
@@ -221,7 +248,31 @@ function SlidesEditor({ slides: loadedSlides, sourceLabel }: SlidesEditorProps) 
     doc.onclick = (event) => {
       const target = event.target;
       if (!(target instanceof Element)) {
+        if (textEditingRef.current) {
+          const editingNode = doc.querySelector<HTMLElement>(
+            `[data-editor-id="${textEditingRef.current.elementId}"]`
+          );
+          if (editingNode) {
+            commitNodeText(editingNode);
+            return;
+          }
+        }
+
         setSelectedElementId(null);
+        return;
+      }
+
+      const activeEditing = textEditingRef.current;
+      if (activeEditing) {
+        const editingNode = doc.querySelector<HTMLElement>(
+          `[data-editor-id="${activeEditing.elementId}"]`
+        );
+
+        if (editingNode && !editingNode.contains(target)) {
+          commitNodeText(editingNode);
+          return;
+        }
+
         return;
       }
 
@@ -239,6 +290,11 @@ function SlidesEditor({ slides: loadedSlides, sourceLabel }: SlidesEditorProps) 
       node.onkeydown = null;
       node.onclick = (event) => {
         event.stopPropagation();
+
+        if (textEditingRef.current?.elementId === node.getAttribute("data-editor-id")) {
+          return;
+        }
+
         const id = node.getAttribute("data-editor-id");
         if (id) {
           setSelectedElementId(id);
@@ -250,6 +306,18 @@ function SlidesEditor({ slides: loadedSlides, sourceLabel }: SlidesEditorProps) 
       }
 
       node.ondblclick = (event) => {
+        const elementId = node.getAttribute("data-editor-id");
+        const activeEditing = textEditingRef.current;
+
+        if (
+          elementId &&
+          activeEditing?.slideId === activeSlide.id &&
+          activeEditing.elementId === elementId
+        ) {
+          event.stopPropagation();
+          return;
+        }
+
         event.preventDefault();
         event.stopPropagation();
         beginTextEdit(node);
@@ -277,11 +345,31 @@ function SlidesEditor({ slides: loadedSlides, sourceLabel }: SlidesEditorProps) 
     const commitNodeText = () => {
       commitTextEditRef.current(editing.elementId, editableNode.textContent || "");
     };
+    let preserveSelectionOnClick = false;
+    const originalInlineDisplay = editableNode.style.display;
+    const originalInlineAlignItems = editableNode.style.alignItems;
+    const originalInlineOverflow = editableNode.style.overflow;
+    const computedStyles = editableNode.ownerDocument.defaultView?.getComputedStyle(editableNode);
+    const computedDisplay = computedStyles?.display ?? "";
 
     editableNode.setAttribute("contenteditable", "plaintext-only");
     editableNode.setAttribute("spellcheck", "false");
     editableNode.setAttribute("data-hse-editing", "true");
     editableNode.style.cursor = "text";
+    editableNode.style.overflow = "visible";
+
+    if (computedDisplay === "inline-flex") {
+      editableNode.style.display = "inline-block";
+      editableNode.style.alignItems = "normal";
+    } else if (
+      computedDisplay === "flex" ||
+      computedDisplay === "grid" ||
+      computedDisplay === "inline-grid"
+    ) {
+      editableNode.style.display = "block";
+      editableNode.style.alignItems = "normal";
+    }
+
     editableNode.focus();
 
     const selection = editableNode.ownerDocument.getSelection();
@@ -304,10 +392,67 @@ function SlidesEditor({ slides: loadedSlides, sourceLabel }: SlidesEditorProps) 
       }
     };
 
-    editableNode.onblur = () => {
-      if (textEditingRef.current?.elementId === editing.elementId) {
-        commitNodeText();
+    editableNode.onmousedown = () => {
+      preserveSelectionOnClick = false;
+    };
+
+    editableNode.onmouseup = () => {
+      const nextSelection = editableNode.ownerDocument.getSelection();
+      const anchorNode = nextSelection?.anchorNode;
+      const focusNode = nextSelection?.focusNode;
+      const containsAnchor = anchorNode ? editableNode.contains(anchorNode) : false;
+      const containsFocus = focusNode ? editableNode.contains(focusNode) : false;
+
+      preserveSelectionOnClick = Boolean(
+        nextSelection && !nextSelection.isCollapsed && containsAnchor && containsFocus
+      );
+    };
+
+    editableNode.onclick = (event) => {
+      event.stopPropagation();
+
+      if (preserveSelectionOnClick) {
+        event.preventDefault();
+        preserveSelectionOnClick = false;
       }
+    };
+
+    editableNode.onblur = () => {
+      window.setTimeout(() => {
+        if (textEditingRef.current?.elementId !== editing.elementId) {
+          return;
+        }
+
+        const nextSelection = editableNode.ownerDocument.getSelection();
+        const anchorNode = nextSelection?.anchorNode;
+        const focusNode = nextSelection?.focusNode;
+        const activeElement = editableNode.ownerDocument.activeElement;
+        const selectionStaysInside =
+          Boolean(nextSelection && !nextSelection.isCollapsed) &&
+          Boolean(anchorNode && editableNode.contains(anchorNode)) &&
+          Boolean(focusNode && editableNode.contains(focusNode));
+
+        if (activeElement === editableNode || selectionStaysInside) {
+          return;
+        }
+
+        commitNodeText();
+      }, 0);
+    };
+
+    return () => {
+      editableNode.removeAttribute("contenteditable");
+      editableNode.removeAttribute("spellcheck");
+      editableNode.removeAttribute("data-hse-editing");
+      editableNode.style.cursor = "pointer";
+      editableNode.style.display = originalInlineDisplay;
+      editableNode.style.alignItems = originalInlineAlignItems;
+      editableNode.style.overflow = originalInlineOverflow;
+      editableNode.onblur = null;
+      editableNode.onclick = null;
+      editableNode.onkeydown = null;
+      editableNode.onmousedown = null;
+      editableNode.onmouseup = null;
     };
   }, [activeSlide, textEditing]);
 
@@ -393,15 +538,19 @@ function SlidesEditor({ slides: loadedSlides, sourceLabel }: SlidesEditorProps) 
 
     const elementRect = inspectedNode.getBoundingClientRect();
     const rootRect = rootNode.getBoundingClientRect();
+    const stageRect = elementRectToStageRect(elementRect, rootRect, {
+      scale: safeScale,
+      offsetX,
+      offsetY,
+      slideWidth,
+      slideHeight,
+    });
 
     setSelectionOverlay({
-      ...elementRectToStageRect(elementRect, rootRect, {
-        scale: safeScale,
-        offsetX,
-        offsetY,
-        slideWidth,
-        slideHeight,
-      }),
+      x: stageRect.x - SELECTION_OVERLAY_PADDING_X,
+      y: stageRect.y - SELECTION_OVERLAY_PADDING_Y,
+      width: stageRect.width + SELECTION_OVERLAY_PADDING_X * 2,
+      height: stageRect.height + SELECTION_OVERLAY_PADDING_Y * 2,
     });
   }, [
     activeSlide,

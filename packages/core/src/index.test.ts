@@ -84,6 +84,22 @@ describe("updateSlideText", () => {
     expect(doc.querySelector('[data-editor-id="text-1"]')?.textContent).toBe("Original heading");
     expect(doc.querySelector('[data-editor-id="text-2"]')?.textContent).toBe("Updated body");
   });
+
+  test("preserves leading and trailing whitespace when writing text updates", () => {
+    const html = ensureEditableSelectors(`<!DOCTYPE html>
+<html lang="en">
+  <body>
+    <div class="slide-container" data-slide-root="true">
+      <p data-editable="text">Original body</p>
+    </div>
+  </body>
+</html>`);
+
+    const updatedHtml = updateSlideText(html, "text-1", "  Updated body  ");
+    const doc = new DOMParser().parseFromString(updatedHtml, "text/html");
+
+    expect(doc.querySelector('[data-editor-id="text-1"]')?.textContent).toBe("  Updated body  ");
+  });
 });
 
 describe("slide operations", () => {
@@ -149,6 +165,33 @@ describe("slide operations", () => {
     expect(restoredSlide.htmlSource).toBe(originalSlide.htmlSource);
     expect(restoredSlide.elements.find((element) => element.id === "text-1")?.content).toBe(
       "Before"
+    );
+  });
+
+  test("applySlideOperation preserves surrounding whitespace in parsed element content", () => {
+    const originalSlide = parseSlide(
+      `<!DOCTYPE html>
+<html lang="en">
+  <body>
+    <div class="slide-container" data-slide-root="true">
+      <p data-editable="text">Before</p>
+    </div>
+  </body>
+</html>`,
+      "slide-a"
+    );
+
+    const updatedSlide = applySlideOperation(originalSlide, {
+      type: "text.update",
+      slideId: originalSlide.id,
+      elementId: "text-1",
+      previousText: "Before",
+      nextText: "  After  ",
+      timestamp: 1,
+    });
+
+    expect(updatedSlide.elements.find((element) => element.id === "text-1")?.content).toBe(
+      "  After  "
     );
   });
 });
@@ -249,6 +292,39 @@ describe("history reducer", () => {
     expect(
       fullyUndoneState.slides[0]?.elements.find((element) => element.id === "text-1")?.content
     ).toBe("Title");
+  });
+
+  test("undo and redo preserve exact surrounding whitespace in committed text edits", () => {
+    const initialSlide = parseSlide(
+      `<!DOCTYPE html>
+<html lang="en">
+  <body>
+    <div class="slide-container" data-slide-root="true">
+      <p data-editable="text">Summary</p>
+    </div>
+  </body>
+</html>`,
+      "slide-1"
+    );
+    const operation = {
+      type: "text.update" as const,
+      slideId: "slide-1",
+      elementId: "text-1",
+      previousText: "Summary",
+      nextText: "  Summary  ",
+      timestamp: 1,
+    };
+
+    const committedState = reduceHistory(createHistoryState([initialSlide]), {
+      type: "history.commit",
+      operation,
+    });
+    const undoneState = reduceHistory(committedState, { type: "history.undo" });
+    const redoneState = reduceHistory(undoneState, { type: "history.redo" });
+
+    expect(committedState.slides[0]?.elements[0]?.content).toBe("  Summary  ");
+    expect(undoneState.slides[0]?.elements[0]?.content).toBe("Summary");
+    expect(redoneState.slides[0]?.elements[0]?.content).toBe("  Summary  ");
   });
 
   test("reset replaces slides and clears both history stacks", () => {
