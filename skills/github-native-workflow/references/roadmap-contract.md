@@ -83,7 +83,12 @@ If the repo already has a format, preserve it.
 
 Otherwise use a simple checklist style:
 
-- before completion: `- [ ] #123 Short title`
-- after merge: `- [x] #123 Short title`
+- before completion: `- [ ] [#123 Short title](https://github.com/org/repo/issues/123)`
+- after merge: `- [x] [#123 Short title](https://github.com/org/repo/issues/123)`
+
+Rationale:
+
+- the `#123` shorthand is useful for humans inside the repo
+- the full URL gives future sessions an unambiguous handoff target
 
 If the repo prefers full URLs, use full GitHub issue links instead.

@@ -69,6 +69,7 @@ If not, follow that section order.
 After the user approves and the issue is created:
 
 - treat the issue as the source of truth for implementation
+- capture the created issue's canonical URL and preserve it in the roadmap update or handoff notes for future sessions
 - start new Codex sessions from the issue number or issue URL
 - read the linked ADRs before proposing architecture changes
 - keep implementation scoped to the issue instead of silently expanding the task
@@ -109,7 +110,7 @@ The skill helps by:
 - drafting roadmap repairs
 - drafting issue bodies
 - publishing approved issues
-- updating roadmap links at creation and closeout
+- updating roadmap links at creation and closeout, including the canonical issue URL when a new issue is published
 
 ## Quality bar
 

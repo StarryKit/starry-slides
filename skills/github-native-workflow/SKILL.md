@@ -51,6 +51,7 @@ If any gate fails, stop issue creation and normalize the roadmap or ADR setup fi
 
 3. **Implementation session handoff**
    - Once the issue exists, treat it as the execution contract for future Codex sessions.
+   - Capture both the issue number and the canonical GitHub issue URL in the workflow output and in any roadmap update tied to the new issue.
    - New implementation sessions should start from the issue, related ADRs, and the relevant repo context docs.
 
 4. **Closeout**
@@ -64,5 +65,6 @@ If any gate fails, stop issue creation and normalize the roadmap or ADR setup fi
 - Do not create an issue until roadmap and ADR preconditions are satisfied, or the user explicitly accepts the gap.
 - Keep one issue focused on one implementation slice.
 - Keep acceptance criteria observable and testing expectations explicit.
+- After creating an issue, update the roadmap's related-issue entry to include the issue URL, not only the `#123` shorthand, unless the repo already requires a different format.
 - If the change affects architecture, package boundaries, persistence, deployment shape, or long-lived workflow rules, require ADR review or ADR creation before implementation.
 - If the roadmap or ADR setup is missing, guide the user by asking questions instead of guessing hidden structure.
