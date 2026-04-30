@@ -7,7 +7,7 @@
     "dev": "pnpm --parallel --filter @html-slides-editor/core --filter @html-slides-editor/editor --filter web dev",
     "build": "pnpm -r build",
     "generate:slides": "node skills/html-slides-generator/generate-slides.mjs",
-    "test:e2e:prepare": "pnpm generate:slides -- --topic \"E2E Regression Deck\" --summary \"A generated deck used to verify the full editor pipeline from skill output through in-app editing.\" --points \"Generated input|Editor import|Round-trip text editing\"",
+    "test:e2e:prepare": "pnpm generate:slides -- --topic \"HTML Slides Editor Project Overview\" --summary \"A generated project deck that doubles as a broad regression fixture for the HTML Slides Editor.\" --points \"Problem framing|Architecture|Feature matrix|Charts|Images|Roadmap|Comparison|Coverage\"",
     "lint": "biome check .",
     "lint:fix": "biome check --write .",
     "format": "biome format --write .",
