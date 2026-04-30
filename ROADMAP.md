@@ -19,9 +19,6 @@ system for this repo.
 
 This roadmap tracks project-level milestones.
 
-GitHub Issues are the execution queue. Each milestone should link to the issues
-that implement it.
-
 ## Issue Template
 
 Use [implementation-task.md](/Users/haichao/code/html-slides-editor/.github/ISSUE_TEMPLATE/implementation-task.md)
@@ -55,10 +52,6 @@ Exit criteria:
   `pnpm verify`.
 - Core context documents, ADRs, and QA constraints exist and provide clear
   boundaries for future implementation work.
-
-Related issues:
-
-- add GitHub issue links here
 
 ### Milestone 2: Editor Editing Features
 
@@ -159,7 +152,3 @@ Exit criteria:
   editor functionality.
 - Each feature slice is verified with the appropriate mix of unit tests and E2E
   regression tests.
-
-Related issues:
-
-- add GitHub issue links here
