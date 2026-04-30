@@ -152,6 +152,7 @@ body,
   width: 100%;
   gap: var(--hse-slide-list-gap-expanded);
   padding-right: 0;
+  padding-top: 10px;
   overscroll-behavior: contain;
   scrollbar-width: none;
   -ms-overflow-style: none;
@@ -338,6 +339,7 @@ body,
   flex: 1 1 auto;
   min-width: 0;
   height: 100vh;
+  gap: var(--hse-panel-gap);
   overflow: hidden;
 }
 
@@ -413,7 +415,7 @@ body,
   min-width: 0;
   padding: var(--hse-inspector-padding);
   background: var(--hse-inspector-bg);
-  border-left: 1px solid var(--hse-border-color);
+  border-left: 0;
   overflow-y: auto;
 }
 
