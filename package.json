@@ -9,9 +9,12 @@
     "generate:slides": "node skills/html-slides-generator/generate-slides.mjs",
     "lint": "biome check .",
     "lint:fix": "biome check --write .",
-    "format": "biome format --write ."
+    "format": "biome format --write .",
+    "test:e2e:serve": "pnpm build && pnpm --filter web exec vite preview --host 127.0.0.1 --port 4173 --strictPort",
+    "test:e2e": "playwright test"
   },
   "devDependencies": {
+    "@playwright/test": "^1.54.2",
     "@biomejs/biome": "^1.9.4"
   }
 }

@@ -8,12 +8,15 @@ coverage
 .idea
 .vscode
 generated
+playwright-report/
+test-results/
 
 # Local agent and scratch files
 AGENTS.md
 CLAUDE.md
 docs/agents/
 .scratch/
+.codex
 
 # Environment files
 .env

@@ -270,6 +270,43 @@ body,
   font-size: 24px;
 }
 
+.hse-history-toolbar {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.hse-history-button {
+  border: 1px solid var(--hse-border-color);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.82);
+  color: var(--hse-text-color);
+  font: inherit;
+  padding: 8px 14px;
+  cursor: pointer;
+  transition: var(--hse-transition);
+}
+
+.hse-history-button:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: var(--hse-shadow-card);
+}
+
+.hse-history-button:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.hse-editing-hint {
+  margin: 0 0 14px;
+  padding: 10px 12px;
+  border-radius: 14px;
+  background: var(--hse-accent-soft);
+  color: var(--hse-accent-text);
+  font-size: 13px;
+  line-height: 1.45;
+}
+
 .hse-style-list {
   display: grid;
   gap: 1px;

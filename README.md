@@ -34,7 +34,10 @@ Other useful commands:
 ```bash
 pnpm build
 pnpm lint
+pnpm test:e2e
 ```
+
+`pnpm test:e2e` runs the browser regression suite, including direct text editing coverage.
 
 ## Generate Slides
 

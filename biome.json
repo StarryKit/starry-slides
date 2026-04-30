@@ -2,7 +2,17 @@
   "$schema": "https://biomejs.dev/schemas/1.9.4/schema.json",
   "files": {
     "ignoreUnknown": true,
-    "ignore": ["node_modules", "dist", "coverage", ".vite", "generated", "docs/agents", ".scratch"]
+    "ignore": [
+      "node_modules",
+      "dist",
+      "coverage",
+      ".vite",
+      "generated",
+      "docs/agents",
+      ".scratch",
+      "playwright-report",
+      "test-results"
+    ]
   },
   "formatter": {
     "enabled": true,

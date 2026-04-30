@@ -2,118 +2,103 @@
 
 ## Purpose
 
-`html-slides-editor` is a monorepo for generating and editing HTML slides without converting them into a proprietary document model.
+`html-slides-editor` edits HTML slides directly in the browser without converting them into a proprietary document model.
 
-The product goal is to keep HTML as the source of truth while still supporting interactive editing in the browser.
+The product rule is simple: HTML stays the source of truth.
 
-## System Shape
+## Working Agreement
 
-The repo is organized as one product with a small set of package boundaries:
+Every implementation task is only complete when both commands pass:
 
-- `apps/web`: the Vite app that hosts the editor UI
-- `packages/core`: slide contract, HTML parsing, selector normalization, and source update helpers
-- `packages/react`: React-side data loading and bindings for slides
-- `packages/stage`: editor stage UI, selection overlays, thumbnails, and style inspection
-- `skills/html-slides-generator`: local generator that produces standalone slide decks and syncs the latest output into the app
+- `pnpm lint`
+- `pnpm build`
 
-## Core Model
+Run both before closing a task, even for small UI fixes.
 
-The central domain object is the `SlideModel` from `packages/core`.
+## Testing Expectations
 
-`SlideModel` represents one editable slide with:
+Default rule: any user-triggered interaction that changes editor state, selection state,
+editing state, history state, or persisted document content should add or update tests.
 
-- a stable `id`
-- a human-facing `title`
-- the full `htmlSource`
-- a `rootSelector`
-- slide `width` and `height`
-- a list of editable `elements`
+Use this coverage bar:
 
-Editable elements are discovered from HTML markers, not from a separate document schema.
+- each interaction feature should have at least one happy-path test
+- each interaction feature should have at least one protection test for misfire, data loss, or unwanted state changes
+- each bug fix should add a regression test when there is a reasonable seam
 
-## Source Of Truth
+Choose the narrowest useful test layer:
 
-The source of truth for a slide is its HTML, stored as `htmlSource`.
+- browser tests for end-to-end interaction flows
+- `packages/core` tests for parsing, operations, HTML write-back, and inversion logic
+- pure visual or copy-only changes do not require tests unless they touch a critical interaction
 
-The editor may derive runtime state from that HTML, but product decisions should preserve the rule that edits eventually write back into HTML rather than diverging into a separate proprietary model.
+## Core Domain
 
-This is reinforced by `ADR-0001`.
+The central object is `SlideModel` in `packages/core`:
+
+- `id`
+- `title`
+- `htmlSource`
+- `rootSelector`
+- `width` / `height`
+- `elements`
+
+`htmlSource` is the persisted slide state. Runtime state may be derived from it, but edits must write back into HTML.
 
 ## Slide Contract
 
-Slides are expected to follow these invariants:
+Slides must preserve these attributes:
 
-- exactly one slide root marked with `data-slide-root="true"`
-- the slide root carries `data-slide-width` and `data-slide-height`
-- editable content is marked with `data-editable="text"`, `data-editable="image"`, or `data-editable="block"`
-- editor targeting uses `data-editor-id`
+- one slide root marked with `data-slide-root="true"`
+- root dimensions via `data-slide-width` and `data-slide-height`
+- editable nodes marked with `data-editable="text" | "image" | "block"`
+- stable editor targeting through `data-editor-id`
 
-`packages/core` normalizes some of this contract by:
+Treat these as product contracts, not incidental DOM details.
 
-- promoting `.slide-container` to a slide root when needed
-- filling in default dimensions
-- adding stable `data-editor-id` values for editable nodes
+## Editing Direction
 
-When changing parsing or write-back behavior, treat these attributes as product-level contracts, not incidental implementation details.
-
-## Current Editing Direction
-
-The current editor is moving from selection and inspection toward direct editing.
-
-The accepted architectural direction is:
+Per ADR-0001, editing follows this pipeline:
 
 1. user interaction produces editor operations
 2. operations update in-memory slide state
 3. updated state writes back into `htmlSource`
-4. history or versioning layers sit on top of that pipeline
+4. history/versioning layers sit on top
 
-For the authoritative wording and constraints, read `docs/adr/0001-editing-pipeline-and-versioning.md` before changing editing architecture.
+For editing architecture changes, read [docs/adr/0001-editing-pipeline-and-versioning.md](/Users/haichao/code/html-slides-editor/docs/adr/0001-editing-pipeline-and-versioning.md) first.
 
-## Generated Decks
+## Content Sources
 
-The web app prefers generated content from `apps/web/public/generated/current/manifest.json`.
+The app prefers generated decks from `apps/web/public/generated/current/manifest.json`.
 
-If no generated deck exists, the app falls back to built-in sample slides.
+If no generated deck exists, it falls back to built-in sample slides.
 
-This means there are two common content sources during development:
+## Package Boundaries
 
-- generated decks synced by `pnpm generate:slides`
-- built-in sample slides used as a fallback
+- `packages/core`: parsing, normalization, HTML mutation, slide contract
+- `packages/react`: slide loading and React bindings
+- `packages/stage`: stage UI, overlays, inspector, thumbnails, editing interactions
+- `apps/web`: app composition only; keep editor logic out when possible
 
-Changes to loading behavior should preserve that fallback path unless a newer ADR says otherwise.
+If a change redefines these responsibilities, update the ADRs.
 
-## Package Responsibilities
+## Preferred Terms
 
-Use these boundaries when adding code:
+Use these repo terms consistently:
 
-- put parsing, normalization, HTML mutation, and slide-contract logic in `packages/core`
-- put React data-loading hooks and app-facing bindings in `packages/react`
-- put stage presentation, selection UI, inspector UI, and thumbnail rendering in `packages/stage`
-- keep `apps/web` thin; it should compose the editor rather than own core editing logic
-
-If a change redefines these boundaries, add or update an ADR.
-
-## Terms To Use
-
-Prefer these repo terms in issues, ADRs, tests, and code comments:
-
-- `slide`: one HTML slide and its derived runtime model
-- `slide root`: the element marked by `data-slide-root`
-- `editable element`: an element marked by `data-editable`
-- `htmlSource`: the persisted HTML string for a slide
-- `stage`: the visual editing canvas/UI
-- `generated deck`: slides produced by the local generator and loaded from `public/generated/current`
-
-Avoid introducing new synonyms for these concepts unless the project deliberately renames them.
+- `slide`
+- `slide root`
+- `editable element`
+- `htmlSource`
+- `stage`
+- `generated deck`
 
 ## ADR Triggers
 
-Consult `docs/adr/` before changing:
+Check `docs/adr/` before changing:
 
 - editing architecture
-- HTML write-back or persistence behavior
+- HTML write-back or persistence
 - undo/redo, checkpoints, or version history
 - collaboration model
-- package boundaries or major module responsibilities
-
-If a change in those areas introduces a new decision or contradicts an accepted ADR, update the ADR set as part of the same work.
+- package boundaries

@@ -18,6 +18,17 @@ export interface SlideModel {
   elements: EditableElement[];
 }
 
+export interface TextUpdateOperation {
+  type: "text.update";
+  slideId: string;
+  elementId: string;
+  previousText: string;
+  nextText: string;
+  timestamp: number;
+}
+
+export type SlideOperation = TextUpdateOperation;
+
 export interface RectLike {
   left: number;
   top: number;
@@ -183,6 +194,31 @@ export function updateSlideText(html: string, elementId: string, value: string):
   }
 
   return `<!DOCTYPE html>\n${doc.documentElement.outerHTML}`;
+}
+
+export function applySlideOperation(slide: SlideModel, operation: SlideOperation): SlideModel {
+  if (slide.id !== operation.slideId) {
+    return slide;
+  }
+
+  switch (operation.type) {
+    case "text.update":
+      return parseSlide(
+        updateSlideText(slide.htmlSource, operation.elementId, operation.nextText),
+        slide.id
+      );
+  }
+}
+
+export function invertSlideOperation(operation: SlideOperation): SlideOperation {
+  switch (operation.type) {
+    case "text.update":
+      return {
+        ...operation,
+        previousText: operation.nextText,
+        nextText: operation.previousText,
+      };
+  }
 }
 
 function parseTranslate(transformValue: string): { x: number; y: number } {

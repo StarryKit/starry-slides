@@ -6,6 +6,11 @@ export function useSlidesData() {
   const [sourceLabel, setSourceLabel] = useState("Built-in sample slides");
 
   useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("deck") === "sample") {
+      return;
+    }
+
     let cancelled = false;
 
     async function loadGeneratedSlides() {

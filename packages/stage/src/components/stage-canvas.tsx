@@ -29,10 +29,11 @@ function StageCanvas({
   stageViewportRef,
 }: StageCanvasProps) {
   return (
-    <section className="hse-stage-panel" ref={stageViewportRef}>
+    <section className="hse-stage-panel" data-testid="stage-panel" ref={stageViewportRef}>
       <h1 className="hse-stage-title">{sourceLabel}</h1>
       <div
         className="hse-stage-frame"
+        data-testid="stage-frame"
         style={{
           width: `${slideWidth}px`,
           height: `${slideHeight}px`,
@@ -41,10 +42,16 @@ function StageCanvas({
           transform: `scale(${scale})`,
         }}
       >
-        <iframe ref={iframeRef} title={slideTitle} className="hse-slide-iframe" />
+        <iframe
+          ref={iframeRef}
+          title={slideTitle}
+          className="hse-slide-iframe"
+          data-testid="slide-iframe"
+        />
       </div>
       {selectionOverlay ? (
         <div
+          data-testid="selection-overlay"
           className="hse-selection-overlay"
           style={{
             left: `${selectionOverlay.x}px`,
