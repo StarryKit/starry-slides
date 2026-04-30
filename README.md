@@ -37,11 +37,12 @@ pnpm test:e2e
 ```
 
 `pnpm test:e2e` runs the browser regression suite, including direct text editing coverage.
-It first generates a fresh deck with `skills/html-slides-generator`, syncs that output into the app, then runs the editor against the generated deck end to end.
+It first generates a fresh project-overview deck with `skills/html-slides-generator`, syncs that output into the app, then runs the editor against the generated deck end to end.
 
 ## Generate Slides
 
 The current skill is a local generator that writes standalone HTML slides and syncs the latest deck into the app.
+The default output is now a richer project-overview deck that also serves as a broad regression fixture with tables, charts, images, timelines, and other mixed-content layouts.
 
 ```bash
 pnpm generate:slides -- --topic "Your topic"

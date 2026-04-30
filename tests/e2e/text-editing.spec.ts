@@ -102,7 +102,9 @@ test("text editing supports toolbar undo/redo after commit", async ({ page }) =>
   const { editingHint, undoButton, redoButton } = getHistoryControls(page);
   const nextText = "Edited by Playwright";
 
-  await expect(editableHeading).toHaveText("Generated Slide Deck");
+  await expect(page.getByText("Generated deck: HTML Slides Editor Project Overview")).toBeVisible();
+  await expect(iframe).toBeVisible();
+  await expect(editableHeading).toHaveText("HTML Slides Editor");
 
   await editableHeading.dblclick();
   await expect(editingHint).toBeVisible();
@@ -116,7 +118,7 @@ test("text editing supports toolbar undo/redo after commit", async ({ page }) =>
   await expect(redoButton).toBeDisabled();
 
   await undoButton.click();
-  await expect(editableHeading).toHaveText("Generated Slide Deck");
+  await expect(editableHeading).toHaveText("HTML Slides Editor");
   await expect(redoButton).toBeEnabled();
 
   await redoButton.click();
@@ -308,8 +310,10 @@ test("escape cancels text editing without creating undo history", async ({ page 
 
   const frame = coverFrame(page);
   const editableHeading = frame.locator('[data-editor-id="text-1"]');
-  const { undoButton, redoButton, editingHint } = getHistoryControls(page);
-  const originalText = "Generated Slide Deck";
+  const undoButton = page.getByTestId("undo-button");
+  const redoButton = page.getByTestId("redo-button");
+  const editingHint = page.getByText("Editing text. Press Enter to save or Escape to cancel.");
+  const originalText = "HTML Slides Editor";
   const draftText = "Draft text that should be discarded";
 
   await editableHeading.dblclick();
