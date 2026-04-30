@@ -117,6 +117,11 @@ function copyDirectory(sourceDir, targetDir) {
   }
 }
 
+function resetDirectory(targetDir) {
+  fs.rmSync(targetDir, { recursive: true, force: true });
+  fs.mkdirSync(targetDir, { recursive: true });
+}
+
 function buildHeroSlide(topic, summary) {
   return wrapHtml(
     `${baseStyles(
@@ -1557,7 +1562,7 @@ const slides = [
   },
 ];
 
-fs.mkdirSync(outputRoot, { recursive: true });
+resetDirectory(outputRoot);
 
 for (const slide of slides) {
   fs.writeFileSync(path.join(outputRoot, slide.file), slide.html, "utf8");
@@ -1580,6 +1585,7 @@ fs.writeFileSync(
   "utf8"
 );
 
+resetDirectory(appOutputRoot);
 copyDirectory(outputRoot, appOutputRoot);
 
 console.log(`Generated ${slides.length} slides in ${outputRoot}`);

@@ -2,10 +2,17 @@ import { type FrameLocator, type Page, expect, test } from "@playwright/test";
 
 const EDITING_HINT = "Editing text. Press Enter to save or Escape to cancel.";
 const MODIFIER = process.platform === "darwin" ? "Meta" : "Control";
+const SOURCE_LABEL = "Generated deck: HTML Slides Editor Project Overview";
+const HERO_KICKER = "HTML Slides Editor";
+const HERO_TITLE = "HTML Slides Editor Project Overview";
+const HERO_SUMMARY =
+  "A generated project deck that doubles as a broad regression fixture for the HTML Slides Editor.";
+const AGENDA_PARAGRAPH =
+  "How html slides editor project overview handles problem framing in a browser-native workflow.";
 
 async function gotoEditor(page: Page) {
   await page.goto("/");
-  await expect(page.getByText("Generated deck: E2E Regression Deck")).toBeVisible();
+  await expect(page.getByText(SOURCE_LABEL)).toBeVisible();
   await expect(page.getByTestId("slide-iframe")).toBeVisible();
 }
 
@@ -81,7 +88,7 @@ test("pressing Enter without content changes exits editing without creating undo
   const frame = coverFrame(page);
   const editableHeading = frame.locator('[data-editor-id="text-1"]');
   const { editingHint, undoButton, redoButton } = getHistoryControls(page);
-  const originalText = "Generated Slide Deck";
+  const originalText = HERO_KICKER;
 
   await editableHeading.dblclick();
   await expect(editingHint).toBeVisible();
@@ -102,9 +109,9 @@ test("text editing supports toolbar undo/redo after commit", async ({ page }) =>
   const { editingHint, undoButton, redoButton } = getHistoryControls(page);
   const nextText = "Edited by Playwright";
 
-  await expect(page.getByText("Generated deck: HTML Slides Editor Project Overview")).toBeVisible();
-  await expect(iframe).toBeVisible();
-  await expect(editableHeading).toHaveText("HTML Slides Editor");
+  await expect(page.getByText(SOURCE_LABEL)).toBeVisible();
+  await expect(page.getByTestId("slide-iframe")).toBeVisible();
+  await expect(editableHeading).toHaveText(HERO_KICKER);
 
   await editableHeading.dblclick();
   await expect(editingHint).toBeVisible();
@@ -118,7 +125,7 @@ test("text editing supports toolbar undo/redo after commit", async ({ page }) =>
   await expect(redoButton).toBeDisabled();
 
   await undoButton.click();
-  await expect(editableHeading).toHaveText("HTML Slides Editor");
+  await expect(editableHeading).toHaveText(HERO_KICKER);
   await expect(redoButton).toBeEnabled();
 
   await redoButton.click();
@@ -139,14 +146,14 @@ test("keyboard shortcuts trigger undo and redo", async ({ page }) => {
 
   await expect(undoButton).toBeEnabled();
   await page.keyboard.press(`${MODIFIER}+Z`);
-  await expect(editableHeading).toHaveText("Generated Slide Deck");
+  await expect(editableHeading).toHaveText(HERO_KICKER);
   await expect(redoButton).toBeEnabled();
 
   await page.keyboard.press(`${MODIFIER}+Shift+Z`);
   await expect(editableHeading).toHaveText(nextText);
 
   await page.keyboard.press(`${MODIFIER}+Z`);
-  await expect(editableHeading).toHaveText("Generated Slide Deck");
+  await expect(editableHeading).toHaveText(HERO_KICKER);
   await page.keyboard.press(`${MODIFIER}+Y`);
   await expect(editableHeading).toHaveText(nextText);
 });
@@ -159,8 +166,7 @@ test("keyboard undo and redo do not record themselves as new history entries", a
   const summary = frame.locator('[data-editor-id="text-3"]');
   const headingText = "Deck topic updated";
   const summaryText = "Summary updated after heading";
-  const originalSummary =
-    "A generated deck used to verify the full editor pipeline from skill output through in-app editing.";
+  const originalSummary = HERO_SUMMARY;
 
   await heading.dblclick();
   await selectAllAndFill(heading, headingText);
@@ -183,7 +189,7 @@ test("keyboard undo and redo do not record themselves as new history entries", a
   await expect(heading).toHaveText(headingText);
 
   await page.keyboard.press(`${MODIFIER}+Z`);
-  await expect(heading).toHaveText("E2E Regression Deck");
+  await expect(heading).toHaveText(HERO_TITLE);
   await expect(summary).toHaveText(originalSummary);
 });
 
@@ -197,10 +203,8 @@ test("multiple edits maintain correct undo and redo stack order", async ({ page 
   const headingText = "Deck topic updated";
   const summaryText = "Summary updated after heading";
 
-  await expect(heading).toHaveText("E2E Regression Deck");
-  await expect(summary).toHaveText(
-    "A generated deck used to verify the full editor pipeline from skill output through in-app editing."
-  );
+  await expect(heading).toHaveText(HERO_TITLE);
+  await expect(summary).toHaveText(HERO_SUMMARY);
 
   await heading.dblclick();
   await selectAllAndFill(heading, headingText);
@@ -214,13 +218,11 @@ test("multiple edits maintain correct undo and redo stack order", async ({ page 
   await expect(summary).toHaveText(summaryText);
 
   await undoButton.click();
-  await expect(summary).toHaveText(
-    "A generated deck used to verify the full editor pipeline from skill output through in-app editing."
-  );
+  await expect(summary).toHaveText(HERO_SUMMARY);
   await expect(heading).toHaveText(headingText);
 
   await undoButton.click();
-  await expect(heading).toHaveText("E2E Regression Deck");
+  await expect(heading).toHaveText(HERO_TITLE);
   await expect(redoButton).toBeEnabled();
 
   await redoButton.click();
@@ -252,15 +254,13 @@ test("double clicking a text child enters editing on the correct element", async
   await page.getByLabel("Slide 2").click();
 
   const frame = coverFrame(page);
-  const card = frame.locator('[data-editor-id="block-2"]');
-  const title = frame.locator('[data-editor-id="text-4"]');
-  const paragraph = frame.locator('[data-editor-id="text-5"]');
+  const card = frame.locator('[data-editor-id="block-4"]');
+  const title = frame.locator('[data-editor-id="text-6"]');
+  const paragraph = frame.locator('[data-editor-id="text-7"]');
   const { editingHint } = getHistoryControls(page);
 
   await expect(card).toBeVisible();
-  await expect(paragraph).toHaveText(
-    "A concrete point about e2e regression deck that can be refined later."
-  );
+  await expect(paragraph).toHaveText(AGENDA_PARAGRAPH);
 
   await paragraph.dblclick();
 
@@ -313,7 +313,7 @@ test("escape cancels text editing without creating undo history", async ({ page 
   const undoButton = page.getByTestId("undo-button");
   const redoButton = page.getByTestId("redo-button");
   const editingHint = page.getByText("Editing text. Press Enter to save or Escape to cancel.");
-  const originalText = "HTML Slides Editor";
+  const originalText = HERO_KICKER;
   const draftText = "Draft text that should be discarded";
 
   await editableHeading.dblclick();

@@ -339,7 +339,7 @@ describe("generated slide contract", () => {
     const secondSlideHtml = fs.readFileSync(path.join(outputRoot, manifest.slides[1].file), "utf8");
     const secondSlide = parseSlide(secondSlideHtml, "generated-slide-2");
 
-    expect(manifest.slides).toHaveLength(3);
+    expect(manifest.slides).toHaveLength(11);
 
     expect(firstSlide.id).toBe("generated-slide-1");
     expect(firstSlide.width).toBe(DEFAULT_SLIDE_WIDTH);
@@ -352,14 +352,27 @@ describe("generated slide contract", () => {
       "block-4:block",
       "text-5:text",
       "text-6:text",
+      "block-7:block",
+      "text-8:text",
+      "text-9:text",
+      "block-10:block",
+      "block-11:block",
+      "text-12:text",
+      "text-13:text",
+      "block-14:block",
+      "text-15:text",
+      "text-16:text",
+      "block-17:block",
+      "text-18:text",
+      "text-19:text",
     ]);
     expect(firstSlide.elements.find((element) => element.id === "text-1")?.content).toBe(
-      "Generated Slide Deck"
+      "HTML Slides Editor"
     );
     expect(firstSlide.elements.find((element) => element.id === "block-4")?.tagName).toBe("div");
 
-    expect(secondSlide.elements.find((element) => element.id === "block-2")?.type).toBe("block");
-    expect(secondSlide.elements.find((element) => element.id === "text-4")?.content).toBe(
+    expect(secondSlide.elements.find((element) => element.id === "block-4")?.type).toBe("block");
+    expect(secondSlide.elements.find((element) => element.id === "text-6")?.content).toBe(
       "Point A"
     );
 
