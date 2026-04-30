@@ -10,6 +10,7 @@ import {
   createHistoryState,
   ensureEditableSelectors,
   invertSlideOperation,
+  loadSlidesFromManifest,
   parseSlide,
   reduceHistory,
   updateSlideText,
@@ -301,6 +302,67 @@ describe("history reducer", () => {
 });
 
 describe("generated slide contract", () => {
+  test("loadSlidesFromManifest applies generated-deck defaults while allowing overrides", async () => {
+    const requests: Array<{ input: RequestInfo | URL; init: RequestInit | undefined }> = [];
+    const fetchImpl: typeof fetch = async (input, init) => {
+      requests.push({ input, init });
+
+      const url = typeof input === "string" ? input : input instanceof URL ? input.toString() : input.url;
+
+      if (url.endsWith("/manifest.json")) {
+        return new Response(
+          JSON.stringify({
+            topic: "Contract Deck",
+            slides: [{ file: "slide-1.html", title: "Slide A" }],
+          }),
+          {
+            status: 200,
+            headers: { "content-type": "application/json" },
+          }
+        );
+      }
+
+      if (url.endsWith("/slide-1.html")) {
+        return new Response(
+          `<!DOCTYPE html>
+<html lang="en">
+  <body>
+    <div class="slide-container">
+      <h1 data-editable="text">Imported title</h1>
+    </div>
+  </body>
+</html>`,
+          {
+            status: 200,
+            headers: { "content-type": "text/html" },
+          }
+        );
+      }
+
+      return new Response("not found", { status: 404 });
+    };
+
+    const deck = await loadSlidesFromManifest({
+      manifestUrl: "https://example.com/generated/current/manifest.json",
+      fetchImpl,
+      requestInit: {
+        credentials: "same-origin",
+      },
+    });
+
+    expect(deck?.slides[0]?.id).toBe("generated-slide-1");
+    expect(deck?.slides[0]?.title).toBe("Slide A");
+    expect(requests).toHaveLength(2);
+    expect(requests[0]?.init).toMatchObject({
+      cache: "no-store",
+      credentials: "same-origin",
+    });
+    expect(requests[1]?.init).toMatchObject({
+      cache: "no-store",
+      credentials: "same-origin",
+    });
+  });
+
   test("parseSlide returns editor-compatible metadata for generated slides", () => {
     const workspaceRoot = path.resolve(import.meta.dirname, "../../..");
     const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), "hse-generated-"));

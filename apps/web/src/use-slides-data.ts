@@ -18,15 +18,10 @@ export function useSlidesData(): SlidesDataResult {
 
   useEffect(() => {
     let cancelled = false;
-
-    async function loadGeneratedSlides() {
-      try {
-        const importedDeck = await loadSlidesFromManifest({
-          manifestUrl: GENERATED_MANIFEST_URL,
-          requestInit: { cache: "no-store" },
-          slideIdPrefix: "generated-slide-",
-        });
-
+    loadSlidesFromManifest({
+      manifestUrl: GENERATED_MANIFEST_URL,
+    })
+      .then((importedDeck) => {
         if (cancelled) {
           return;
         }
@@ -47,7 +42,8 @@ export function useSlidesData(): SlidesDataResult {
         );
         setErrorMessage(null);
         setIsLoading(false);
-      } catch {
+      })
+      .catch(() => {
         if (cancelled) {
           return;
         }
@@ -56,10 +52,7 @@ export function useSlidesData(): SlidesDataResult {
         setSourceLabel("Generated deck unavailable");
         setErrorMessage("The app could not load the generated deck.");
         setIsLoading(false);
-      }
-    }
-
-    loadGeneratedSlides();
+      });
 
     return () => {
       cancelled = true;

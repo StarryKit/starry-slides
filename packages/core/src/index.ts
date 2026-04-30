@@ -388,14 +388,19 @@ export async function loadSlidesFromManifest({
   manifestUrl,
   fetchImpl,
   requestInit,
-  slideIdPrefix = "slide-",
+  slideIdPrefix = "generated-slide-",
 }: LoadSlidesFromManifestOptions): Promise<ImportedSlideDeck | null> {
   const activeFetch = fetchImpl ?? globalThis.fetch;
   if (!activeFetch) {
     throw new Error("loadSlidesFromManifest requires a fetch implementation.");
   }
 
-  const manifestResponse = await activeFetch(manifestUrl, requestInit);
+  const effectiveRequestInit = {
+    cache: "no-store" as const,
+    ...requestInit,
+  };
+
+  const manifestResponse = await activeFetch(manifestUrl, effectiveRequestInit);
   if (!manifestResponse.ok) {
     return null;
   }
@@ -410,7 +415,7 @@ export async function loadSlidesFromManifest({
     manifest.slides.map(async (slide, index) => {
       const slideResponse = await activeFetch(
         new URL(slide.file, manifestBaseUrl).toString(),
-        requestInit
+        effectiveRequestInit
       );
       if (!slideResponse.ok) {
         throw new Error(`Failed to load slide HTML: ${slide.file}`);
