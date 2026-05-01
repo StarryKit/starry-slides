@@ -94,15 +94,11 @@ test("selection overlay adds visible padding around the selected element", async
   );
 });
 
-test("header moves slide count into the sidebar and panel button toggles the inspector", async ({
-  page,
-}) => {
+test("panel button toggles the inspector", async ({ page }) => {
   await gotoEditor(page);
 
-  const { toggleInspectorButton, slideCount, inspector } = getHeaderControls(page);
+  const { toggleInspectorButton, inspector } = getHeaderControls(page);
 
-  await expect(slideCount).toHaveText("11 slides");
-  await expect(page.getByText(/^Deck$/)).toHaveCount(0);
   await expect(inspector).toBeVisible();
 
   await toggleInspectorButton.click();
@@ -112,11 +108,12 @@ test("header moves slide count into the sidebar and panel button toggles the ins
   await expect(inspector).toBeVisible();
 });
 
-test("floating toolbar only appears after selecting an element", async ({ page }) => {
+test("floating toolbar visibility follows selection state", async ({ page }) => {
   await gotoEditor(page);
 
   const frame = coverFrame(page);
   const editableHeading = frame.locator('[data-editor-id="text-1"]');
+  const stagePanel = page.getByTestId("stage-panel");
   const { floatingToolbarAnchor } = getHeaderControls(page);
 
   await expect(floatingToolbarAnchor).toBeHidden();
@@ -125,8 +122,12 @@ test("floating toolbar only appears after selecting an element", async ({ page }
 
   await expect(floatingToolbarAnchor).toBeVisible();
   await expect(page.getByRole("button", { name: "Bold" })).toBeVisible();
-  await expect(page.getByText("Basic tools")).toHaveCount(0);
-  await expect(page.getByText("Select an element to edit")).toHaveCount(0);
+
+  await stagePanel.click({
+    position: { x: 12, y: 12 },
+  });
+
+  await expect(floatingToolbarAnchor).toBeHidden();
 });
 
 test("text editing commits on blur and keeps undo/redo disabled while editing", async ({

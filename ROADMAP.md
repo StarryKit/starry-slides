@@ -59,6 +59,22 @@ Status:
 
 - In progress
 
+Completed work:
+
+- Text editing is already stable enough to support direct in-surface editing,
+  commit/cancel flows, and regression-tested undo/redo behavior.
+- The editor UI shell now includes a dedicated top header, a floating
+  quick-action toolbar region, and a right-side advanced editing panel
+  direction.
+- The right-side advanced panel can now be shown and hidden from the header,
+  and the panel interaction is covered by E2E regression tests.
+- The floating toolbar now appears only after selection, uses icon-based
+  actions, and includes mount/unmount motion polish without changing the
+  underlying selection timing.
+- The editor package has started to adopt the layering direction in code by
+  splitting large top-level editor logic into focused hooks and component-level
+  styling files.
+
 Goal:
 
 - Use the agreed editor layering model to complete the editing pipeline

@@ -28,6 +28,16 @@ Default rule: any user-triggered interaction that changes editor state,
 selection state, editing state, history state, or persisted document content
 should add or update tests.
 
+Refinement for UI work:
+
+- pure visual, layout-only, styling-only, motion-only, or copy-only UI changes
+  do not need dedicated tests
+- UI changes should add tests only when they introduce or change real
+  interaction behavior, editing behavior, functional workflow, persistence
+  behavior, or state transitions
+- moving labels, changing visual hierarchy, changing static icons, or polishing
+  motion without changing behavior should not add coverage by default
+
 Use this coverage bar:
 
 - each interaction feature should have at least one happy-path test
