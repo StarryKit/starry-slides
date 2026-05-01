@@ -18,7 +18,15 @@ interface SlideHistoryResult {
   runRedo: () => void;
 }
 
-function useSlideHistory(loadedSlides: SlideModel[]): SlideHistoryResult {
+interface UseSlideHistoryOptions {
+  onSlidesChange?: (slides: SlideModel[]) => void;
+}
+
+function useSlideHistory(
+  loadedSlides: SlideModel[],
+  options: UseSlideHistoryOptions = {}
+): SlideHistoryResult {
+  const { onSlidesChange } = options;
   const [historyState, dispatchHistory] = useReducer(
     reduceHistory,
     loadedSlides,
@@ -47,16 +55,25 @@ function useSlideHistory(loadedSlides: SlideModel[]): SlideHistoryResult {
     redoDepth: historyState.redoStack.length,
     setActiveSlideId,
     commitOperation: (operation) => {
+      const nextState = reduceHistory(historyState, {
+        type: "history.commit",
+        operation,
+      });
       dispatchHistory({
         type: "history.commit",
         operation,
       });
+      onSlidesChange?.(nextState.slides);
     },
     runUndo: () => {
+      const nextState = reduceHistory(historyState, { type: "history.undo" });
       dispatchHistory({ type: "history.undo" });
+      onSlidesChange?.(nextState.slides);
     },
     runRedo: () => {
+      const nextState = reduceHistory(historyState, { type: "history.redo" });
       dispatchHistory({ type: "history.redo" });
+      onSlidesChange?.(nextState.slides);
     },
   };
 }

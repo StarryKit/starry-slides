@@ -63,6 +63,9 @@ Completed work:
 
 - Text editing is already stable enough to support direct in-surface editing,
   commit/cancel flows, and regression-tested undo/redo behavior.
+- The editing pipeline is now end-to-end for committed edits: frontend
+  interaction, shared history, disk write-back, and refresh persistence are all
+  connected through the HTML-first flow.
 - The editor UI shell now includes a dedicated top header, a floating
   quick-action toolbar region, and a right-side advanced editing panel
   direction.
@@ -87,6 +90,13 @@ Completed work:
 - The `CSS` tab now shows a filtered computed-style snapshot rather than the
   full noisy browser dump, excluding vendor-prefixed and other low-signal
   properties that are not useful for slide editing.
+- Initial block manipulation scaffolding now exists for move, resize, and
+  rotate flows, including shared history operations for layout style updates
+  and first-pass overlay handles in the editor surface.
+- Block manipulation now uses a single overlay model for selection and direct
+  manipulation, including draggable text and block elements, four-corner resize
+  handles, rotation controls, and persisted write-back through the same history
+  pipeline.
 
 Current status inside Milestone 2:
 
@@ -95,14 +105,16 @@ Current status inside Milestone 2:
   - already backed by regression coverage
 - Advanced property editing panel:
   - first usable version is implemented
-  - current focus should shift from more panel scaffolding to workflow
-    completion and verification
+  - shares the same persistence and history pipeline as other edits
 - Floating toolbar:
   - visual shell exists
+  - visibility and interaction polish are in place for selection and drag flows
   - actions are still placeholder UI and are not yet wired into the shared
     style-editing pipeline
 - Block/layout manipulation:
-  - not started as a full workflow yet
+  - move, resize, and rotate are implemented through the editor surface
+  - interaction polish is substantially improved, but snapping/alignment helpers
+    are still pending
 - Style-editing verification:
   - core history behavior exists
   - dedicated E2E coverage for property editing is still missing
@@ -165,6 +177,11 @@ Features:
      where those behaviors can be represented safely in the HTML-first model.
    - These edits should still flow through the same shared history and
      persistence pipeline as other editor features.
+   - Current status:
+     - move, resize, and rotate now have an initial implementation path wired
+       into history and write-back
+     - interaction polish is still pending, especially around overlay
+       presentation, affordance clarity, and final manipulation UX
 
 3. Toolbar and property editing
    - After selecting an editable element, the editor should expose element-aware
@@ -202,6 +219,8 @@ Exit criteria:
   persistence/write-back path.
 - Block and layout editing features follow the same layered direction as other
   editor functionality.
+- Block manipulation UI reaches a single clear selection model without
+  redundant overlays or ambiguous affordances.
 - Each feature slice is verified with the appropriate mix of unit tests and E2E
   regression tests.
 

@@ -4,10 +4,14 @@ import type { CssPropertyRow } from "../lib/collect-css-properties";
 interface StyleInspectorProps {
   inspectedLabel: string;
   inspectedStyles: CssPropertyRow[];
+  canUndo: boolean;
+  canRedo: boolean;
   isEditingText: boolean;
   isOpen: boolean;
   selectedElementId: string | null;
   onStyleChange: (propertyName: string, nextValue: string) => void;
+  onUndo: () => void;
+  onRedo: () => void;
 }
 
 interface InspectorFieldConfig {
@@ -149,10 +153,14 @@ function commitDraftValue(
 function StyleInspector({
   inspectedLabel,
   inspectedStyles,
+  canUndo,
+  canRedo,
   isEditingText,
   isOpen,
   selectedElementId,
   onStyleChange,
+  onUndo,
+  onRedo,
 }: StyleInspectorProps) {
   const accordionBaseId = useId();
   const styleMap = toStyleMap(inspectedStyles);
@@ -249,6 +257,27 @@ function StyleInspector({
       {isEditingText ? (
         <p className="hse-editing-hint">Editing text. Press Enter to save or Escape to cancel.</p>
       ) : null}
+
+      <div className="hse-inspector-history">
+        <button
+          type="button"
+          className="hse-inspector-history-button"
+          data-testid="undo-button"
+          disabled={!canUndo || isEditingText}
+          onClick={onUndo}
+        >
+          Undo
+        </button>
+        <button
+          type="button"
+          className="hse-inspector-history-button"
+          data-testid="redo-button"
+          disabled={!canRedo || isEditingText}
+          onClick={onRedo}
+        >
+          Redo
+        </button>
+      </div>
 
       <div className="hse-inspector-tabs" role="tablist" aria-label="Inspector tabs">
         <button

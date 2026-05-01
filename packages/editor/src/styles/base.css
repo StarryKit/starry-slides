@@ -32,6 +32,9 @@
   --hse-accent-soft: rgba(242, 98, 56, 0.12);
   --hse-accent-outline: rgba(242, 98, 56, 0.3);
   --hse-accent-text: #8a431d;
+  --hse-saving-bg: rgba(117, 92, 62, 0.08);
+  --hse-saving-border: rgba(117, 92, 62, 0.14);
+  --hse-saving-text: rgba(79, 59, 35, 0.9);
   --hse-muted-text: rgba(31, 27, 22, 0.7);
   --hse-meta-text: rgba(31, 27, 22, 0.56);
   --hse-thumb-badge-bg: rgba(24, 18, 12, 0.58);

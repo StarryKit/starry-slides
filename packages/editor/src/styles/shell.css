@@ -28,11 +28,14 @@
 
 .hse-editor-header-title-row {
   display: flex;
-  align-items: baseline;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
   min-width: 0;
 }
 
 .hse-editor-header-title-row h1 {
+  flex: 1 1 auto;
   min-width: 0;
   margin: 0;
   font-size: 22px;
@@ -40,6 +43,23 @@
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+.hse-saving-badge {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  height: 22px;
+  padding: 0 9px;
+  border: 1px solid var(--hse-saving-border);
+  border-radius: 7px;
+  background: var(--hse-saving-bg);
+  color: var(--hse-saving-text);
+  font-size: 11px;
+  font-weight: 500;
+  line-height: 1;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
 }
 
 .hse-editor-header-meta,
@@ -50,6 +70,20 @@
 
 .hse-editor-header-copy p {
   margin: 0;
+}
+
+.hse-editor-header-meta-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+
+.hse-editor-header-meta-row p {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .hse-editor-header-actions {

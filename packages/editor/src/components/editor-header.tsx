@@ -1,6 +1,7 @@
 interface EditorHeaderProps {
   deckTitle: string;
   sourceLabel: string;
+  isSaving: boolean;
   isInspectorOpen: boolean;
   onToggleInspector: () => void;
 }
@@ -19,6 +20,7 @@ function PanelIcon() {
 function EditorHeader({
   deckTitle,
   sourceLabel,
+  isSaving,
   isInspectorOpen,
   onToggleInspector,
 }: EditorHeaderProps) {
@@ -27,8 +29,15 @@ function EditorHeader({
       <div className="hse-editor-header-copy">
         <div className="hse-editor-header-title-row">
           <h1>{deckTitle}</h1>
+          {isSaving ? (
+            <span className="hse-saving-badge" aria-live="polite">
+              saving...
+            </span>
+          ) : null}
         </div>
-        <p>{sourceLabel}</p>
+        <div className="hse-editor-header-meta-row">
+          <p>{sourceLabel}</p>
+        </div>
       </div>
 
       <div className="hse-editor-header-actions">
@@ -41,9 +50,6 @@ function EditorHeader({
           onClick={onToggleInspector}
         >
           <PanelIcon />
-        </button>
-        <button className="hse-header-button hse-header-button-secondary" type="button">
-          Export
         </button>
         <button
           className="hse-header-button hse-header-button-primary"

@@ -10,10 +10,16 @@ import {
 const EDITING_HINT = "Editing text. Press Enter to save or Escape to cancel.";
 const MODIFIER = process.platform === "darwin" ? "Meta" : "Control";
 const SOURCE_LABEL = REGRESSION_DECK_SOURCE_LABEL;
+const RESET_URL = "/__editor/reset-generated-deck";
 const HERO_KICKER = REGRESSION_DECK_HERO_KICKER;
 const HERO_TITLE = REGRESSION_DECK_TOPIC;
 const HERO_SUMMARY = REGRESSION_DECK_SUMMARY;
 const AGENDA_PARAGRAPH = REGRESSION_DECK_AGENDA_PARAGRAPH;
+
+test.beforeEach(async ({ request }) => {
+  const response = await request.post(RESET_URL);
+  expect(response.ok()).toBeTruthy();
+});
 
 async function gotoEditor(page: Page) {
   await page.goto("/");
@@ -23,6 +29,8 @@ async function gotoEditor(page: Page) {
 
 function getHistoryControls(page: Page) {
   return {
+    undoButton: page.getByTestId("undo-button"),
+    redoButton: page.getByTestId("redo-button"),
     editingHint: page.getByText(EDITING_HINT),
     selectionOverlay: page.getByTestId("selection-overlay"),
   };
@@ -34,6 +42,7 @@ function getHeaderControls(page: Page) {
     slideCount: page.getByTestId("slide-count"),
     floatingToolbarAnchor: page.getByTestId("floating-toolbar-anchor"),
     inspector: page.getByTestId("style-inspector"),
+    savingBadge: page.getByText("saving..."),
   };
 }
 
@@ -65,7 +74,7 @@ test("plain click selects text only, and double click enters editing", async ({ 
   await expect(editableHeading).toHaveAttribute("contenteditable", "plaintext-only");
 });
 
-test("selection overlay adds visible padding around the selected element", async ({ page }) => {
+test("selection overlay stays aligned to the selected element bounds", async ({ page }) => {
   await gotoEditor(page);
 
   const frame = coverFrame(page);
@@ -86,13 +95,10 @@ test("selection overlay adds visible padding around the selected element", async
     throw new Error("Expected both the selected element and the selection overlay to have bounds.");
   }
 
-  expect(overlayBox.x).toBeLessThan(elementBox.x);
-  expect(overlayBox.y).toBeLessThan(elementBox.y);
-  expect(overlayBox.width).toBeGreaterThan(elementBox.width);
-  expect(overlayBox.height).toBeGreaterThan(elementBox.height);
-  expect(overlayBox.height - elementBox.height).toBeGreaterThan(
-    overlayBox.width - elementBox.width
-  );
+  expect(Math.abs(overlayBox.x - elementBox.x)).toBeLessThanOrEqual(3);
+  expect(Math.abs(overlayBox.y - elementBox.y)).toBeLessThanOrEqual(3);
+  expect(Math.abs(overlayBox.width - elementBox.width)).toBeLessThanOrEqual(6);
+  expect(Math.abs(overlayBox.height - elementBox.height)).toBeLessThanOrEqual(6);
 });
 
 test("panel button toggles the inspector", async ({ page }) => {
@@ -129,6 +135,48 @@ test("floating toolbar visibility follows selection state", async ({ page }) => 
   });
 
   await expect(floatingToolbarAnchor).toBeHidden();
+});
+
+test("text editing persists after refresh because the generated html file is rewritten", async ({
+  page,
+}) => {
+  await gotoEditor(page);
+
+  const frame = coverFrame(page);
+  const editableHeading = frame.locator('[data-editor-id="text-1"]');
+  const { savingBadge } = getHeaderControls(page);
+  const nextText = "Persisted after refresh";
+
+  await editableHeading.dblclick();
+  await selectAllAndFill(editableHeading, nextText);
+  await editableHeading.press("Enter");
+  await expect(editableHeading).toHaveText(nextText);
+  await expect(savingBadge).toBeVisible();
+  await expect(savingBadge).toBeHidden();
+
+  await page.reload();
+  await expect(page.getByText(SOURCE_LABEL)).toBeVisible();
+  const reloadedFrame = coverFrame(page);
+  await expect(reloadedFrame.locator('[data-editor-id="text-1"]')).toHaveText(nextText);
+});
+
+test("header shows a saving badge while debounced disk persistence is in flight", async ({
+  page,
+}) => {
+  await gotoEditor(page);
+
+  const frame = coverFrame(page);
+  const editableHeading = frame.locator('[data-editor-id="text-1"]');
+  const { savingBadge } = getHeaderControls(page);
+
+  await expect(savingBadge).toBeHidden();
+
+  await editableHeading.dblclick();
+  await selectAllAndFill(editableHeading, "Badge visible during save");
+  await editableHeading.press("Enter");
+
+  await expect(savingBadge).toBeVisible();
+  await expect(savingBadge).toBeHidden();
 });
 
 test("text editing commits on blur and keeps undo/redo disabled while editing", async ({
@@ -711,6 +759,185 @@ test("clicking a block element outside editing only selects and does not create 
   await expect(editingHint).toBeHidden();
   await page.keyboard.press(`${MODIFIER}+Z`);
   await expect(selectionOverlay).toBeVisible();
+});
+
+test("selected block can be moved by dragging the same selection overlay and keeps a single overlay", async ({
+  page,
+}) => {
+  await gotoEditor(page);
+
+  const frame = coverFrame(page);
+  const blockCard = frame.locator('[data-editor-id="block-4"]');
+  const { selectionOverlay, undoButton } = getHistoryControls(page);
+
+  await blockCard.click();
+  await expect(selectionOverlay).toBeVisible();
+  await expect(page.getByTestId("block-manipulation-outline")).toHaveCount(0);
+
+  const before = await blockCard.boundingBox();
+  if (!before) {
+    throw new Error("Expected selected block to have bounds before dragging.");
+  }
+
+  const overlayBefore = await selectionOverlay.boundingBox();
+  if (!overlayBefore) {
+    throw new Error("Expected selection overlay to have bounds before dragging.");
+  }
+
+  const start = {
+    x: overlayBefore.x + overlayBefore.width / 2,
+    y: overlayBefore.y + overlayBefore.height / 2,
+  };
+  const end = {
+    x: start.x + 80,
+    y: start.y + 60,
+  };
+
+  await page.mouse.move(start.x, start.y);
+  await page.mouse.down();
+  await page.mouse.move(end.x, end.y, { steps: 8 });
+  await page.mouse.up();
+
+  const after = await blockCard.boundingBox();
+  const overlayAfter = await selectionOverlay.boundingBox();
+  expect(after).not.toBeNull();
+  expect(overlayAfter).not.toBeNull();
+
+  if (!after || !overlayAfter) {
+    throw new Error("Expected selected block and overlay to have bounds after dragging.");
+  }
+
+  expect(overlayAfter.x).toBeGreaterThan(overlayBefore.x + 30);
+  expect(overlayAfter.y).toBeGreaterThan(overlayBefore.y + 20);
+  await expect(undoButton).toBeEnabled();
+});
+
+test("selected text element can be moved by dragging the same selection overlay", async ({
+  page,
+}) => {
+  await gotoEditor(page);
+
+  const frame = coverFrame(page);
+  const textElement = frame.locator('[data-editor-id="text-1"]');
+  const { selectionOverlay, undoButton } = getHistoryControls(page);
+
+  await textElement.click();
+  await expect(selectionOverlay).toBeVisible();
+
+  const before = await textElement.boundingBox();
+  const overlayBefore = await selectionOverlay.boundingBox();
+  expect(before).not.toBeNull();
+  expect(overlayBefore).not.toBeNull();
+
+  if (!before || !overlayBefore) {
+    throw new Error("Expected selected text element and overlay to have bounds before dragging.");
+  }
+
+  const start = {
+    x: overlayBefore.x + overlayBefore.width / 2,
+    y: overlayBefore.y + overlayBefore.height / 2,
+  };
+  const end = {
+    x: start.x + 70,
+    y: start.y + 40,
+  };
+
+  await page.mouse.move(start.x, start.y);
+  await page.mouse.down();
+  await page.mouse.move(end.x, end.y, { steps: 8 });
+  await page.mouse.up();
+
+  const after = await textElement.boundingBox();
+  const overlayAfter = await selectionOverlay.boundingBox();
+  expect(after).not.toBeNull();
+  expect(overlayAfter).not.toBeNull();
+
+  if (!after || !overlayAfter) {
+    throw new Error("Expected selected text element and overlay to have bounds after dragging.");
+  }
+
+  expect(overlayAfter.x).toBeGreaterThan(overlayBefore.x + 25);
+  expect(overlayAfter.y).toBeGreaterThan(overlayBefore.y + 12);
+  await expect(undoButton).toBeEnabled();
+});
+
+test("floating toolbar hides while dragging a selected element", async ({ page }) => {
+  await gotoEditor(page);
+
+  const frame = coverFrame(page);
+  const blockCard = frame.locator('[data-editor-id="block-4"]');
+  const { selectionOverlay } = getHistoryControls(page);
+  const { floatingToolbarAnchor } = getHeaderControls(page);
+
+  await blockCard.click();
+  await expect(selectionOverlay).toBeVisible();
+  await expect(floatingToolbarAnchor).toBeVisible();
+
+  const overlayBefore = await selectionOverlay.boundingBox();
+  if (!overlayBefore) {
+    throw new Error("Expected selection overlay to have bounds before dragging.");
+  }
+
+  const start = {
+    x: overlayBefore.x + overlayBefore.width / 2,
+    y: overlayBefore.y + overlayBefore.height / 2,
+  };
+
+  await page.mouse.move(start.x, start.y);
+  await page.mouse.down();
+  await expect(floatingToolbarAnchor).toBeHidden();
+  await page.mouse.move(start.x + 40, start.y + 30, { steps: 4 });
+  await page.mouse.up();
+  await expect(floatingToolbarAnchor).toBeVisible();
+});
+
+test("after dragging and clearing selection, clicking the same element selects it again", async ({
+  page,
+}) => {
+  await gotoEditor(page);
+
+  const frame = coverFrame(page);
+  const blockCard = frame.locator('[data-editor-id="block-4"]');
+  const stagePanel = page.getByTestId("stage-panel");
+  const { selectionOverlay } = getHistoryControls(page);
+
+  await blockCard.click();
+  await expect(selectionOverlay).toBeVisible();
+
+  const overlayBefore = await selectionOverlay.boundingBox();
+  if (!overlayBefore) {
+    throw new Error("Expected selection overlay to have bounds before dragging.");
+  }
+
+  const start = {
+    x: overlayBefore.x + overlayBefore.width / 2,
+    y: overlayBefore.y + overlayBefore.height / 2,
+  };
+
+  await page.mouse.move(start.x, start.y);
+  await page.mouse.down();
+  await page.mouse.move(start.x + 60, start.y + 45, { steps: 6 });
+  await page.mouse.up();
+
+  await stagePanel.click({ position: { x: 12, y: 12 } });
+  await expect(selectionOverlay).toBeHidden();
+
+  await blockCard.click();
+  await expect(selectionOverlay).toBeVisible();
+});
+
+test("all four resize handles are visible for a selected element", async ({ page }) => {
+  await gotoEditor(page);
+
+  const frame = coverFrame(page);
+  const blockCard = frame.locator('[data-editor-id="block-4"]');
+
+  await blockCard.click();
+
+  await expect(page.getByTestId("block-resize-handle-top-left")).toBeVisible();
+  await expect(page.getByTestId("block-resize-handle-top-right")).toBeVisible();
+  await expect(page.getByTestId("block-resize-handle-bottom-right")).toBeVisible();
+  await expect(page.getByTestId("block-resize-handle-bottom-left")).toBeVisible();
 });
 
 test("escape cancels text editing without creating undo history", async ({ page }) => {

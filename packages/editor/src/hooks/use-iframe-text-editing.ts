@@ -22,6 +22,7 @@ interface UseIframeTextEditingResult {
   selectedElementId: string | null;
   isEditingText: boolean;
   setSelectedElementId: Dispatch<SetStateAction<string | null>>;
+  beginTextEditing: (elementId: string) => void;
   clearSelection: () => void;
 }
 
@@ -44,6 +45,10 @@ const EDITING_TEXT_STYLE = `
 }
 `;
 
+function resolveBlockOwner(node: HTMLElement): HTMLElement {
+  return node.closest<HTMLElement>('[data-editable="block"][data-editor-id]') || node;
+}
+
 function useIframeTextEditing({
   activeSlide,
   iframeRef,
@@ -60,6 +65,25 @@ function useIframeTextEditing({
   const cancelTextEditRef = useRef<() => void>(() => {});
   const runUndoRef = useRef<() => void>(() => {});
   const runRedoRef = useRef<() => void>(() => {});
+
+  function beginTextEditing(elementId: string) {
+    if (!activeSlide) {
+      return;
+    }
+
+    const doc = iframeRef.current?.contentDocument;
+    const node = doc?.querySelector<HTMLElement>(`[data-editor-id="${elementId}"]`);
+    if (!node || node.getAttribute("data-editable") !== "text") {
+      return;
+    }
+
+    setSelectedElementId(elementId);
+    setTextEditing({
+      slideId: activeSlide.id,
+      elementId,
+      initialText: node.textContent || "",
+    });
+  }
 
   function commitTextEdit(elementId: string, nextText: string) {
     const editing = textEditing;
@@ -160,20 +184,6 @@ function useIframeTextEditing({
       doc.head.appendChild(style);
     }
 
-    const beginTextEdit = (node: HTMLElement) => {
-      const elementId = node.getAttribute("data-editor-id");
-      if (!elementId) {
-        return;
-      }
-
-      setSelectedElementId(elementId);
-      setTextEditing({
-        slideId: activeSlide.id,
-        elementId,
-        initialText: node.textContent || "",
-      });
-    };
-
     const commitNodeText = (node: HTMLElement) => {
       const elementId = node.getAttribute("data-editor-id");
       if (!elementId) {
@@ -214,9 +224,15 @@ function useIframeTextEditing({
         return;
       }
 
-      const editableTarget = target.closest("[data-editable][data-editor-id]");
+      const editableTarget = target.closest<HTMLElement>("[data-editable][data-editor-id]");
       if (!editableTarget) {
         setSelectedElementId(null);
+        return;
+      }
+
+      const id = editableTarget.getAttribute("data-editor-id");
+      if (id) {
+        setSelectedElementId(id);
       }
     };
 
@@ -233,7 +249,9 @@ function useIframeTextEditing({
           return;
         }
 
-        const id = node.getAttribute("data-editor-id");
+        const resolvedNode =
+          node.getAttribute("data-editable") === "text" ? resolveBlockOwner(node) : node;
+        const id = resolvedNode.getAttribute("data-editor-id");
         if (id) {
           setSelectedElementId(id);
         }
@@ -259,7 +277,7 @@ function useIframeTextEditing({
 
         event.preventDefault();
         event.stopPropagation();
-        beginTextEdit(node);
+        beginTextEditing(elementId);
       };
     }
   }, [activeSlide, iframeRef]);
@@ -446,6 +464,7 @@ function useIframeTextEditing({
     selectedElementId,
     isEditingText: Boolean(activeSlide && textEditing?.slideId === activeSlide.id),
     setSelectedElementId,
+    beginTextEditing,
     clearSelection: () => {
       if (!textEditingRef.current) {
         setSelectedElementId(null);

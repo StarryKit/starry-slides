@@ -283,9 +283,47 @@
 
 .hse-selection-overlay {
   position: absolute;
-  border: 2px solid var(--hse-accent);
-  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.8);
+  z-index: 3;
+  border: 2.5px dashed rgba(242, 98, 56, 0.94);
   pointer-events: none;
+}
+
+.hse-selection-overlay-interactive {
+  pointer-events: auto;
+}
+
+.hse-block-handle {
+  position: absolute;
+  z-index: 5;
+  width: 15px;
+  height: 15px;
+  border: 2px solid white;
+  border-radius: 999px;
+  background: var(--hse-accent);
+  box-shadow: 0 8px 18px rgba(76, 57, 36, 0.18);
+  transform: translate(-50%, -50%);
+  cursor: pointer;
+}
+
+.hse-block-handle:hover {
+  transform: translate(-50%, -50%) scale(1.08);
+}
+
+.hse-block-handle-rotate::before,
+.hse-block-handle-resize::before {
+  content: "";
+  position: absolute;
+  inset: 2.5px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.9);
+}
+
+.hse-block-handle-rotate {
+  cursor: alias;
+}
+
+.hse-block-handle-resize {
+  cursor: nwse-resize;
 }
 
 .hse-selection-label {

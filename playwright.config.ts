@@ -11,7 +11,7 @@ export default defineConfig({
   webServer: {
     command: "pnpm test:e2e:serve",
     port: 4173,
-    reuseExistingServer: !process.env.CI,
+    reuseExistingServer: false,
     timeout: 120_000,
   },
   projects: [

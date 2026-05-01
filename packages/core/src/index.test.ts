@@ -7,12 +7,14 @@ import {
   DEFAULT_SLIDE_HEIGHT,
   DEFAULT_SLIDE_WIDTH,
   applySlideOperation,
+  captureElementLayoutStyleSnapshot,
   createHistoryState,
   ensureEditableSelectors,
   invertSlideOperation,
   loadSlidesFromManifest,
   parseSlide,
   reduceHistory,
+  updateSlideElementLayout,
   updateSlideStyle,
   updateSlideText,
 } from "./index";
@@ -306,6 +308,121 @@ describe("slide operations", () => {
     expect(
       restoredDoc.querySelector('[data-editor-id="text-1"]')?.style.getPropertyValue("font-size")
     ).toBe("48px");
+  });
+
+  test("layout updates write block position, size, and rotation back into htmlSource", () => {
+    const html = ensureEditableSelectors(`<!DOCTYPE html>
+<html lang="en">
+  <body>
+    <div class="slide-container" data-slide-root="true">
+      <div data-editable="block">Card</div>
+    </div>
+  </body>
+</html>`);
+
+    const updatedHtml = updateSlideElementLayout(html, "block-1", {
+      position: "absolute",
+      left: "120px",
+      top: "180px",
+      width: "320px",
+      height: "220px",
+      transform: "rotate(18deg)",
+      transformOrigin: "center center",
+      margin: "0px",
+      zIndex: "1",
+    });
+    const doc = new DOMParser().parseFromString(updatedHtml, "text/html");
+    const node = doc.querySelector<HTMLElement>('[data-editor-id="block-1"]');
+
+    expect(node?.style.position).toBe("absolute");
+    expect(node?.style.left).toBe("120px");
+    expect(node?.style.top).toBe("180px");
+    expect(node?.style.width).toBe("320px");
+    expect(node?.style.height).toBe("220px");
+    expect(node?.style.transform).toBe("rotate(18deg)");
+    expect(node?.style.transformOrigin).toBe("center center");
+  });
+
+  test("captureElementLayoutStyleSnapshot preserves inline layout styles used by history", () => {
+    const doc = new DOMParser().parseFromString(
+      `<!DOCTYPE html><html><body><div style="position:absolute;left:12px;top:24px;width:300px;height:160px;transform:rotate(12deg);transform-origin:center center;margin:0;z-index:4"></div></body></html>`,
+      "text/html"
+    );
+    const node = doc.querySelector("div");
+
+    expect(node).not.toBeNull();
+    if (!(node instanceof HTMLElement)) {
+      throw new Error("Expected a div node.");
+    }
+
+    expect(captureElementLayoutStyleSnapshot(node)).toEqual({
+      position: "absolute",
+      left: "12px",
+      top: "24px",
+      width: "300px",
+      height: "160px",
+      transform: "rotate(12deg)",
+      transformOrigin: "center center",
+      margin: "0px",
+      zIndex: "4",
+    });
+  });
+
+  test("layout update operations undo and redo cleanly", () => {
+    const originalSlide = parseSlide(
+      `<!DOCTYPE html>
+<html lang="en">
+  <body>
+    <div class="slide-container" data-slide-root="true">
+      <div data-editable="block">Card</div>
+    </div>
+  </body>
+</html>`,
+      "slide-a"
+    );
+
+    const operation = {
+      type: "element.layout.update" as const,
+      slideId: originalSlide.id,
+      elementId: "block-1",
+      previousStyle: {
+        position: null,
+        left: null,
+        top: null,
+        width: null,
+        height: null,
+        transform: null,
+        transformOrigin: null,
+        margin: null,
+        zIndex: null,
+      },
+      nextStyle: {
+        position: "absolute",
+        left: "240px",
+        top: "140px",
+        width: "360px",
+        height: "260px",
+        transform: "rotate(24deg)",
+        transformOrigin: "center center",
+        margin: "0px",
+        zIndex: "1",
+      },
+      timestamp: 2,
+    };
+
+    const updatedSlide = applySlideOperation(originalSlide, operation);
+    const restoredSlide = applySlideOperation(updatedSlide, invertSlideOperation(operation));
+    const updatedDoc = new DOMParser().parseFromString(updatedSlide.htmlSource, "text/html");
+    const updatedNode = updatedDoc.querySelector<HTMLElement>('[data-editor-id="block-1"]');
+    const restoredDoc = new DOMParser().parseFromString(restoredSlide.htmlSource, "text/html");
+    const restoredNode = restoredDoc.querySelector<HTMLElement>('[data-editor-id="block-1"]');
+
+    expect(updatedNode?.style.position).toBe("absolute");
+    expect(updatedNode?.style.left).toBe("240px");
+    expect(updatedNode?.style.width).toBe("360px");
+    expect(updatedNode?.style.transform).toBe("rotate(24deg)");
+    expect(restoredSlide.htmlSource).toBe(originalSlide.htmlSource);
+    expect(restoredNode?.getAttribute("style") || "").toBe("");
   });
 });
 

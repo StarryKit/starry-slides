@@ -31,6 +31,34 @@
   line-height: 1.45;
 }
 
+.hse-inspector-history {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+.hse-inspector-history-button {
+  flex: 1 1 0;
+  border: 1px solid rgba(76, 57, 36, 0.12);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.88);
+  color: var(--hse-text-color);
+  font: inherit;
+  padding: 10px 12px;
+  cursor: pointer;
+  transition: var(--hse-transition);
+}
+
+.hse-inspector-history-button:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: var(--hse-shadow-card);
+}
+
+.hse-inspector-history-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
 .hse-inspector-tabs {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));

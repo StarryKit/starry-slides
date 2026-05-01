@@ -9,8 +9,6 @@ import { useEffect, useState } from "react";
 import { type CssPropertyRow, collectCssProperties } from "../lib/collect-css-properties";
 
 const DEFAULT_INSPECTED_LABEL = "slide root";
-const SELECTION_OVERLAY_PADDING_X = 8;
-const SELECTION_OVERLAY_PADDING_Y = 14;
 
 interface UseSlideInspectorOptions {
   iframeRef: RefObject<HTMLIFrameElement | null>;
@@ -25,6 +23,7 @@ interface UseSlideInspectorOptions {
 }
 
 interface SlideInspectorResult {
+  selectedStageRect: StageRect | null;
   selectionOverlay: StageRect | null;
   selectionLabel: string;
   inspectedLabel: string;
@@ -42,6 +41,7 @@ function useSlideInspector({
   slideWidth,
   slideHeight,
 }: UseSlideInspectorOptions): SlideInspectorResult {
+  const [selectedStageRect, setSelectedStageRect] = useState<StageRect | null>(null);
   const [selectionOverlay, setSelectionOverlay] = useState<StageRect | null>(null);
   const [inspectedStyles, setInspectedStyles] = useState<CssPropertyRow[]>([]);
   const [inspectedLabel, setInspectedLabel] = useState(DEFAULT_INSPECTED_LABEL);
@@ -50,6 +50,7 @@ function useSlideInspector({
     const iframe = iframeRef.current;
     const doc = iframe?.contentDocument;
     if (!iframe || !doc || !activeSlide) {
+      setSelectedStageRect(null);
       setSelectionOverlay(null);
       setInspectedStyles([]);
       setInspectedLabel(DEFAULT_INSPECTED_LABEL);
@@ -62,6 +63,7 @@ function useSlideInspector({
       : rootNode;
 
     if (!inspectedNode) {
+      setSelectedStageRect(null);
       setSelectionOverlay(null);
       setInspectedStyles([]);
       setInspectedLabel(DEFAULT_INSPECTED_LABEL);
@@ -76,6 +78,7 @@ function useSlideInspector({
     );
 
     if (!selectedElementId || !rootNode) {
+      setSelectedStageRect(null);
       setSelectionOverlay(null);
       return;
     }
@@ -90,12 +93,8 @@ function useSlideInspector({
       slideHeight,
     });
 
-    setSelectionOverlay({
-      x: stageRect.x - SELECTION_OVERLAY_PADDING_X,
-      y: stageRect.y - SELECTION_OVERLAY_PADDING_Y,
-      width: stageRect.width + SELECTION_OVERLAY_PADDING_X * 2,
-      height: stageRect.height + SELECTION_OVERLAY_PADDING_Y * 2,
-    });
+    setSelectedStageRect(stageRect);
+    setSelectionOverlay(stageRect);
   }, [
     activeSlide,
     iframeRef,
@@ -109,6 +108,7 @@ function useSlideInspector({
   ]);
 
   return {
+    selectedStageRect,
     selectionOverlay,
     selectionLabel: selectedElement?.type || "element",
     inspectedLabel,
