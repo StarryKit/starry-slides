@@ -22,3 +22,5 @@ docs/agents/
 .env
 .env.*
 !.env.example
+
+.tmp
