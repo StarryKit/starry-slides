@@ -31,7 +31,7 @@ function StatusScreen({ title, body }: { title: string; body: string }) {
 }
 
 function App() {
-  const { slides, sourceLabel, errorMessage, isLoading } = useSlidesData();
+  const { deckTitle, slides, sourceLabel, errorMessage, isLoading } = useSlidesData();
 
   if (isLoading) {
     return (
@@ -46,7 +46,7 @@ function App() {
     return <StatusScreen title="Generated deck required" body={errorMessage} />;
   }
 
-  return <SlidesEditor slides={slides} sourceLabel={sourceLabel} />;
+  return <SlidesEditor slides={slides} deckTitle={deckTitle} sourceLabel={sourceLabel} />;
 }
 
 export default App;

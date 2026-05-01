@@ -1,0 +1,103 @@
+.hse-stage-panel {
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 0;
+  position: relative;
+  padding: 40px 40px 24px;
+  overflow: hidden;
+}
+
+.hse-stage-toolbar-anchor {
+  position: absolute;
+  z-index: 2;
+  pointer-events: none;
+}
+
+.hse-floating-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  padding: 8px;
+  border: 1px solid rgba(76, 57, 36, 0.08);
+  border-radius: 14px;
+  background: rgba(255, 251, 245, 0.92);
+  box-shadow: 0 18px 32px rgba(76, 57, 36, 0.14);
+  backdrop-filter: blur(12px);
+  pointer-events: auto;
+}
+
+.hse-floating-toolbar-ghost {
+  position: absolute;
+  z-index: 2;
+  margin: 0;
+  pointer-events: none;
+}
+
+.hse-floating-toolbar-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.hse-floating-toolbar-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border: 1px solid rgba(76, 57, 36, 0.08);
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.78);
+  color: var(--hse-text-color);
+  padding: 0;
+  cursor: pointer;
+  transition: var(--hse-transition);
+}
+
+.hse-floating-toolbar-button svg {
+  width: 16px;
+  height: 16px;
+}
+
+.hse-floating-toolbar-button:hover {
+  transform: translateY(-1px);
+  box-shadow: var(--hse-shadow-card);
+}
+
+.hse-stage-frame {
+  position: absolute;
+  transform-origin: top left;
+  overflow: hidden;
+  background: var(--hse-surface-bg);
+  box-shadow: var(--hse-shadow-stage);
+  border-radius: 20px;
+}
+
+.hse-slide-iframe {
+  width: 100%;
+  height: 100%;
+  border: 0;
+  background: var(--hse-surface-bg);
+}
+
+.hse-selection-overlay {
+  position: absolute;
+  border: 2px solid var(--hse-accent);
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.8);
+  pointer-events: none;
+}
+
+.hse-selection-label {
+  position: absolute;
+  top: -28px;
+  left: 0;
+  padding: 4px 8px;
+  border-radius: 999px;
+  background: var(--hse-accent);
+  color: white;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  white-space: nowrap;
+  pointer-events: none;
+}

@@ -1,0 +1,99 @@
+:root {
+  --hse-text-color: #1f1b16;
+  --hse-app-bg: #efe6d8;
+  --hse-font-family: "IBM Plex Sans", "Segoe UI", sans-serif;
+  --hse-line-height: 1.5;
+  --hse-font-weight: 400;
+
+  --hse-sidebar-collapsed-width: 132px;
+  --hse-sidebar-expanded-width: 272px;
+  --hse-sidebar-border-width: 1px;
+  --hse-inspector-width: 360px;
+  --hse-header-height: 72px;
+  --hse-panel-gap: 18px;
+  --hse-slide-list-gap-expanded: 10px;
+  --hse-slide-list-gap-collapsed: 8px;
+  --hse-sidebar-padding: 14px 14px 14px 14px;
+  --hse-sidebar-panel-padding: 0;
+  --hse-sidebar-border-inset-y: 6px;
+  --hse-inspector-padding: 22px;
+  --hse-sidebar-bg: transparent;
+  --hse-sidebar-panel-bg: transparent;
+  --hse-inspector-bg: rgba(255, 251, 245, 0.92);
+  --hse-stage-bg: #dbcfbd;
+  --hse-border-color: rgba(76, 57, 36, 0.1);
+
+  --hse-card-bg: rgba(255, 255, 255, 0.66);
+  --hse-card-bg-active: #fff4ea;
+  --hse-thumb-bg: #ddd1bf;
+  --hse-surface-bg: #ffffff;
+
+  --hse-accent: rgba(242, 98, 56, 1);
+  --hse-accent-soft: rgba(242, 98, 56, 0.12);
+  --hse-accent-outline: rgba(242, 98, 56, 0.3);
+  --hse-accent-text: #8a431d;
+  --hse-muted-text: rgba(31, 27, 22, 0.7);
+  --hse-meta-text: rgba(31, 27, 22, 0.56);
+  --hse-thumb-badge-bg: rgba(24, 18, 12, 0.58);
+  --hse-thumb-badge-text: #fffaf3;
+
+  --hse-radius-slide-card: 18px;
+  --hse-radius-element-card: 22px;
+  --hse-radius-thumb: 14px;
+  --hse-radius-input: 20px;
+  --hse-radius-pill: 999px;
+
+  --hse-shadow-card: 0 10px 30px rgba(98, 70, 37, 0.08);
+  --hse-shadow-card-hover: 0 12px 34px rgba(98, 70, 37, 0.14);
+  --hse-shadow-card-active: 0 14px 40px rgba(141, 76, 17, 0.16);
+  --hse-shadow-stage: 0 18px 40px rgba(76, 57, 36, 0.16);
+  --hse-shadow-sidebar: none;
+  --hse-sidebar-active-border: rgba(242, 98, 56, 0.85);
+
+  --hse-transition: transform 160ms ease, box-shadow 160ms ease, background 160ms ease;
+  --hse-sidebar-transition: flex-basis 180ms ease, width 180ms ease, opacity 140ms ease;
+
+  color: var(--hse-text-color);
+  background: var(--hse-app-bg);
+  font-family: var(--hse-font-family);
+  line-height: var(--hse-line-height);
+  font-weight: var(--hse-font-weight);
+}
+
+html,
+body,
+#root {
+  margin: 0;
+  width: 100%;
+  height: 100%;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+.hse-panel-kicker,
+.hse-slide-number,
+.hse-element-meta,
+.hse-editor-header-kicker,
+.hse-stage-meta-kicker,
+.hse-floating-toolbar-kicker {
+  display: inline-block;
+  text-transform: uppercase;
+  letter-spacing: 0.16em;
+  font-size: 11px;
+  color: var(--hse-meta-text);
+}
+
+.hse-slide-card:focus-visible,
+.hse-element-card:focus-visible,
+.hse-history-button:focus-visible {
+  outline: 2px solid var(--hse-accent-outline);
+  outline-offset: 2px;
+}
+
+.hse-empty {
+  display: grid;
+  place-items: center;
+  min-height: 100vh;
+}

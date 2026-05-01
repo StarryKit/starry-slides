@@ -1,0 +1,69 @@
+@media (max-width: 1200px) {
+  .hse-workspace,
+  .hse-main {
+    display: block;
+  }
+
+  .hse-editor-header {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .hse-editor-header-actions {
+    width: 100%;
+    justify-content: flex-end;
+  }
+
+  .hse-sidebar {
+    flex: none;
+    padding: 0 0 10px;
+  }
+
+  .hse-sidebar::after {
+    top: auto;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    width: auto;
+    height: var(--hse-sidebar-border-width);
+  }
+
+  .hse-sidebar-panel,
+  .hse-sidebar:hover .hse-sidebar-panel,
+  .hse-sidebar:focus-within .hse-sidebar-panel {
+    width: 100%;
+  }
+
+  .hse-slide-list {
+    max-height: 240px;
+  }
+
+  .hse-inspector-panel {
+    flex: none;
+  }
+
+  .hse-stage-panel {
+    padding: 16px 20px;
+  }
+
+  .hse-stage-toolbar-anchor {
+    position: static;
+    margin-bottom: 16px;
+    pointer-events: auto;
+  }
+
+  .hse-floating-toolbar {
+    min-width: 0;
+    width: 100%;
+  }
+
+  .hse-stage-meta {
+    position: static;
+    margin-bottom: 18px;
+    max-width: none;
+  }
+
+  .hse-stage-frame {
+    max-width: 100%;
+  }
+}

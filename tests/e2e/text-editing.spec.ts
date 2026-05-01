@@ -25,6 +25,15 @@ function getHistoryControls(page: Page) {
   };
 }
 
+function getHeaderControls(page: Page) {
+  return {
+    toggleInspectorButton: page.getByTestId("toggle-inspector-button"),
+    slideCount: page.getByTestId("slide-count"),
+    floatingToolbarAnchor: page.getByTestId("floating-toolbar-anchor"),
+    inspector: page.getByTestId("style-inspector"),
+  };
+}
+
 function coverFrame(page: Page): FrameLocator {
   return page.frameLocator('[data-testid="slide-iframe"]');
 }
@@ -83,6 +92,41 @@ test("selection overlay adds visible padding around the selected element", async
   expect(overlayBox.height - elementBox.height).toBeGreaterThan(
     overlayBox.width - elementBox.width
   );
+});
+
+test("header moves slide count into the sidebar and panel button toggles the inspector", async ({
+  page,
+}) => {
+  await gotoEditor(page);
+
+  const { toggleInspectorButton, slideCount, inspector } = getHeaderControls(page);
+
+  await expect(slideCount).toHaveText("11 slides");
+  await expect(page.getByText(/^Deck$/)).toHaveCount(0);
+  await expect(inspector).toBeVisible();
+
+  await toggleInspectorButton.click();
+  await expect(inspector).toBeHidden();
+
+  await toggleInspectorButton.click();
+  await expect(inspector).toBeVisible();
+});
+
+test("floating toolbar only appears after selecting an element", async ({ page }) => {
+  await gotoEditor(page);
+
+  const frame = coverFrame(page);
+  const editableHeading = frame.locator('[data-editor-id="text-1"]');
+  const { floatingToolbarAnchor } = getHeaderControls(page);
+
+  await expect(floatingToolbarAnchor).toBeHidden();
+
+  await editableHeading.click();
+
+  await expect(floatingToolbarAnchor).toBeVisible();
+  await expect(page.getByRole("button", { name: "Bold" })).toBeVisible();
+  await expect(page.getByText("Basic tools")).toHaveCount(0);
+  await expect(page.getByText("Select an element to edit")).toHaveCount(0);
 });
 
 test("text editing commits on blur and keeps undo/redo disabled while editing", async ({

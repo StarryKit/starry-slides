@@ -1,0 +1,110 @@
+.hse-shell {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+}
+
+.hse-editor-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  min-height: var(--hse-header-height);
+  padding: 12px 24px;
+  border-bottom: 1px solid rgba(76, 57, 36, 0.08);
+  background: linear-gradient(180deg, rgba(255, 251, 245, 0.96), rgba(255, 248, 241, 0.9)),
+    rgba(255, 255, 255, 0.72);
+  backdrop-filter: blur(14px);
+}
+
+.hse-editor-header-copy {
+  display: grid;
+  min-width: 0;
+  gap: 4px;
+}
+
+.hse-editor-header-title-row {
+  display: flex;
+  align-items: baseline;
+  min-width: 0;
+}
+
+.hse-editor-header-title-row h1 {
+  min-width: 0;
+  margin: 0;
+  font-size: 22px;
+  line-height: 1.1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.hse-editor-header-meta,
+.hse-editor-header-copy p {
+  color: var(--hse-muted-text);
+  font-size: 13px;
+}
+
+.hse-editor-header-copy p {
+  margin: 0;
+}
+
+.hse-editor-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.hse-header-button {
+  border: 1px solid var(--hse-border-color);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.82);
+  color: var(--hse-text-color);
+  font: inherit;
+  font-size: 14px;
+  font-weight: 500;
+  padding: 10px 16px;
+  cursor: pointer;
+  transition: var(--hse-transition);
+}
+
+.hse-header-button svg {
+  display: block;
+  width: 16px;
+  height: 16px;
+}
+
+.hse-header-button:hover {
+  transform: translateY(-1px);
+  box-shadow: var(--hse-shadow-card);
+}
+
+.hse-header-button-primary {
+  border-color: rgba(242, 98, 56, 0.24);
+  background: linear-gradient(135deg, rgba(242, 98, 56, 1), rgba(206, 83, 40, 0.96));
+  color: white;
+}
+
+.hse-header-button-secondary {
+  background: rgba(255, 255, 255, 0.68);
+}
+
+.hse-workspace {
+  display: flex;
+  flex: 1 1 auto;
+  min-height: 0;
+  gap: var(--hse-panel-gap);
+  overflow: hidden;
+}
+
+.hse-main {
+  display: flex;
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 0;
+  gap: var(--hse-panel-gap);
+  overflow: hidden;
+}

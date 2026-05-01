@@ -4,11 +4,18 @@ import { useCallback } from "react";
 interface SlideSidebarProps {
   slides: SlideModel[];
   activeSlideId: string;
+  slideCount: number;
   thumbnails: Record<string, string>;
   onSelectSlide: (slideId: string) => void;
 }
 
-function SlideSidebar({ slides, activeSlideId, thumbnails, onSelectSlide }: SlideSidebarProps) {
+function SlideSidebar({
+  slides,
+  activeSlideId,
+  slideCount,
+  thumbnails,
+  onSelectSlide,
+}: SlideSidebarProps) {
   const activeSlideRef = useCallback((node: HTMLButtonElement | null) => {
     node?.scrollIntoView({
       block: "nearest",
@@ -19,6 +26,11 @@ function SlideSidebar({ slides, activeSlideId, thumbnails, onSelectSlide }: Slid
   return (
     <aside className="hse-sidebar" data-testid="slide-sidebar">
       <div className="hse-sidebar-panel" data-testid="slide-sidebar-panel">
+        <div className="hse-sidebar-header">
+          <span className="hse-sidebar-count" data-testid="slide-count">
+            {slideCount} slide{slideCount === 1 ? "" : "s"}
+          </span>
+        </div>
         <div className="hse-slide-list" data-testid="slide-list">
           {slides.map((slide, index) => (
             <button

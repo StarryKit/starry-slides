@@ -1,9 +1,8 @@
 import type { StageRect } from "@html-slides-editor/core";
-import type { RefObject } from "react";
+import type { CSSProperties, RefObject } from "react";
+import { FloatingToolbar } from "./floating-toolbar";
 
 interface StageCanvasProps {
-  sourceLabel: string;
-  slideTitle: string;
   slideWidth: number;
   slideHeight: number;
   offsetX: number;
@@ -17,8 +16,6 @@ interface StageCanvasProps {
 }
 
 function StageCanvas({
-  sourceLabel,
-  slideTitle,
   slideWidth,
   slideHeight,
   offsetX,
@@ -39,6 +36,20 @@ function StageCanvas({
     }
   };
 
+  const toolbarStyle: CSSProperties | undefined = selectionOverlay
+    ? {
+        left: `${selectionOverlay.x + selectionOverlay.width / 2}px`,
+        top:
+          selectionOverlay.y < 84
+            ? `${selectionOverlay.y + selectionOverlay.height + 18}px`
+            : `${selectionOverlay.y - 18}px`,
+        transform: selectionOverlay.y < 84 ? "translate(-50%, 0)" : "translate(-50%, -100%)",
+      }
+    : undefined;
+  const toolbarKey = selectionOverlay
+    ? `${selectionOverlay.x}:${selectionOverlay.y}:${selectionOverlay.width}:${selectionOverlay.height}:${selectionLabel}`
+    : null;
+
   return (
     <section
       className="hse-stage-panel"
@@ -53,7 +64,16 @@ function StageCanvas({
         }
       }}
     >
-      <h1 className="hse-stage-title">{sourceLabel}</h1>
+      {selectionOverlay ? (
+        <div
+          className="hse-stage-toolbar-anchor"
+          style={toolbarStyle}
+          data-testid="floating-toolbar-anchor"
+        >
+          <FloatingToolbar key={toolbarKey} />
+        </div>
+      ) : null}
+
       <div
         className="hse-stage-frame"
         data-testid="stage-frame"
@@ -67,7 +87,7 @@ function StageCanvas({
       >
         <iframe
           ref={iframeRef}
-          title={slideTitle}
+          title="Slide canvas"
           className="hse-slide-iframe"
           data-testid="slide-iframe"
         />

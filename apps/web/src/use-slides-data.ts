@@ -2,6 +2,7 @@ import { type SlideModel, loadSlidesFromManifest } from "@html-slides-editor/cor
 import { useEffect, useState } from "react";
 
 interface SlidesDataResult {
+  deckTitle: string;
   slides: SlideModel[];
   sourceLabel: string;
   errorMessage: string | null;
@@ -11,6 +12,7 @@ interface SlidesDataResult {
 const GENERATED_MANIFEST_URL = "/generated/current/manifest.json";
 
 export function useSlidesData(): SlidesDataResult {
+  const [deckTitle, setDeckTitle] = useState("Generated deck");
   const [slides, setSlides] = useState<SlideModel[]>([]);
   const [sourceLabel, setSourceLabel] = useState("Generated deck");
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -27,6 +29,7 @@ export function useSlidesData(): SlidesDataResult {
         }
 
         if (!importedDeck) {
+          setDeckTitle("Generated deck");
           setSlides([]);
           setSourceLabel("Generated deck unavailable");
           setErrorMessage("No generated deck was found at /generated/current/manifest.json.");
@@ -34,6 +37,7 @@ export function useSlidesData(): SlidesDataResult {
           return;
         }
 
+        setDeckTitle(importedDeck.manifest.topic || "Generated deck");
         setSlides(importedDeck.slides);
         setSourceLabel(
           importedDeck.manifest.topic
@@ -48,6 +52,7 @@ export function useSlidesData(): SlidesDataResult {
           return;
         }
 
+        setDeckTitle("Generated deck");
         setSlides([]);
         setSourceLabel("Generated deck unavailable");
         setErrorMessage("The app could not load the generated deck.");
@@ -59,5 +64,5 @@ export function useSlidesData(): SlidesDataResult {
     };
   }, []);
 
-  return { slides, sourceLabel, errorMessage, isLoading };
+  return { deckTitle, slides, sourceLabel, errorMessage, isLoading };
 }
