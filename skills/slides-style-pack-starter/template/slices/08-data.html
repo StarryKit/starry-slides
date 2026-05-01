@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <style>
+      * { box-sizing: border-box; }
+      html, body { margin: 0; width: 1920px; height: 1080px; overflow: hidden; }
+      body { background: linear-gradient(135deg, #0f172a, #14304a); color: #f8fafc; font-family: "Avenir Next", sans-serif; }
+      .slide { width: 1920px; height: 1080px; padding: 96px; display: grid; gap: 28px; }
+      h1, p, strong, span { margin: 0; }
+      h1 { font-size: 74px; line-height: 1; letter-spacing: -0.04em; }
+      .grid { display: grid; grid-template-columns: 1.2fr 0.8fr; gap: 24px; }
+      .hero, .stack { border-radius: 28px; background: rgba(255, 255, 255, 0.08); padding: 28px; }
+      .hero { min-height: 640px; display: grid; align-content: center; gap: 18px; }
+      .big { font-size: 180px; line-height: 0.86; letter-spacing: -0.06em; }
+      .label { font-size: 28px; opacity: 0.82; }
+      .stack { display: grid; gap: 18px; }
+      .card { padding: 22px; border-radius: 22px; background: rgba(255, 255, 255, 0.08); }
+      strong { display: block; font-size: 40px; margin-bottom: 8px; }
+      span, p { font-size: 24px; line-height: 1.45; opacity: 0.86; }
+    </style>
+  </head>
+  <body>
+    <main class="slide" data-slide-root="true" data-slide-width="1920" data-slide-height="1080" data-style-pack="starter-minimal" data-archetype="data">
+      <h1 data-editable="text" data-role="title">Why protocol coverage matters</h1>
+      <div class="grid">
+        <section class="hero" data-editable="block" data-role="primary-metric">
+          <div class="big" data-editable="text">10</div>
+          <div class="label" data-editable="text">core archetypes in v1</div>
+        </section>
+        <aside class="stack">
+          <div class="card" data-editable="block"><strong data-editable="text">1 contract</strong><span data-editable="text">Shared semantics for parse and edit.</span></div>
+          <div class="card" data-editable="block"><strong data-editable="text">3 tooling entry points</strong><span data-editable="text">Validate, annotate, and build manifests.</span></div>
+          <div class="card" data-editable="block"><strong data-editable="text">0 visual assumptions</strong><span data-editable="text">The protocol should stay style-agnostic.</span></div>
+        </aside>
+      </div>
+      <p data-editable="text" data-role="note">The protocol should stay smaller than the style surface built on top of it.</p>
+    </main>
+  </body>
+</html>

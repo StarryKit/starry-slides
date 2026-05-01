@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <style>
+      * { box-sizing: border-box; }
+      html, body { margin: 0; width: 1920px; height: 1080px; overflow: hidden; }
+      body { background: #f8f5ef; color: #1f2937; font-family: "Avenir Next", sans-serif; }
+      .slide { width: 1920px; height: 1080px; padding: 88px 96px; display: grid; gap: 26px; }
+      h1, p { margin: 0; }
+      h1 { font-size: 70px; line-height: 1; letter-spacing: -0.04em; max-width: 1180px; }
+      figure { margin: 0; display: grid; gap: 14px; }
+      img { width: 100%; height: 620px; object-fit: cover; border-radius: 30px; display: block; }
+      p { font-size: 24px; line-height: 1.45; }
+    </style>
+  </head>
+  <body>
+    <main class="slide" data-slide-root="true" data-slide-width="1920" data-slide-height="1080" data-style-pack="starter-minimal" data-archetype="media">
+      <h1 data-editable="text" data-role="title">The editor should understand real slides</h1>
+      <figure data-editable="block" data-role="media">
+        <img
+          data-editable="image"
+          src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='1600' height='900' viewBox='0 0 1600 900'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0%25' stop-color='%23172033'/%3E%3Cstop offset='100%25' stop-color='%23d7e8f8'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='1600' height='900' fill='url(%23g)'/%3E%3Ccircle cx='460' cy='360' r='180' fill='rgba(255,255,255,0.35)'/%3E%3Ccircle cx='1040' cy='460' r='240' fill='rgba(255,248,220,0.3)'/%3E%3C/svg%3E"
+          alt="Abstract specimen visual"
+        />
+        <p data-editable="text" data-role="caption">Media-heavy layouts should still expose clear editable zones.</p>
+      </figure>
+    </main>
+  </body>
+</html>

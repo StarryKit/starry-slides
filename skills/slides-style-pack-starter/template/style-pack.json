@@ -1,0 +1,30 @@
+{
+  "name": "starter-minimal",
+  "version": "0.1.0",
+  "protocol": "slides-protocol/v1",
+  "description": "A minimal reference style pack that implements the fixed v1 archetypes against the canonical specimen deck.",
+  "supports": [
+    "title",
+    "section",
+    "thesis",
+    "concept",
+    "comparison",
+    "list",
+    "timeline",
+    "data",
+    "media",
+    "closing"
+  ],
+  "slices": [
+    { "archetype": "title", "file": "slices/01-title.html" },
+    { "archetype": "section", "file": "slices/02-section.html" },
+    { "archetype": "thesis", "file": "slices/03-thesis.html" },
+    { "archetype": "concept", "file": "slices/04-concept.html" },
+    { "archetype": "comparison", "file": "slices/05-comparison.html" },
+    { "archetype": "list", "file": "slices/06-list.html" },
+    { "archetype": "timeline", "file": "slices/07-timeline.html" },
+    { "archetype": "data", "file": "slices/08-data.html" },
+    { "archetype": "media", "file": "slices/09-media.html" },
+    { "archetype": "closing", "file": "slices/10-closing.html" }
+  ]
+}

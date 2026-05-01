@@ -1,14 +1,19 @@
 import { type FrameLocator, type Page, expect, test } from "@playwright/test";
+import {
+  REGRESSION_DECK_AGENDA_PARAGRAPH,
+  REGRESSION_DECK_HERO_KICKER,
+  REGRESSION_DECK_SOURCE_LABEL,
+  REGRESSION_DECK_SUMMARY,
+  REGRESSION_DECK_TOPIC,
+} from "./regression-deck";
 
 const EDITING_HINT = "Editing text. Press Enter to save or Escape to cancel.";
 const MODIFIER = process.platform === "darwin" ? "Meta" : "Control";
-const SOURCE_LABEL = "Generated deck: HTML Slides Editor Project Overview";
-const HERO_KICKER = "HTML Slides Editor";
-const HERO_TITLE = "HTML Slides Editor Project Overview";
-const HERO_SUMMARY =
-  "A generated project deck that doubles as a broad regression fixture for the HTML Slides Editor.";
-const AGENDA_PARAGRAPH =
-  "How html slides editor project overview handles problem framing in a browser-native workflow.";
+const SOURCE_LABEL = REGRESSION_DECK_SOURCE_LABEL;
+const HERO_KICKER = REGRESSION_DECK_HERO_KICKER;
+const HERO_TITLE = REGRESSION_DECK_TOPIC;
+const HERO_SUMMARY = REGRESSION_DECK_SUMMARY;
+const AGENDA_PARAGRAPH = REGRESSION_DECK_AGENDA_PARAGRAPH;
 
 async function gotoEditor(page: Page) {
   await page.goto("/");
@@ -18,8 +23,6 @@ async function gotoEditor(page: Page) {
 
 function getHistoryControls(page: Page) {
   return {
-    undoButton: page.getByTestId("undo-button"),
-    redoButton: page.getByTestId("redo-button"),
     editingHint: page.getByText(EDITING_HINT),
     selectionOverlay: page.getByTestId("selection-overlay"),
   };
@@ -48,15 +51,13 @@ test("plain click selects text only, and double click enters editing", async ({ 
 
   const frame = coverFrame(page);
   const editableHeading = frame.locator('[data-editor-id="text-1"]');
-  const { editingHint, selectionOverlay, undoButton, redoButton } = getHistoryControls(page);
+  const { editingHint, selectionOverlay } = getHistoryControls(page);
 
   await editableHeading.click();
 
   await expect(selectionOverlay).toBeVisible();
   await expect(editingHint).toBeHidden();
   await expect(editableHeading).not.toHaveAttribute("contenteditable", /.+/);
-  await expect(undoButton).toBeDisabled();
-  await expect(redoButton).toBeDisabled();
 
   await editableHeading.dblclick();
 
@@ -138,21 +139,25 @@ test("text editing commits on blur and keeps undo/redo disabled while editing", 
   const frame = coverFrame(page);
   const editableHeading = frame.locator('[data-editor-id="text-1"]');
   const blockCard = frame.locator('[data-editor-id="block-4"]');
-  const { editingHint, undoButton, redoButton } = getHistoryControls(page);
+  const { editingHint } = getHistoryControls(page);
   const nextText = "Blur committed heading";
 
   await editableHeading.dblclick();
   await expect(editingHint).toBeVisible();
-  await expect(undoButton).toBeDisabled();
-  await expect(redoButton).toBeDisabled();
+
+  await page.keyboard.press(`${MODIFIER}+Z`);
+  await expect(editableHeading).toHaveText(HERO_KICKER);
 
   await selectAllAndFill(editableHeading, nextText);
   await blockCard.click();
 
   await expect(editingHint).toBeHidden();
   await expect(editableHeading).toHaveText(nextText);
-  await expect(undoButton).toBeEnabled();
-  await expect(redoButton).toBeDisabled();
+
+  await page.keyboard.press(`${MODIFIER}+Z`);
+  await expect(editableHeading).toHaveText(HERO_KICKER);
+  await page.keyboard.press(`${MODIFIER}+Shift+Z`);
+  await expect(editableHeading).toHaveText(nextText);
 });
 
 test("single clicking outside the active text element exits editing mode", async ({ page }) => {
@@ -179,7 +184,6 @@ test("text editing preserves leading and trailing whitespace and keeps exact und
 
   const frame = coverFrame(page);
   const editableHeading = frame.locator('[data-editor-id="text-1"]');
-  const { undoButton, redoButton } = getHistoryControls(page);
   const nextText = "  HTML Slides Editor  ";
 
   await editableHeading.dblclick();
@@ -187,13 +191,11 @@ test("text editing preserves leading and trailing whitespace and keeps exact und
   await editableHeading.press("Enter");
 
   await expect(editableHeading).toHaveText(nextText);
-  await expect(undoButton).toBeEnabled();
-  await expect(redoButton).toBeDisabled();
 
-  await undoButton.click();
+  await page.keyboard.press(`${MODIFIER}+Z`);
   await expect(editableHeading).toHaveText(HERO_KICKER);
 
-  await redoButton.click();
+  await page.keyboard.press(`${MODIFIER}+Shift+Z`);
   await expect(editableHeading).toHaveText(nextText);
 });
 
@@ -202,7 +204,6 @@ test("whitespace-only surrounding changes still create a committed edit", async 
 
   const frame = coverFrame(page);
   const editableHeading = frame.locator('[data-editor-id="text-1"]');
-  const { undoButton, redoButton } = getHistoryControls(page);
   const nextText = ` ${HERO_KICKER} `;
 
   await editableHeading.dblclick();
@@ -210,8 +211,10 @@ test("whitespace-only surrounding changes still create a committed edit", async 
   await editableHeading.press("Enter");
 
   await expect(editableHeading).toHaveText(nextText);
-  await expect(undoButton).toBeEnabled();
-  await expect(redoButton).toBeDisabled();
+  await page.keyboard.press(`${MODIFIER}+Z`);
+  await expect(editableHeading).toHaveText(HERO_KICKER);
+  await page.keyboard.press(`${MODIFIER}+Shift+Z`);
+  await expect(editableHeading).toHaveText(nextText);
 });
 
 test("text editing allows deleting a partial keyboard selection before commit", async ({
@@ -390,7 +393,7 @@ test("pressing Enter without content changes exits editing without creating undo
 
   const frame = coverFrame(page);
   const editableHeading = frame.locator('[data-editor-id="text-1"]');
-  const { editingHint, undoButton, redoButton } = getHistoryControls(page);
+  const { editingHint } = getHistoryControls(page);
   const originalText = HERO_KICKER;
 
   await editableHeading.dblclick();
@@ -400,16 +403,16 @@ test("pressing Enter without content changes exits editing without creating undo
 
   await expect(editingHint).toBeHidden();
   await expect(editableHeading).toHaveText(originalText);
-  await expect(undoButton).toBeDisabled();
-  await expect(redoButton).toBeDisabled();
+  await page.keyboard.press(`${MODIFIER}+Z`);
+  await expect(editableHeading).toHaveText(originalText);
 });
 
-test("text editing supports toolbar undo/redo after commit", async ({ page }) => {
+test("text editing supports keyboard undo/redo after commit", async ({ page }) => {
   await gotoEditor(page);
 
   const frame = coverFrame(page);
   const editableHeading = frame.locator('[data-editor-id="text-1"]');
-  const { editingHint, undoButton, redoButton } = getHistoryControls(page);
+  const { editingHint } = getHistoryControls(page);
   const nextText = "Edited by Playwright";
 
   await expect(page.getByText(SOURCE_LABEL)).toBeVisible();
@@ -424,14 +427,11 @@ test("text editing supports toolbar undo/redo after commit", async ({ page }) =>
 
   await expect(editingHint).toBeHidden();
   await expect(editableHeading).toHaveText(nextText);
-  await expect(undoButton).toBeEnabled();
-  await expect(redoButton).toBeDisabled();
 
-  await undoButton.click();
+  await page.keyboard.press(`${MODIFIER}+Z`);
   await expect(editableHeading).toHaveText(HERO_KICKER);
-  await expect(redoButton).toBeEnabled();
 
-  await redoButton.click();
+  await page.keyboard.press(`${MODIFIER}+Shift+Z`);
   await expect(editableHeading).toHaveText(nextText);
 });
 
@@ -440,17 +440,14 @@ test("keyboard shortcuts trigger undo and redo", async ({ page }) => {
 
   const frame = coverFrame(page);
   const editableHeading = frame.locator('[data-editor-id="text-1"]');
-  const { undoButton, redoButton } = getHistoryControls(page);
   const nextText = "Keyboard history";
 
   await editableHeading.dblclick();
   await selectAllAndFill(editableHeading, nextText);
   await editableHeading.press("Enter");
 
-  await expect(undoButton).toBeEnabled();
   await page.keyboard.press(`${MODIFIER}+Z`);
   await expect(editableHeading).toHaveText(HERO_KICKER);
-  await expect(redoButton).toBeEnabled();
 
   await page.keyboard.press(`${MODIFIER}+Shift+Z`);
   await expect(editableHeading).toHaveText(nextText);
@@ -502,7 +499,6 @@ test("multiple edits maintain correct undo and redo stack order", async ({ page 
   const frame = coverFrame(page);
   const heading = frame.locator('[data-editor-id="text-2"]');
   const summary = frame.locator('[data-editor-id="text-3"]');
-  const { undoButton, redoButton } = getHistoryControls(page);
   const headingText = "Deck topic updated";
   const summaryText = "Summary updated after heading";
 
@@ -517,22 +513,20 @@ test("multiple edits maintain correct undo and redo stack order", async ({ page 
   await selectAllAndFill(summary, summaryText);
   await summary.press("Enter");
 
-  await expect(undoButton).toBeEnabled();
   await expect(summary).toHaveText(summaryText);
 
-  await undoButton.click();
+  await page.keyboard.press(`${MODIFIER}+Z`);
   await expect(summary).toHaveText(HERO_SUMMARY);
   await expect(heading).toHaveText(headingText);
 
-  await undoButton.click();
+  await page.keyboard.press(`${MODIFIER}+Z`);
   await expect(heading).toHaveText(HERO_TITLE);
-  await expect(redoButton).toBeEnabled();
 
-  await redoButton.click();
+  await page.keyboard.press(`${MODIFIER}+Shift+Z`);
   await expect(heading).toHaveText(headingText);
   await expect(summary).not.toHaveText(summaryText);
 
-  await redoButton.click();
+  await page.keyboard.press(`${MODIFIER}+Shift+Z`);
   await expect(summary).toHaveText(summaryText);
 });
 
@@ -691,7 +685,7 @@ test("double clicking a non-text element does not enter text editing", async ({ 
 
   const frame = coverFrame(page);
   const blockCard = frame.locator('[data-editor-id="block-4"]');
-  const { editingHint, undoButton, redoButton } = getHistoryControls(page);
+  const { editingHint } = getHistoryControls(page);
 
   await expect(blockCard).toBeVisible();
 
@@ -700,8 +694,6 @@ test("double clicking a non-text element does not enter text editing", async ({ 
   });
 
   await expect(editingHint).toBeHidden();
-  await expect(undoButton).toBeDisabled();
-  await expect(redoButton).toBeDisabled();
 });
 
 test("clicking a block element outside editing only selects and does not create history", async ({
@@ -711,14 +703,14 @@ test("clicking a block element outside editing only selects and does not create 
 
   const frame = coverFrame(page);
   const blockCard = frame.locator('[data-editor-id="block-4"]');
-  const { selectionOverlay, undoButton, redoButton, editingHint } = getHistoryControls(page);
+  const { selectionOverlay, editingHint } = getHistoryControls(page);
 
   await blockCard.click();
 
   await expect(selectionOverlay).toBeVisible();
   await expect(editingHint).toBeHidden();
-  await expect(undoButton).toBeDisabled();
-  await expect(redoButton).toBeDisabled();
+  await page.keyboard.press(`${MODIFIER}+Z`);
+  await expect(selectionOverlay).toBeVisible();
 });
 
 test("escape cancels text editing without creating undo history", async ({ page }) => {
@@ -726,8 +718,6 @@ test("escape cancels text editing without creating undo history", async ({ page 
 
   const frame = coverFrame(page);
   const editableHeading = frame.locator('[data-editor-id="text-1"]');
-  const undoButton = page.getByTestId("undo-button");
-  const redoButton = page.getByTestId("redo-button");
   const editingHint = page.getByText("Editing text. Press Enter to save or Escape to cancel.");
   const originalText = HERO_KICKER;
   const draftText = "Draft text that should be discarded";
@@ -740,6 +730,6 @@ test("escape cancels text editing without creating undo history", async ({ page 
 
   await expect(editingHint).toBeHidden();
   await expect(editableHeading).toHaveText(originalText);
-  await expect(undoButton).toBeDisabled();
-  await expect(redoButton).toBeDisabled();
+  await page.keyboard.press(`${MODIFIER}+Z`);
+  await expect(editableHeading).toHaveText(originalText);
 });

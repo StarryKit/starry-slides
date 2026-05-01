@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <style>
+      * { box-sizing: border-box; }
+      html, body { margin: 0; width: 1920px; height: 1080px; overflow: hidden; }
+      body { background: linear-gradient(135deg, #f5efe6, #eaf2fb); color: #111827; font-family: "Avenir Next", sans-serif; }
+      .slide { width: 1920px; height: 1080px; padding: 96px; display: grid; grid-template-columns: 1.1fr 0.9fr; gap: 40px; }
+      h1, p, li { margin: 0; }
+      h1 { font-size: 78px; line-height: 1; letter-spacing: -0.04em; margin-bottom: 20px; }
+      .body { display: grid; align-content: center; gap: 22px; }
+      .card { padding: 32px; border-radius: 28px; background: rgba(255, 255, 255, 0.8); box-shadow: 0 20px 40px rgba(15, 23, 42, 0.08); }
+      p, li { font-size: 28px; line-height: 1.5; }
+      ul { margin: 0; padding-left: 28px; display: grid; gap: 12px; }
+    </style>
+  </head>
+  <body>
+    <main class="slide" data-slide-root="true" data-slide-width="1920" data-slide-height="1080" data-style-pack="starter-minimal" data-archetype="concept">
+      <section class="body">
+        <h1 data-editable="text" data-role="title">Protocol before automation</h1>
+        <p data-editable="text" data-role="body">A stable document contract makes generation, editing, validation, and rendering part of the same workflow instead of separate conversions.</p>
+      </section>
+      <aside class="card" data-editable="block" data-role="concept-points">
+        <ul>
+          <li data-editable="text">The style pack defines visual slices.</li>
+          <li data-editable="text">The protocol defines editable semantics.</li>
+          <li data-editable="text">Tools validate and normalize the output.</li>
+        </ul>
+      </aside>
+    </main>
+  </body>
+</html>

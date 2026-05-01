@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <style>
+      * { box-sizing: border-box; }
+      html, body { margin: 0; width: 1920px; height: 1080px; overflow: hidden; }
+      body { background: #f4efe7; color: #1f2937; font-family: "Avenir Next", sans-serif; }
+      .slide { width: 1920px; height: 1080px; padding: 88px 96px; display: grid; gap: 36px; }
+      h1, strong, p { margin: 0; }
+      h1 { font-size: 76px; line-height: 0.98; letter-spacing: -0.04em; }
+      .rail { display: grid; grid-template-columns: repeat(3, 1fr); gap: 22px; }
+      .step { padding: 28px; border-radius: 28px; background: rgba(255, 255, 255, 0.78); display: grid; gap: 14px; min-height: 560px; }
+      strong { font-size: 28px; text-transform: uppercase; letter-spacing: 0.08em; opacity: 0.7; }
+      p { font-size: 28px; line-height: 1.45; }
+    </style>
+  </head>
+  <body>
+    <main class="slide" data-slide-root="true" data-slide-width="1920" data-slide-height="1080" data-style-pack="starter-minimal" data-archetype="timeline">
+      <h1 data-editable="text" data-role="title">Adoption path</h1>
+      <div class="rail">
+        <article class="step" data-editable="block" data-role="milestone">
+          <strong data-editable="text">Phase 1</strong>
+          <p data-editable="text">Define the protocol.</p>
+        </article>
+        <article class="step" data-editable="block" data-role="milestone">
+          <strong data-editable="text">Phase 2</strong>
+          <p data-editable="text">Ship a starter style pack.</p>
+        </article>
+        <article class="step" data-editable="block" data-role="milestone">
+          <strong data-editable="text">Phase 3</strong>
+          <p data-editable="text">Add validation and annotation tools.</p>
+        </article>
+      </div>
+    </main>
+  </body>
+</html>

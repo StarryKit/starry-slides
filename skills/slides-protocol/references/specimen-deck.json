@@ -1,0 +1,136 @@
+{
+  "deckTitle": "Protocol Specimen Deck",
+  "topic": "Future of Team Workflows",
+  "author": "HTML Slides Editor",
+  "slides": [
+    {
+      "id": "01-title",
+      "archetype": "title",
+      "title": "Future of Team Workflows",
+      "fields": {
+        "title": "Future of Team Workflows",
+        "subtitle": "Why source-native collaboration changes how teams ship.",
+        "meta": "Protocol Specimen Deck"
+      }
+    },
+    {
+      "id": "02-section",
+      "archetype": "section",
+      "title": "The shift",
+      "fields": {
+        "title": "The shift",
+        "subtitle": "From static documents to editable, inspectable HTML artifacts."
+      }
+    },
+    {
+      "id": "03-thesis",
+      "archetype": "thesis",
+      "title": "Source-native decks are easier to trust",
+      "fields": {
+        "title": "Source-native decks are easier to trust",
+        "points": [
+          "HTML stays readable in version control.",
+          "Editors can preserve original structure instead of flattening it.",
+          "Teams can review content and layout in the same artifact."
+        ]
+      }
+    },
+    {
+      "id": "04-concept",
+      "archetype": "concept",
+      "title": "Protocol before automation",
+      "fields": {
+        "title": "Protocol before automation",
+        "body": "A stable document contract makes generation, editing, validation, and rendering part of the same workflow instead of separate conversions.",
+        "points": [
+          "The style pack defines visual slices.",
+          "The protocol defines editable semantics.",
+          "Tools validate and normalize the output."
+        ]
+      }
+    },
+    {
+      "id": "05-comparison",
+      "archetype": "comparison",
+      "title": "Schema-first vs HTML-native",
+      "fields": {
+        "leftTitle": "Schema-first",
+        "leftPoints": [
+          "Import into a private document model",
+          "Round-tripping can become lossy",
+          "Source and presentation drift apart"
+        ],
+        "rightTitle": "HTML-native",
+        "rightPoints": [
+          "Keep HTML as the source of truth",
+          "Preserve DOM structure and semantics",
+          "Edit and validate the same files"
+        ],
+        "summary": "The contract should reduce translation boundaries, not add more of them."
+      }
+    },
+    {
+      "id": "06-list",
+      "archetype": "list",
+      "title": "What teams need from deck tooling",
+      "fields": {
+        "title": "What teams need from deck tooling",
+        "points": [
+          "Clear page boundaries",
+          "Predictable editable markers",
+          "Stable selectors for write-back",
+          "A visual system that covers common page forms"
+        ]
+      }
+    },
+    {
+      "id": "07-timeline",
+      "archetype": "timeline",
+      "title": "Adoption path",
+      "fields": {
+        "title": "Adoption path",
+        "milestones": [
+          "Phase 1: define the protocol",
+          "Phase 2: ship a starter style pack",
+          "Phase 3: add validation and annotation tools"
+        ]
+      }
+    },
+    {
+      "id": "08-data",
+      "archetype": "data",
+      "title": "Why protocol coverage matters",
+      "fields": {
+        "title": "Why protocol coverage matters",
+        "primaryMetric": "10",
+        "primaryLabel": "core archetypes in v1",
+        "secondaryMetrics": [
+          "1 contract",
+          "3 tooling entry points",
+          "0 required visual system assumptions"
+        ],
+        "note": "The protocol should stay smaller than the style surface built on top of it."
+      }
+    },
+    {
+      "id": "09-media",
+      "archetype": "media",
+      "title": "The editor should understand real slides",
+      "fields": {
+        "title": "The editor should understand real slides",
+        "imageAlt": "Abstract specimen visual",
+        "caption": "Media-heavy layouts should still expose clear editable zones."
+      }
+    },
+    {
+      "id": "10-closing",
+      "archetype": "closing",
+      "title": "A good style pack makes the protocol feel invisible",
+      "fields": {
+        "title": "A good style pack makes the protocol feel invisible",
+        "body": "Authors should feel like they are choosing a design language, while the system quietly preserves editability underneath it.",
+        "action": "Build style packs against the specimen deck, then map user content into those same archetypes."
+      }
+    }
+  ]
+}

@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <style>
+      * { box-sizing: border-box; }
+      html, body { margin: 0; width: 1920px; height: 1080px; overflow: hidden; }
+      body { background: #fffdf8; color: #1f2937; font-family: "Avenir Next", sans-serif; }
+      .slide { width: 1920px; height: 1080px; padding: 88px 96px; display: grid; gap: 32px; }
+      h1, h2, p, li { margin: 0; }
+      h1 { font-size: 76px; line-height: 1; letter-spacing: -0.04em; }
+      .columns { display: grid; grid-template-columns: 1fr 1fr; gap: 28px; }
+      .panel { padding: 28px; border-radius: 28px; min-height: 620px; background: #f5efe6; display: grid; align-content: start; gap: 18px; }
+      .panel.alt { background: #eaf2fb; }
+      h2 { font-size: 44px; }
+      li, p { font-size: 26px; line-height: 1.5; }
+      ul { margin: 0; padding-left: 26px; display: grid; gap: 12px; }
+    </style>
+  </head>
+  <body>
+    <main class="slide" data-slide-root="true" data-slide-width="1920" data-slide-height="1080" data-style-pack="starter-minimal" data-archetype="comparison">
+      <h1 data-editable="text" data-role="title">Schema-first vs HTML-native</h1>
+      <div class="columns">
+        <section class="panel" data-editable="block" data-role="left-panel">
+          <h2 data-editable="text">Schema-first</h2>
+          <ul>
+            <li data-editable="text">Import into a private document model</li>
+            <li data-editable="text">Round-tripping can become lossy</li>
+            <li data-editable="text">Source and presentation drift apart</li>
+          </ul>
+        </section>
+        <section class="panel alt" data-editable="block" data-role="right-panel">
+          <h2 data-editable="text">HTML-native</h2>
+          <ul>
+            <li data-editable="text">Keep HTML as the source of truth</li>
+            <li data-editable="text">Preserve DOM structure and semantics</li>
+            <li data-editable="text">Edit and validate the same files</li>
+          </ul>
+        </section>
+      </div>
+      <p data-editable="text" data-role="summary">The contract should reduce translation boundaries, not add more of them.</p>
+    </main>
+  </body>
+</html>

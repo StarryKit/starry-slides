@@ -17,6 +17,8 @@ packages/
   editor/                      Editor UI that applies core operations
 skills/
   html-slides-generator/       Local slide generator skill
+  slides-protocol/             Headless protocol skill + tools
+  slides-style-pack-starter/   Starter style pack package
 ```
 
 ## Development
@@ -37,7 +39,9 @@ pnpm test:e2e
 ```
 
 `pnpm test:e2e` runs the browser regression suite, including direct text editing coverage.
-It first generates a fresh project-overview deck with `skills/html-slides-generator`, syncs that output into the app, then runs the editor against the generated deck end to end.
+It first prepares a fresh regression deck through `testing/regression-deck/prepare-regression-deck.mjs`, syncs that output into the app, then runs the editor against the generated deck end to end.
+
+The regression deck module exists to keep tests stable even if the skill surface evolves. The app still loads a single generated deck from `apps/web/public/generated/current/`.
 
 ## Generate Slides
 
@@ -64,6 +68,37 @@ This command:
 - syncs the latest output to `apps/web/public/generated/current/`
 
 The app loads `apps/web/public/generated/current/manifest.json` through a core import helper. A generated deck is required for the app to render slides.
+
+## Protocol Skill
+
+The repo now includes a headless slide protocol package in `skills/slides-protocol`.
+
+It contains:
+
+- `SKILL.md` for agent-facing usage
+- `references/contract-v1.md` for the single editable-slide protocol
+- `references/archetypes.md` for fixed v1 page forms
+- `references/specimen-deck.json` for canonical sample content
+- `tools/*.mjs` for validation, annotation, and manifest generation
+
+Useful commands:
+
+```bash
+pnpm slides:protocol:create-style-pack -- --out-dir generated/my-style-pack
+pnpm slides:protocol:validate -- --input skills/slides-style-pack-starter/template/slices
+pnpm slides:protocol:annotate -- --input path/to/slides
+pnpm slides:protocol:manifest -- --input-dir skills/slides-style-pack-starter/template/slices --deck-title "Starter Minimal"
+```
+
+## Style Pack Starter
+
+`skills/slides-style-pack-starter` is the first v1 visual-layer package.
+
+It does not define a new protocol. Instead, it demonstrates how one style pack:
+
+- implements the fixed v1 archetypes
+- uses the shared specimen content forms
+- keeps protocol markers embedded in every slice
 
 ## Slide Contract
 

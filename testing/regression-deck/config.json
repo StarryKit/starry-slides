@@ -1,0 +1,16 @@
+{
+  "topic": "HTML Slides Editor Project Overview",
+  "summary": "A generated project deck that doubles as a broad regression fixture for the HTML Slides Editor.",
+  "points": [
+    "Problem framing",
+    "Architecture",
+    "Feature matrix",
+    "Charts",
+    "Images",
+    "Roadmap",
+    "Comparison",
+    "Coverage"
+  ],
+  "heroKicker": "HTML Slides Editor",
+  "agendaParagraph": "How html slides editor project overview handles problem framing in a browser-native workflow."
+}

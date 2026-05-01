@@ -1,0 +1,67 @@
+{
+  "deckTitle": "Starter Minimal",
+  "topic": "Protocol Specimen Deck",
+  "generatedAt": "2026-05-01T11:56:50.602Z",
+  "slides": [
+    {
+      "file": "01-title.html",
+      "title": "Future of Team Workflows",
+      "archetype": "title",
+      "stylePack": "starter-minimal"
+    },
+    {
+      "file": "02-section.html",
+      "title": "The shift",
+      "archetype": "section",
+      "stylePack": "starter-minimal"
+    },
+    {
+      "file": "03-thesis.html",
+      "title": "Source-native decks are easier to trust",
+      "archetype": "thesis",
+      "stylePack": "starter-minimal"
+    },
+    {
+      "file": "04-concept.html",
+      "title": "Protocol before automation",
+      "archetype": "concept",
+      "stylePack": "starter-minimal"
+    },
+    {
+      "file": "05-comparison.html",
+      "title": "Schema-first vs HTML-native",
+      "archetype": "comparison",
+      "stylePack": "starter-minimal"
+    },
+    {
+      "file": "06-list.html",
+      "title": "What teams need from deck tooling",
+      "archetype": "list",
+      "stylePack": "starter-minimal"
+    },
+    {
+      "file": "07-timeline.html",
+      "title": "Adoption path",
+      "archetype": "timeline",
+      "stylePack": "starter-minimal"
+    },
+    {
+      "file": "08-data.html",
+      "title": "Why protocol coverage matters",
+      "archetype": "data",
+      "stylePack": "starter-minimal"
+    },
+    {
+      "file": "09-media.html",
+      "title": "The editor should understand real slides",
+      "archetype": "media",
+      "stylePack": "starter-minimal"
+    },
+    {
+      "file": "10-closing.html",
+      "title": "A good style pack makes the protocol feel invisible",
+      "archetype": "closing",
+      "stylePack": "starter-minimal"
+    }
+  ]
+}

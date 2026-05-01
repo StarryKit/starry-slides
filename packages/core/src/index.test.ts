@@ -17,6 +17,18 @@ import {
   updateSlideText,
 } from "./index";
 
+const regressionDeckConfig = JSON.parse(
+  fs.readFileSync(
+    path.resolve(import.meta.dirname, "../../../testing/regression-deck/config.json"),
+    "utf8"
+  )
+) as {
+  topic: string;
+  summary: string;
+  points: string[];
+  heroKicker: string;
+};
+
 describe("ensureEditableSelectors", () => {
   test("adds stable data-editor-id values to slide root and editable nodes", () => {
     const html = `<!DOCTYPE html>
@@ -584,13 +596,7 @@ describe("generated slide contract", () => {
     execFileSync(
       "node",
       [
-        path.join(workspaceRoot, "skills/html-slides-generator/generate-slides.mjs"),
-        "--topic",
-        "Contract Deck",
-        "--summary",
-        "Contract summary",
-        "--points",
-        "Point A|Point B|Point C",
+        path.join(workspaceRoot, "testing/regression-deck/prepare-regression-deck.mjs"),
         "--out-dir",
         outputRoot,
         "--app-out-dir",
@@ -613,6 +619,7 @@ describe("generated slide contract", () => {
     const secondSlideHtml = fs.readFileSync(path.join(outputRoot, manifest.slides[1].file), "utf8");
     const secondSlide = parseSlide(secondSlideHtml, "generated-slide-2");
 
+    expect(manifest.topic).toBe(regressionDeckConfig.topic);
     expect(manifest.slides).toHaveLength(11);
 
     expect(firstSlide.id).toBe("generated-slide-1");
@@ -641,13 +648,13 @@ describe("generated slide contract", () => {
       "text-19:text",
     ]);
     expect(firstSlide.elements.find((element) => element.id === "text-1")?.content).toBe(
-      "HTML Slides Editor"
+      regressionDeckConfig.heroKicker
     );
     expect(firstSlide.elements.find((element) => element.id === "block-4")?.tagName).toBe("div");
 
     expect(secondSlide.elements.find((element) => element.id === "block-4")?.type).toBe("block");
     expect(secondSlide.elements.find((element) => element.id === "text-6")?.content).toBe(
-      "Point A"
+      regressionDeckConfig.points[0]
     );
 
     fs.rmSync(tempRoot, { recursive: true, force: true });
