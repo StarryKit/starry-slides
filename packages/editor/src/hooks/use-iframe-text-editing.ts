@@ -45,10 +45,6 @@ const EDITING_TEXT_STYLE = `
 }
 `;
 
-function resolveBlockOwner(node: HTMLElement): HTMLElement {
-  return node.closest<HTMLElement>('[data-editable="block"][data-editor-id]') || node;
-}
-
 function useIframeTextEditing({
   activeSlide,
   iframeRef,
@@ -260,9 +256,7 @@ function useIframeTextEditing({
           return;
         }
 
-        const resolvedNode =
-          node.getAttribute("data-editable") === "text" ? resolveBlockOwner(node) : node;
-        const id = resolvedNode.getAttribute("data-editor-id");
+        const id = node.getAttribute("data-editor-id");
         if (id) {
           setSelectedElementId(id);
         }

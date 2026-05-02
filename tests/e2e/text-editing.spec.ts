@@ -99,6 +99,38 @@ test("selection overlay stays aligned to the selected element bounds", async ({ 
   expect(Math.abs(overlayBox.height - elementBox.height)).toBeLessThanOrEqual(6);
 });
 
+test("plain click selects nested text instead of its parent block", async ({ page }) => {
+  await gotoEditor(page);
+
+  const frame = coverFrame(page);
+  const nestedText = frame.locator('[data-editor-id="text-5"]');
+  const parentBlock = frame.locator('[data-editor-id="block-4"]');
+  const { selectionOverlay } = getHistoryControls(page);
+
+  await nestedText.click();
+
+  const [textBox, blockBox, overlayBox] = await Promise.all([
+    nestedText.boundingBox(),
+    parentBlock.boundingBox(),
+    selectionOverlay.boundingBox(),
+  ]);
+
+  expect(textBox).not.toBeNull();
+  expect(blockBox).not.toBeNull();
+  expect(overlayBox).not.toBeNull();
+
+  if (!textBox || !blockBox || !overlayBox) {
+    throw new Error("Expected nested text, parent block, and overlay to all have bounds.");
+  }
+
+  expect(Math.abs(overlayBox.x - textBox.x)).toBeLessThanOrEqual(3);
+  expect(Math.abs(overlayBox.y - textBox.y)).toBeLessThanOrEqual(3);
+  expect(Math.abs(overlayBox.width - textBox.width)).toBeLessThanOrEqual(6);
+  expect(Math.abs(overlayBox.height - textBox.height)).toBeLessThanOrEqual(6);
+  expect(Math.abs(overlayBox.y - blockBox.y)).toBeGreaterThan(6);
+  expect(Math.abs(overlayBox.height - blockBox.height)).toBeGreaterThan(24);
+});
+
 test("panel button toggles the inspector", async ({ page }) => {
   await gotoEditor(page);
 
@@ -195,7 +227,7 @@ test("text editing commits on blur and keeps undo/redo disabled while editing", 
   await expect(editableHeading).toHaveText(HERO_KICKER);
 
   await selectAllAndFill(editableHeading, nextText);
-  await blockCard.click();
+  await blockCard.click({ position: { x: 12, y: 12 } });
 
   await expect(editingHint).toBeHidden();
   await expect(editableHeading).toHaveText(nextText);
@@ -217,7 +249,7 @@ test("single clicking outside the active text element exits editing mode", async
   await editableHeading.dblclick();
   await expect(editingHint).toBeVisible();
 
-  await blockCard.click();
+  await blockCard.click({ position: { x: 12, y: 12 } });
 
   await expect(editingHint).toBeHidden();
   await expect(editableHeading).not.toHaveAttribute("contenteditable", /.+/);
@@ -748,7 +780,7 @@ test("clicking a block element outside editing only selects and does not create 
   const blockCard = frame.locator('[data-editor-id="block-4"]');
   const { selectionOverlay, editingHint } = getHistoryControls(page);
 
-  await blockCard.click();
+  await blockCard.click({ position: { x: 12, y: 12 } });
 
   await expect(selectionOverlay).toBeVisible();
   await expect(editingHint).toBeHidden();
@@ -765,7 +797,7 @@ test("selected block can be moved by dragging the same selection overlay and kee
   const blockCard = frame.locator('[data-editor-id="block-4"]');
   const { selectionOverlay } = getHistoryControls(page);
 
-  await blockCard.click();
+  await blockCard.click({ position: { x: 12, y: 12 } });
   await expect(selectionOverlay).toBeVisible();
   await expect(page.getByTestId("block-manipulation-outline")).toHaveCount(0);
 
@@ -864,7 +896,7 @@ test("floating toolbar hides while dragging a selected element", async ({ page }
   const { selectionOverlay } = getHistoryControls(page);
   const { floatingToolbarAnchor } = getHeaderControls(page);
 
-  await blockCard.click();
+  await blockCard.click({ position: { x: 12, y: 12 } });
   await expect(selectionOverlay).toBeVisible();
   await expect(floatingToolbarAnchor).toBeVisible();
 
@@ -896,7 +928,7 @@ test("after dragging and clearing selection, clicking the same element selects i
   const stagePanel = page.getByTestId("stage-panel");
   const { selectionOverlay } = getHistoryControls(page);
 
-  await blockCard.click();
+  await blockCard.click({ position: { x: 12, y: 12 } });
   await expect(selectionOverlay).toBeVisible();
 
   const overlayBefore = await selectionOverlay.boundingBox();
@@ -917,7 +949,7 @@ test("after dragging and clearing selection, clicking the same element selects i
   await stagePanel.click({ position: { x: 12, y: 12 } });
   await expect(selectionOverlay).toBeHidden();
 
-  await blockCard.click();
+  await blockCard.click({ position: { x: 12, y: 12 } });
   await expect(selectionOverlay).toBeVisible();
 });
 
@@ -927,7 +959,7 @@ test("all four resize handles are visible for a selected element", async ({ page
   const frame = coverFrame(page);
   const blockCard = frame.locator('[data-editor-id="block-4"]');
 
-  await blockCard.click();
+  await blockCard.click({ position: { x: 12, y: 12 } });
 
   await expect(page.getByTestId("block-resize-handle-top-left")).toBeVisible();
   await expect(page.getByTestId("block-resize-handle-top-right")).toBeVisible();
