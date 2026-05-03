@@ -15,12 +15,33 @@ function getArg(name, fallback = "") {
   return process.argv[index + 1] ?? fallback;
 }
 
+function copyDirectory(sourceDir, targetDir) {
+  fs.rmSync(targetDir, { recursive: true, force: true });
+  fs.mkdirSync(targetDir, { recursive: true });
+
+  for (const entry of fs.readdirSync(sourceDir, { withFileTypes: true })) {
+    const sourcePath = path.join(sourceDir, entry.name);
+    const targetPath = path.join(targetDir, entry.name);
+
+    if (entry.isDirectory()) {
+      copyDirectory(sourcePath, targetPath);
+      continue;
+    }
+
+    fs.copyFileSync(sourcePath, targetPath);
+  }
+}
+
 function main() {
   const workspaceRoot = path.resolve(new URL("../..", import.meta.url).pathname);
   const outputRoot = path.resolve(process.cwd(), getArg("--out-dir", "generated/regression-deck"));
   const appOutputRoot = path.resolve(
     process.cwd(),
     getArg("--app-out-dir", "apps/web/public/generated/current")
+  );
+  const sourceRoot = path.resolve(
+    process.cwd(),
+    getArg("--source-out-dir", "generated/html-slides-editor-project-overview")
   );
 
   execFileSync(
@@ -43,6 +64,8 @@ function main() {
       stdio: "inherit",
     }
   );
+
+  copyDirectory(appOutputRoot, sourceRoot);
 }
 
 main();

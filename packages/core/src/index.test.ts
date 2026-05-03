@@ -10,10 +10,12 @@ import {
   captureElementLayoutStyleSnapshot,
   createHistoryState,
   ensureEditableSelectors,
+  insertSlideElement,
   invertSlideOperation,
   loadSlidesFromManifest,
   parseSlide,
   reduceHistory,
+  removeSlideElement,
   updateSlideElementLayout,
   updateSlideStyle,
   updateSlideText,
@@ -263,6 +265,121 @@ describe("slide operations", () => {
     expect(updatedSlide.elements.find((element) => element.id === "text-1")?.content).toBe(
       "  After  "
     );
+  });
+
+  test("applySlideOperation removes and restores elements through insert and remove operations", () => {
+    const originalSlide = parseSlide(
+      `<!DOCTYPE html>
+<html lang="en">
+  <body>
+    <div class="slide-container" data-slide-root="true">
+      <h1 data-editable="text">Before</h1>
+      <p data-editable="text">After</p>
+    </div>
+  </body>
+</html>`,
+      "slide-a"
+    );
+
+    const removeOperation = {
+      type: "element.remove" as const,
+      slideId: originalSlide.id,
+      elementId: "text-1",
+      parentElementId: "slide-root",
+      previousSiblingElementId: null,
+      nextSiblingElementId: "text-2",
+      html: '<h1 data-editable="text" data-editor-id="text-1">Before</h1>',
+      timestamp: 1,
+    };
+
+    const removedSlide = applySlideOperation(originalSlide, removeOperation);
+    const restoredSlide = applySlideOperation(removedSlide, invertSlideOperation(removeOperation));
+
+    expect(removedSlide.elements.find((element) => element.id === "text-1")).toBeUndefined();
+    expect(restoredSlide.elements.find((element) => element.id === "text-1")?.content).toBe(
+      "Before"
+    );
+    expect(restoredSlide.elements.map((element) => element.id)).toEqual(["text-1", "text-2"]);
+  });
+
+  test("invertSlideOperation pairs insert and remove operations", () => {
+    const operation = {
+      type: "element.insert" as const,
+      slideId: "slide-a",
+      elementId: "text-9",
+      parentElementId: "slide-root",
+      previousSiblingElementId: "text-1",
+      nextSiblingElementId: "text-2",
+      html: '<p data-editable="text" data-editor-id="text-9">Copied</p>',
+      timestamp: 2,
+    };
+
+    expect(invertSlideOperation(operation)).toMatchObject({
+      type: "element.remove",
+      elementId: "text-9",
+      html: '<p data-editable="text" data-editor-id="text-9">Copied</p>',
+    });
+    expect(invertSlideOperation(invertSlideOperation(operation))).toMatchObject(operation);
+  });
+
+  test("batch operations apply and undo as one history entry", () => {
+    const originalSlide = parseSlide(
+      `<!DOCTYPE html>
+<html lang="en">
+  <body>
+    <div class="slide-container" data-slide-root="true">
+      <h1 data-editable="text">One</h1>
+      <p data-editable="text">Two</p>
+    </div>
+  </body>
+</html>`,
+      "slide-a"
+    );
+
+    const operation = {
+      type: "operation.batch" as const,
+      slideId: originalSlide.id,
+      timestamp: 4,
+      operations: [
+        {
+          type: "element.remove" as const,
+          slideId: originalSlide.id,
+          elementId: "text-1",
+          parentElementId: "slide-root",
+          previousSiblingElementId: null,
+          nextSiblingElementId: "text-2",
+          html: '<h1 data-editable="text" data-editor-id="text-1">One</h1>',
+          timestamp: 4,
+        },
+        {
+          type: "text.update" as const,
+          slideId: originalSlide.id,
+          elementId: "text-2",
+          previousText: "Two",
+          nextText: "Updated",
+          timestamp: 4,
+        },
+      ],
+    };
+
+    const committedState = reduceHistory(createHistoryState([originalSlide]), {
+      type: "history.commit",
+      operation,
+    });
+    const updatedSlide = committedState.slides[0];
+
+    expect(committedState.undoStack).toHaveLength(1);
+    expect(updatedSlide?.elements.find((element) => element.id === "text-1")).toBeUndefined();
+    expect(updatedSlide?.elements.find((element) => element.id === "text-2")?.content).toBe(
+      "Updated"
+    );
+
+    const restoredState = reduceHistory(committedState, { type: "history.undo" });
+
+    expect(restoredState.slides[0]?.elements.map((element) => element.content)).toEqual([
+      "One",
+      "Two",
+    ]);
   });
 
   test("applySlideOperation updates the matching slide inline styles", () => {

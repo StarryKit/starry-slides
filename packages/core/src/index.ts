@@ -62,10 +62,43 @@ export interface ElementLayoutUpdateOperation {
   timestamp: number;
 }
 
-export type SlideOperation =
+export interface ElementInsertOperation {
+  type: "element.insert";
+  slideId: string;
+  elementId: string;
+  parentElementId: string | null;
+  previousSiblingElementId: string | null;
+  nextSiblingElementId: string | null;
+  html: string;
+  timestamp: number;
+}
+
+export interface ElementRemoveOperation {
+  type: "element.remove";
+  slideId: string;
+  elementId: string;
+  parentElementId: string | null;
+  previousSiblingElementId: string | null;
+  nextSiblingElementId: string | null;
+  html: string;
+  timestamp: number;
+}
+
+export type AtomicSlideOperation =
   | TextUpdateOperation
   | StyleUpdateOperation
-  | ElementLayoutUpdateOperation;
+  | ElementLayoutUpdateOperation
+  | ElementInsertOperation
+  | ElementRemoveOperation;
+
+export interface SlideBatchOperation {
+  type: "operation.batch";
+  slideId: string;
+  operations: AtomicSlideOperation[];
+  timestamp: number;
+}
+
+export type SlideOperation = AtomicSlideOperation | SlideBatchOperation;
 
 export interface HistoryState {
   slides: SlideModel[];
@@ -387,12 +420,194 @@ export function updateSlideElementLayout(
 ${doc.documentElement.outerHTML}`;
 }
 
+function findElementWithFallback(doc: Document, elementId: string | null): HTMLElement | null {
+  if (!elementId) {
+    return null;
+  }
+
+  return doc.querySelector<HTMLElement>(`[${SELECTOR_ATTR}="${elementId}"]`);
+}
+
+function findSlideRoot(doc: Document): HTMLElement | null {
+  return doc.querySelector<HTMLElement>(`[${SLIDE_ROOT_ATTR}]`);
+}
+
+export function createElementPlacement(
+  html: string,
+  elementId: string
+): Pick<
+  ElementInsertOperation,
+  "parentElementId" | "previousSiblingElementId" | "nextSiblingElementId"
+> | null {
+  if (typeof DOMParser === "undefined") {
+    return null;
+  }
+
+  const parser = new DOMParser();
+  const doc = parser.parseFromString(html, "text/html");
+  const node = findElementWithFallback(doc, elementId);
+
+  if (!node || !(node.parentElement instanceof HTMLElement)) {
+    return null;
+  }
+
+  const parentElementId = node.parentElement.getAttribute(SELECTOR_ATTR);
+  const previousSiblingElementId =
+    node.previousElementSibling instanceof HTMLElement
+      ? node.previousElementSibling.getAttribute(SELECTOR_ATTR)
+      : null;
+  const nextSiblingElementId =
+    node.nextElementSibling instanceof HTMLElement
+      ? node.nextElementSibling.getAttribute(SELECTOR_ATTR)
+      : null;
+
+  return {
+    parentElementId,
+    previousSiblingElementId,
+    nextSiblingElementId,
+  };
+}
+
+export function getSlideElementHtml(html: string, elementId: string): string | null {
+  if (typeof DOMParser === "undefined") {
+    return null;
+  }
+
+  const parser = new DOMParser();
+  const doc = parser.parseFromString(html, "text/html");
+  const node = findElementWithFallback(doc, elementId);
+
+  return node?.outerHTML ?? null;
+}
+
+export function updateSlideElementHtmlIds(
+  elementHtml: string,
+  idMap: Record<string, string>
+): string {
+  if (typeof DOMParser === "undefined") {
+    return elementHtml;
+  }
+
+  const parser = new DOMParser();
+  const doc = parser.parseFromString(`<template>${elementHtml}</template>`, "text/html");
+  const template = doc.querySelector("template");
+  const root = template?.content.firstElementChild;
+
+  if (!(root instanceof HTMLElement)) {
+    return elementHtml;
+  }
+
+  const nodes = [root, ...Array.from(root.querySelectorAll<HTMLElement>(`[${SELECTOR_ATTR}]`))];
+  for (const node of nodes) {
+    const currentId = node.getAttribute(SELECTOR_ATTR);
+    if (currentId && idMap[currentId]) {
+      node.setAttribute(SELECTOR_ATTR, idMap[currentId]);
+    }
+  }
+
+  return root.outerHTML;
+}
+
+export function createUniqueElementId(html: string, preferredId: string): string {
+  if (typeof DOMParser === "undefined") {
+    return preferredId;
+  }
+
+  const parser = new DOMParser();
+  const doc = parser.parseFromString(html, "text/html");
+  const existingIds = new Set(
+    Array.from(doc.querySelectorAll<HTMLElement>(`[${SELECTOR_ATTR}]`))
+      .map((node) => node.getAttribute(SELECTOR_ATTR))
+      .filter((value): value is string => Boolean(value))
+  );
+
+  if (!existingIds.has(preferredId)) {
+    return preferredId;
+  }
+
+  const match = preferredId.match(/^(.*?)(?:-(\d+))?$/);
+  const base = match?.[1] || preferredId;
+  let index = Number.parseInt(match?.[2] || "1", 10) + 1;
+
+  while (existingIds.has(`${base}-${index}`)) {
+    index += 1;
+  }
+
+  return `${base}-${index}`;
+}
+
+export function insertSlideElement(
+  html: string,
+  operation: Pick<
+    ElementInsertOperation,
+    "elementId" | "parentElementId" | "previousSiblingElementId" | "nextSiblingElementId" | "html"
+  >
+): string {
+  if (typeof DOMParser === "undefined") {
+    return html;
+  }
+
+  const parser = new DOMParser();
+  const doc = parser.parseFromString(html, "text/html");
+
+  if (findElementWithFallback(doc, operation.elementId)) {
+    return html;
+  }
+
+  const fragmentDoc = parser.parseFromString(`<template>${operation.html}</template>`, "text/html");
+  const template = fragmentDoc.querySelector("template");
+  const node = template?.content.firstElementChild;
+
+  if (!(node instanceof HTMLElement)) {
+    return html;
+  }
+
+  const parent =
+    findElementWithFallback(doc, operation.parentElementId) ?? findSlideRoot(doc) ?? doc.body;
+  const nextSibling = findElementWithFallback(doc, operation.nextSiblingElementId);
+  const previousSibling = findElementWithFallback(doc, operation.previousSiblingElementId);
+
+  if (nextSibling?.parentElement === parent) {
+    parent.insertBefore(doc.importNode(node, true), nextSibling);
+  } else if (previousSibling?.parentElement === parent) {
+    previousSibling.after(doc.importNode(node, true));
+  } else {
+    parent.appendChild(doc.importNode(node, true));
+  }
+
+  return `<!DOCTYPE html>
+${doc.documentElement.outerHTML}`;
+}
+
+export function removeSlideElement(html: string, elementId: string): string {
+  if (typeof DOMParser === "undefined") {
+    return html;
+  }
+
+  const parser = new DOMParser();
+  const doc = parser.parseFromString(html, "text/html");
+  const node = findElementWithFallback(doc, elementId);
+
+  if (!node) {
+    return html;
+  }
+
+  node.remove();
+  return `<!DOCTYPE html>
+${doc.documentElement.outerHTML}`;
+}
+
 export function applySlideOperation(slide: SlideModel, operation: SlideOperation): SlideModel {
   if (slide.id !== operation.slideId) {
     return slide;
   }
 
   switch (operation.type) {
+    case "operation.batch":
+      return operation.operations.reduce(
+        (currentSlide, childOperation) => applySlideOperation(currentSlide, childOperation),
+        slide
+      );
     case "text.update":
       return parseSlide(
         updateSlideText(slide.htmlSource, operation.elementId, operation.nextText),
@@ -413,11 +628,24 @@ export function applySlideOperation(slide: SlideModel, operation: SlideOperation
         updateSlideElementLayout(slide.htmlSource, operation.elementId, operation.nextStyle),
         slide.id
       );
+    case "element.insert":
+      return parseSlide(insertSlideElement(slide.htmlSource, operation), slide.id);
+    case "element.remove":
+      return parseSlide(removeSlideElement(slide.htmlSource, operation.elementId), slide.id);
   }
 }
 
 export function invertSlideOperation(operation: SlideOperation): SlideOperation {
   switch (operation.type) {
+    case "operation.batch":
+      return {
+        type: "operation.batch",
+        slideId: operation.slideId,
+        operations: operation.operations
+          .map((childOperation) => invertSlideOperation(childOperation) as AtomicSlideOperation)
+          .reverse(),
+        timestamp: operation.timestamp,
+      };
     case "text.update":
       return {
         ...operation,
@@ -435,6 +663,28 @@ export function invertSlideOperation(operation: SlideOperation): SlideOperation 
         ...operation,
         previousStyle: operation.nextStyle,
         nextStyle: operation.previousStyle,
+      };
+    case "element.insert":
+      return {
+        type: "element.remove",
+        slideId: operation.slideId,
+        elementId: operation.elementId,
+        parentElementId: operation.parentElementId,
+        previousSiblingElementId: operation.previousSiblingElementId,
+        nextSiblingElementId: operation.nextSiblingElementId,
+        html: operation.html,
+        timestamp: operation.timestamp,
+      };
+    case "element.remove":
+      return {
+        type: "element.insert",
+        slideId: operation.slideId,
+        elementId: operation.elementId,
+        parentElementId: operation.parentElementId,
+        previousSiblingElementId: operation.previousSiblingElementId,
+        nextSiblingElementId: operation.nextSiblingElementId,
+        html: operation.html,
+        timestamp: operation.timestamp,
       };
   }
 }

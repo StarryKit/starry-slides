@@ -12,7 +12,7 @@ interface UseSlideInspectorOptions {
   iframeRef: RefObject<HTMLIFrameElement | null>;
   activeSlide: SlideModel | undefined;
   selectedElement: EditableElement | undefined;
-  selectedElementId: string | null;
+  selectedElementIds: string[];
   scale: number;
   offsetX: number;
   offsetY: number;
@@ -31,7 +31,7 @@ function useSlideInspector({
   iframeRef,
   activeSlide,
   selectedElement,
-  selectedElementId,
+  selectedElementIds,
   scale,
   offsetX,
   offsetY,
@@ -53,8 +53,8 @@ function useSlideInspector({
     }
 
     const rootNode = doc.querySelector<HTMLElement>(activeSlide.rootSelector);
-    const inspectedNode = selectedElementId
-      ? doc.querySelector<HTMLElement>(`[data-editor-id="${selectedElementId}"]`)
+    const inspectedNode = selectedElementIds[0]
+      ? doc.querySelector<HTMLElement>(`[data-editor-id="${selectedElementIds[0]}"]`)
       : rootNode;
 
     if (!inspectedNode) {
@@ -66,25 +66,57 @@ function useSlideInspector({
 
     setInspectedStyles(collectCssProperties(inspectedNode));
 
-    if (!selectedElementId || !rootNode) {
+    if (!selectedElementIds.length || !rootNode) {
       setSelectedStageRect(null);
       setSelectionOverlay(null);
       return;
     }
 
-    const elementRect = inspectedNode.getBoundingClientRect();
     const rootRect = rootNode.getBoundingClientRect();
-    const stageRect = elementRectToStageRect(elementRect, rootRect, {
-      scale,
-      offsetX,
-      offsetY,
-      slideWidth,
-      slideHeight,
+    const elementRects = selectedElementIds
+      .map((elementId) => doc.querySelector<HTMLElement>(`[data-editor-id="${elementId}"]`))
+      .filter((node): node is HTMLElement => Boolean(node))
+      .map((node) =>
+        elementRectToStageRect(node.getBoundingClientRect(), rootRect, {
+          scale,
+          offsetX,
+          offsetY,
+          slideWidth,
+          slideHeight,
+        })
+      );
+
+    if (!elementRects.length) {
+      setSelectedStageRect(null);
+      setSelectionOverlay(null);
+      return;
+    }
+
+    const stageRect = elementRects.reduce((accumulator, rect) => {
+      const minX = Math.min(accumulator.x, rect.x);
+      const minY = Math.min(accumulator.y, rect.y);
+      const maxX = Math.max(accumulator.x + accumulator.width, rect.x + rect.width);
+      const maxY = Math.max(accumulator.y + accumulator.height, rect.y + rect.height);
+      return {
+        x: minX,
+        y: minY,
+        width: maxX - minX,
+        height: maxY - minY,
+      };
     });
 
     setSelectedStageRect(stageRect);
     setSelectionOverlay(stageRect);
-  }, [activeSlide, iframeRef, offsetX, offsetY, scale, selectedElementId, slideHeight, slideWidth]);
+  }, [
+    activeSlide,
+    iframeRef,
+    offsetX,
+    offsetY,
+    scale,
+    selectedElementIds,
+    slideHeight,
+    slideWidth,
+  ]);
 
   return {
     selectedStageRect,

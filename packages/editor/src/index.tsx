@@ -1,16 +1,22 @@
 import {
   DEFAULT_SLIDE_HEIGHT,
   DEFAULT_SLIDE_WIDTH,
+  type EditableElement,
+  type ElementRemoveOperation,
   type SlideModel,
+  type SlideOperation,
   type StyleUpdateOperation,
+  createElementPlacement,
+  getSlideElementHtml,
 } from "@html-slides-editor/core";
-import { useRef, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { EditorHeader } from "./components/editor-header";
 import { SidebarToolPanel } from "./components/sidebar-tool-panel";
 import { SlideSidebar } from "./components/slide-sidebar";
 import { StageCanvas } from "./components/stage-canvas";
 import { TooltipProvider } from "./components/ui/tooltip";
 import { useBlockManipulation } from "./hooks/use-block-manipulation";
+import { useEditorKeyboardShortcuts } from "./hooks/use-editor-keyboard-shortcuts";
 import { useIframeTextEditing } from "./hooks/use-iframe-text-editing";
 import { useSlideHistory } from "./hooks/use-slide-history";
 import { useSlideInspector } from "./hooks/use-slide-inspector";
@@ -62,21 +68,26 @@ function SlidesEditor({
   const thumbnails = useSlideThumbnails(slides);
   const {
     selectedElementId,
+    selectedElementIds,
     isEditingText,
     setSelectedElementId,
+    setSelectedElementIds,
     beginTextEditing,
     clearSelection,
   } = useIframeTextEditing({
     activeSlide,
     iframeRef,
-    canUndo: undoDepth > 0,
-    canRedo: redoDepth > 0,
     onCommitOperation: commitOperation,
-    onUndo: runUndo,
-    onRedo: runRedo,
   });
 
   const selectedElement = activeSlide?.elements.find((element) => element.id === selectedElementId);
+  const selectedElements = useMemo(
+    () =>
+      selectedElementIds
+        .map((elementId) => activeSlide?.elements.find((element) => element.id === elementId))
+        .filter((element): element is EditableElement => Boolean(element)),
+    [activeSlide?.elements, selectedElementIds]
+  );
   const resolvedDeckTitle = deckTitle?.trim() || "Untitled deck";
 
   const slideWidth = activeSlide?.width || DEFAULT_SLIDE_WIDTH;
@@ -91,7 +102,7 @@ function SlidesEditor({
       iframeRef,
       activeSlide,
       selectedElement,
-      selectedElementId,
+      selectedElementIds,
       scale,
       offsetX,
       offsetY,
@@ -160,14 +171,69 @@ function SlidesEditor({
     commitOperation(operation);
   }
 
+  function createRemoveOperation(elementId: string): ElementRemoveOperation | null {
+    if (!activeSlide) {
+      return null;
+    }
+
+    const html = getSlideElementHtml(activeSlide.htmlSource, elementId);
+    const placement = createElementPlacement(activeSlide.htmlSource, elementId);
+
+    if (!html || !placement) {
+      return null;
+    }
+
+    return {
+      type: "element.remove",
+      slideId: activeSlide.id,
+      elementId,
+      ...placement,
+      html,
+      timestamp: Date.now(),
+    };
+  }
+
   function deleteSelectedElement() {
-    if (!selectedElementId) {
+    if (!activeSlide || !selectedElementIds.length) {
       return;
     }
 
-    commitStyleChange("display", "none");
-    setSelectedElementId(null);
+    const operations = selectedElementIds
+      .map((elementId) => createRemoveOperation(elementId))
+      .filter((operation): operation is ElementRemoveOperation => Boolean(operation));
+
+    if (!operations.length) {
+      return;
+    }
+
+    commitOperation(
+      operations.length === 1
+        ? operations[0]
+        : {
+            type: "operation.batch",
+            slideId: activeSlide.id,
+            operations,
+            timestamp: Date.now(),
+          }
+    );
+    setSelectedElementIds([]);
   }
+
+  useEditorKeyboardShortcuts({
+    activeSlide,
+    selectedElements,
+    selectedElementIds,
+    iframeRef,
+    slideWidth,
+    slideHeight,
+    isEditingText,
+    canUndo: undoDepth > 0,
+    canRedo: redoDepth > 0,
+    onCommitOperation: commitOperation,
+    onSelectElementIds: setSelectedElementIds,
+    onUndo: runUndo,
+    onRedo: runRedo,
+  });
 
   if (!activeSlide) {
     return <div className="grid min-h-screen place-items-center">No slides loaded.</div>;
@@ -207,7 +273,11 @@ function SlidesEditor({
               scale={scale}
               selectionOverlay={unifiedSelectionOverlay}
               selectionLabel={unifiedSelectionLabel}
-              toolbarKey={selectedElementId ? `${activeSlide.id}:${selectedElementId}` : null}
+              toolbarKey={
+                selectedElementIds.length
+                  ? `${activeSlide.id}:${selectedElementIds.join(",")}`
+                  : null
+              }
               inspectedStyles={inspectedStyles}
               inlineStyleValues={selectedInlineStyleValues}
               isSelectionOverlayInteractive={isSelectionOverlayInteractive}
@@ -218,6 +288,10 @@ function SlidesEditor({
               selectionOverlayRef={selectionOverlayRef}
               isManipulating={isManipulating}
               onSelectionOverlayMouseDown={(event) => {
+                if (selectedElementIds.length !== 1) {
+                  return;
+                }
+
                 beginMove({
                   clientX: event.clientX,
                   clientY: event.clientY,
@@ -226,6 +300,10 @@ function SlidesEditor({
                 });
               }}
               onResizeHandleMouseDown={(corner, event) => {
+                if (selectedElementIds.length !== 1) {
+                  return;
+                }
+
                 beginResize(corner, {
                   clientX: event.clientX,
                   clientY: event.clientY,
@@ -234,6 +312,10 @@ function SlidesEditor({
                 });
               }}
               onRotateHandleMouseDown={(event) => {
+                if (selectedElementIds.length !== 1) {
+                  return;
+                }
+
                 beginRotate({
                   clientX: event.clientX,
                   clientY: event.clientY,
@@ -242,7 +324,11 @@ function SlidesEditor({
                 });
               }}
               onSelectionOverlayDoubleClick={() => {
-                if (selectedElement?.type === "text" && selectedElementId) {
+                if (
+                  selectedElementIds.length === 1 &&
+                  selectedElement?.type === "text" &&
+                  selectedElementId
+                ) {
                   beginTextEditing(selectedElementId);
                 }
               }}
