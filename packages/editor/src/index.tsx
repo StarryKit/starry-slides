@@ -86,7 +86,7 @@ function SlidesEditor({
     slideWidth,
     slideHeight,
   });
-  const { selectedStageRect, selectionOverlay, selectionLabel, inspectedLabel, inspectedStyles } =
+  const { selectedStageRect, selectionOverlay, selectionLabel, inspectedStyles } =
     useSlideInspector({
       iframeRef,
       activeSlide,
@@ -232,7 +232,6 @@ function SlidesEditor({
             }}
           />
           <SidebarToolPanel
-            inspectedLabel={inspectedLabel}
             inspectedStyles={inspectedStyles}
             isEditingText={isEditingText}
             isOpen={isInspectorOpen}

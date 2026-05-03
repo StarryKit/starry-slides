@@ -31,3 +31,4 @@ Update this directory whenever a change affects:
 | --- | --- | --- |
 | [0001](./0001-editing-pipeline-and-versioning.md) | Editing pipeline and versioning strategy | accepted |
 | [0002](./0002-package-boundaries-for-core-editor-and-app.md) | Package boundaries for core, editor, and app | accepted |
+| [0003](./0003-adopt-tailwind-shadcn-for-editor-ui.md) | Adopt Tailwind and shadcn/ui for editor UI | accepted |

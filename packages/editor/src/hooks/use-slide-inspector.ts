@@ -8,8 +8,6 @@ import type { RefObject } from "react";
 import { useEffect, useState } from "react";
 import { type CssPropertyRow, collectCssProperties } from "../lib/collect-css-properties";
 
-const DEFAULT_INSPECTED_LABEL = "slide root";
-
 interface UseSlideInspectorOptions {
   iframeRef: RefObject<HTMLIFrameElement | null>;
   activeSlide: SlideModel | undefined;
@@ -26,7 +24,6 @@ interface SlideInspectorResult {
   selectedStageRect: StageRect | null;
   selectionOverlay: StageRect | null;
   selectionLabel: string;
-  inspectedLabel: string;
   inspectedStyles: CssPropertyRow[];
 }
 
@@ -44,7 +41,6 @@ function useSlideInspector({
   const [selectedStageRect, setSelectedStageRect] = useState<StageRect | null>(null);
   const [selectionOverlay, setSelectionOverlay] = useState<StageRect | null>(null);
   const [inspectedStyles, setInspectedStyles] = useState<CssPropertyRow[]>([]);
-  const [inspectedLabel, setInspectedLabel] = useState(DEFAULT_INSPECTED_LABEL);
 
   useEffect(() => {
     const iframe = iframeRef.current;
@@ -53,7 +49,6 @@ function useSlideInspector({
       setSelectedStageRect(null);
       setSelectionOverlay(null);
       setInspectedStyles([]);
-      setInspectedLabel(DEFAULT_INSPECTED_LABEL);
       return;
     }
 
@@ -66,16 +61,10 @@ function useSlideInspector({
       setSelectedStageRect(null);
       setSelectionOverlay(null);
       setInspectedStyles([]);
-      setInspectedLabel(DEFAULT_INSPECTED_LABEL);
       return;
     }
 
     setInspectedStyles(collectCssProperties(inspectedNode));
-    setInspectedLabel(
-      selectedElement
-        ? `${selectedElement.type} · ${selectedElement.tagName}`
-        : rootNode?.tagName.toLowerCase() || DEFAULT_INSPECTED_LABEL
-    );
 
     if (!selectedElementId || !rootNode) {
       setSelectedStageRect(null);
@@ -95,23 +84,12 @@ function useSlideInspector({
 
     setSelectedStageRect(stageRect);
     setSelectionOverlay(stageRect);
-  }, [
-    activeSlide,
-    iframeRef,
-    offsetX,
-    offsetY,
-    scale,
-    selectedElement,
-    selectedElementId,
-    slideHeight,
-    slideWidth,
-  ]);
+  }, [activeSlide, iframeRef, offsetX, offsetY, scale, selectedElementId, slideHeight, slideWidth]);
 
   return {
     selectedStageRect,
     selectionOverlay,
     selectionLabel: selectedElement?.type || "element",
-    inspectedLabel,
     inspectedStyles,
   };
 }

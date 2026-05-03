@@ -1,8 +1,9 @@
+import { MessageSquare, SlidersHorizontal } from "lucide-react";
 import { useEffect, useId, useMemo, useState } from "react";
 import type { CssPropertyRow } from "../lib/collect-css-properties";
+import { ChatPanel } from "./chat-panel";
 
 interface SidebarToolPanelProps {
-  inspectedLabel: string;
   inspectedStyles: CssPropertyRow[];
   isEditingText: boolean;
   isOpen: boolean;
@@ -237,7 +238,6 @@ function commitDraftValue(
 }
 
 function SidebarToolPanel({
-  inspectedLabel,
   inspectedStyles,
   isEditingText,
   isOpen,
@@ -251,7 +251,7 @@ function SidebarToolPanel({
   const [draftValues, setDraftValues] = useState<Record<string, string>>({});
   const [customPropertyName, setCustomPropertyName] = useState("");
   const [customPropertyValue, setCustomPropertyValue] = useState("");
-  const [activeTab, setActiveTab] = useState<"edit" | "css">("edit");
+  const [activeTab, setActiveTab] = useState<"edit" | "chat">("edit");
   const isStyleEditingDisabled = !canEditStyles || isEditingText;
   const editingTargetId = selectedElementId ?? "slide-root";
 
@@ -391,18 +391,20 @@ function SidebarToolPanel({
             setActiveTab("edit");
           }}
         >
+          <SlidersHorizontal aria-hidden="true" />
           Edit
         </button>
         <button
           type="button"
           role="tab"
-          aria-selected={activeTab === "css"}
-          className={activeTab === "css" ? "hse-inspector-tab is-active" : "hse-inspector-tab"}
+          aria-selected={activeTab === "chat"}
+          className={activeTab === "chat" ? "hse-inspector-tab is-active" : "hse-inspector-tab"}
           onClick={() => {
-            setActiveTab("css");
+            setActiveTab("chat");
           }}
         >
-          CSS
+          <MessageSquare aria-hidden="true" />
+          Chat
         </button>
       </div>
 
@@ -529,22 +531,8 @@ function SidebarToolPanel({
           </div>
         </div>
       ) : (
-        <div className="hse-inspector-tab-panel" role="tabpanel">
-          <div className="hse-inspector-section">
-            <div className="hse-inspector-section-header">
-              <span className="hse-panel-kicker">Live inspection</span>
-              <strong>Computed CSS snapshot</strong>
-            </div>
-          </div>
-
-          <div className="hse-style-list">
-            {inspectedStyles.map((property) => (
-              <div className="hse-style-row" key={property.name}>
-                <span className="hse-style-name">{property.name}</span>
-                <code className="hse-style-value">{property.value}</code>
-              </div>
-            ))}
-          </div>
+        <div className="hse-inspector-tab-panel hse-chat-tab-panel" role="tabpanel">
+          <ChatPanel />
         </div>
       )}
     </section>

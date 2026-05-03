@@ -103,7 +103,13 @@ body,
 .hse-inspector-group-toggle:focus-visible,
 .hse-inspector-input:focus-visible,
 .hse-inspector-select:focus-visible,
-.hse-inspector-apply-button:focus-visible {
+.hse-inspector-apply-button:focus-visible,
+.hse-chat-suggestions button:focus-visible,
+.hse-chat-option:focus-visible,
+.hse-chat-use-prompt:focus-visible,
+.hse-chat-composer textarea:focus-visible,
+.hse-chat-tool-row button:focus-visible,
+.hse-chat-send-button:focus-visible {
   outline: 2px solid var(--hse-accent-outline);
   outline-offset: 2px;
 }
