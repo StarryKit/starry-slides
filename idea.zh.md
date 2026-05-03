@@ -324,7 +324,7 @@ function redo() {
 ## 项目结构
 
 ```
-starry-slide/
+starry-slides/
 ├── packages/
 │   ├── skill/                    # AI Skill（生成 HTML slides）
 │   │   ├── SKILL.md              # Skill 规范文档（给 AI 的 prompt）

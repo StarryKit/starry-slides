@@ -28,7 +28,7 @@ Current repository facts:
 - There is no `components.json`, Tailwind config, Tailwind CSS entrypoint, or
   shadcn/ui component directory today.
 - `packages/editor` currently exports `./styles.css`, and `apps/web` imports
-  `@starry-slide/editor/styles.css`.
+  `@starry-slides/editor/styles.css`.
 
 The new decision must avoid a half-migrated state where some editor surfaces are
 custom CSS while others are shadcn/Tailwind. That mixed model would make later
@@ -131,7 +131,7 @@ migration, but the intended result is:
 - `packages/editor` build emits `dist/index.js`, `dist/index.d.ts`, and
   `dist/index.css`.
 - `apps/web` can continue importing
-  `@starry-slide/editor/styles.css`.
+  `@starry-slides/editor/styles.css`.
 - Tailwind scanning includes `packages/editor/src/**/*.{ts,tsx}`.
 - The editor package does not rely on `apps/web` to scan editor source classes
   for production CSS.
@@ -223,7 +223,7 @@ in one unreviewable patch.
 - Generate only the shadcn primitives required by the first migration slice.
 - Configure the editor package build so `dist/index.css` contains compiled
   Tailwind output for editor source files.
-- Preserve `@starry-slide/editor/styles.css` as the CSS import path unless
+- Preserve `@starry-slides/editor/styles.css` as the CSS import path unless
   a later ADR changes package exports.
 
 Expected first shadcn components:
@@ -299,7 +299,7 @@ Expected AI Elements components:
 - [ ] `packages/editor` builds a compiled `dist/index.css` that includes
       Tailwind output for editor source files.
 - [ ] `apps/web` can render the editor by importing
-      `@starry-slide/editor` and `@starry-slide/editor/styles.css`.
+      `@starry-slides/editor` and `@starry-slides/editor/styles.css`.
 - [ ] New editor UI code uses Tailwind classes and shadcn/ui primitives instead
       of new handwritten component CSS.
 - [ ] No new `hse-*` selectors are introduced after Phase 1.

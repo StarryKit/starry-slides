@@ -1,4 +1,4 @@
-import type { StageRect } from "@starry-slide/core";
+import type { StageRect } from "@starry-slides/core";
 import type { CSSProperties, MouseEvent as ReactMouseEvent, RefObject } from "react";
 import type { CssPropertyRow } from "../lib/collect-css-properties";
 import { cn } from "../lib/utils";

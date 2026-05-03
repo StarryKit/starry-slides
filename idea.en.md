@@ -325,7 +325,7 @@ function redo() {
 ## Proposed Project Structure
 
 ```
-starry-slide/
+starry-slides/
 ├── packages/
 │   ├── skill/                    # AI skill for generating HTML slides
 │   │   ├── SKILL.md              # skill specification / prompt contract

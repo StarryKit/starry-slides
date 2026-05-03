@@ -1,4 +1,4 @@
-import type { StageRect } from "@starry-slide/core";
+import type { StageRect } from "@starry-slides/core";
 import {
   AlignCenter,
   AlignCenterHorizontal,

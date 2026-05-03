@@ -3,7 +3,7 @@ import {
   type SlideOperation,
   createHistoryState,
   reduceHistory,
-} from "@starry-slide/core";
+} from "@starry-slides/core";
 import { useEffect, useMemo, useReducer, useState } from "react";
 
 interface SlideHistoryResult {

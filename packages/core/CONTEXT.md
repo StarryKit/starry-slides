@@ -6,7 +6,7 @@
 editor.
 
 Shared roadmap lives in
-[ROADMAP.md](/Users/haichao/code/starry-slide/ROADMAP.md).
+[ROADMAP.md](/Users/haichao/code/starry-slides/ROADMAP.md).
 
 This package is the source of truth for:
 

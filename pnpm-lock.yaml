@@ -23,10 +23,10 @@ importers:
 
   apps/web:
     dependencies:
-      '@starry-slide/core':
+      '@starry-slides/core':
         specifier: workspace:*
         version: link:../../packages/core
-      '@starry-slide/editor':
+      '@starry-slides/editor':
         specifier: workspace:*
         version: link:../../packages/editor
       react:
@@ -66,7 +66,7 @@ importers:
 
   packages/editor:
     dependencies:
-      '@starry-slide/core':
+      '@starry-slides/core':
         specifier: workspace:*
         version: link:../core
       class-variance-authority:

@@ -1,4 +1,4 @@
-import type { SlideModel, TextUpdateOperation } from "@starry-slide/core";
+import type { SlideModel, TextUpdateOperation } from "@starry-slides/core";
 import type { Dispatch, RefObject, SetStateAction } from "react";
 import { useCallback, useEffect, useRef, useState } from "react";
 

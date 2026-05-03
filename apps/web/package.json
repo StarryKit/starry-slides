@@ -8,8 +8,8 @@
     "build": "tsc -b && vite build"
   },
   "dependencies": {
-    "@starry-slide/core": "workspace:*",
-    "@starry-slide/editor": "workspace:*",
+    "@starry-slides/core": "workspace:*",
+    "@starry-slides/editor": "workspace:*",
     "react": "^19.1.0",
     "react-dom": "^19.1.0"
   },

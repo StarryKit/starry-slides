@@ -21,7 +21,7 @@ This roadmap tracks project-level milestones.
 
 ## Issue Template
 
-Use [implementation-task.md](/Users/haichao/code/starry-slide/.github/ISSUE_TEMPLATE/implementation-task.md)
+Use [implementation-task.md](/Users/haichao/code/starry-slides/.github/ISSUE_TEMPLATE/implementation-task.md)
 for every implementation issue created from the roadmap.
 
 ## Milestones
