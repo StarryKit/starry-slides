@@ -1,6 +1,8 @@
-# HTML Slides Editor
+# Starry Slides
 
 A monorepo for generating and editing HTML slides without converting them into a proprietary document model.
+
+Previously known as **HTML Slides Editor**.
 
 Idea docs:
 
@@ -56,8 +58,8 @@ Optional example:
 
 ```bash
 pnpm generate:slides -- \
-  --topic "HTML Slides Editor" \
-  --summary "A starter deck with editable markers." \
+  --topic "Starry Slides" \
+  --summary "A starter deck with editable markers for Starry Slides." \
   --points "Problem|Approach|First milestone"
 ```
 

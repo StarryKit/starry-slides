@@ -1,4 +1,4 @@
-# HTML Slides Editor — Project Proposal
+# Starry Slides — Project Proposal
 
 ## Project Overview
 
@@ -325,7 +325,7 @@ function redo() {
 ## Proposed Project Structure
 
 ```
-html-slides-editor/
+starry-slides/
 ├── packages/
 │   ├── skill/                    # AI skill for generating HTML slides
 │   │   ├── SKILL.md              # skill specification / prompt contract

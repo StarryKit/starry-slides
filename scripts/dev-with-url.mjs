@@ -8,9 +8,9 @@ const child = spawn(
   [
     "--parallel",
     "--filter",
-    "@html-slides-editor/core",
+    "@starry-slides/core",
     "--filter",
-    "@html-slides-editor/editor",
+    "@starry-slides/editor",
     "--filter",
     "web",
     "dev",

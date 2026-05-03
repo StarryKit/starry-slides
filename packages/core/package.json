@@ -1,5 +1,5 @@
 {
-  "name": "@html-slides-editor/core",
+  "name": "@starry-slides/core",
   "version": "0.1.0",
   "private": true,
   "type": "module",

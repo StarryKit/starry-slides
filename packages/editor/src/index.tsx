@@ -3,7 +3,7 @@ import {
   DEFAULT_SLIDE_WIDTH,
   type SlideModel,
   type StyleUpdateOperation,
-} from "@html-slides-editor/core";
+} from "@starry-slides/core";
 import { useRef, useState } from "react";
 import { EditorHeader } from "./components/editor-header";
 import { SidebarToolPanel } from "./components/sidebar-tool-panel";

@@ -1,4 +1,4 @@
-import { SlidesEditor } from "@html-slides-editor/editor";
+import { SlidesEditor } from "@starry-slides/editor";
 import { useSlidesData } from "./use-slides-data";
 
 function StatusScreen({ title, body }: { title: string; body: string }) {

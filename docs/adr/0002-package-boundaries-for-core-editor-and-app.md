@@ -73,7 +73,7 @@ This decision does not:
 
 - [ ] `packages/core` exports manifest-driven slide import helpers without depending on React
 - [ ] `packages/core` owns shared history/document state transitions without depending on editor UI state
-- [ ] `packages/editor` no longer imports from `@html-slides-editor/react`
+- [ ] `packages/editor` no longer imports from `@starry-slides/react`
 - [ ] `packages/editor` consumes core history APIs instead of maintaining its own document history implementation
 - [ ] `apps/web` renders generated decks through the new boundaries
 - [ ] the workspace builds successfully after removing `packages/react`

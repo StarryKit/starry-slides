@@ -1,4 +1,4 @@
-import type { SlideModel } from "@html-slides-editor/core";
+import type { SlideModel } from "@starry-slides/core";
 import { toPng } from "html-to-image";
 
 const THUMBNAIL_DISPLAY_WIDTH = 224;
