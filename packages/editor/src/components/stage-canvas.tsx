@@ -22,6 +22,12 @@ interface StageCanvasProps {
   isEditingText: boolean;
   manipulationOverlay: {
     selectionBounds: StageRect;
+    snapGuides: Array<{
+      orientation: "vertical" | "horizontal";
+      start: { x: number; y: number };
+      end: { x: number; y: number };
+      variant: "alignment" | "spacing";
+    }>;
     resizeHandles: Array<{
       corner: ResizeHandleCorner;
       x: number;
@@ -171,6 +177,7 @@ function StageCanvas({
       {manipulationOverlay ? (
         <BlockManipulationOverlay
           selectionBounds={manipulationOverlay.selectionBounds}
+          snapGuides={manipulationOverlay.snapGuides}
           resizeHandles={manipulationOverlay.resizeHandles}
           rotationHandle={manipulationOverlay.rotationHandle}
           onResizeHandleMouseDown={onResizeHandleMouseDown}

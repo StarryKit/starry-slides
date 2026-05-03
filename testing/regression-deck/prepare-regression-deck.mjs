@@ -22,6 +22,10 @@ function main() {
     process.cwd(),
     getArg("--app-out-dir", "apps/web/public/generated/current")
   );
+  const sourceOutputRoot = path.resolve(
+    process.cwd(),
+    getArg("--source-out-dir", "generated/html-slides-editor-project-overview")
+  );
 
   execFileSync(
     "node",
@@ -43,6 +47,12 @@ function main() {
       stdio: "inherit",
     }
   );
+
+  if (sourceOutputRoot !== outputRoot && sourceOutputRoot !== appOutputRoot) {
+    fs.rmSync(sourceOutputRoot, { recursive: true, force: true });
+    fs.mkdirSync(sourceOutputRoot, { recursive: true });
+    fs.cpSync(outputRoot, sourceOutputRoot, { recursive: true });
+  }
 }
 
 main();

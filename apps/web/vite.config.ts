@@ -70,8 +70,13 @@ function createSaveGeneratedDeckPlugin() {
   }
 
   async function ensureBaselineDeck() {
+    const hasPublicDeck = await directoryExists(GENERATED_PUBLIC_DIR);
     const hasSourceDeck = await directoryExists(GENERATED_SOURCE_ROOT);
-    const baselineSource = hasSourceDeck ? GENERATED_SOURCE_ROOT : GENERATED_PUBLIC_DIR;
+    const baselineSource = hasPublicDeck
+      ? GENERATED_PUBLIC_DIR
+      : hasSourceDeck
+        ? GENERATED_SOURCE_ROOT
+        : GENERATED_PUBLIC_DIR;
     activeTargets = hasSourceDeck
       ? [GENERATED_PUBLIC_DIR, GENERATED_DIST_DIR, GENERATED_SOURCE_ROOT]
       : [GENERATED_PUBLIC_DIR, GENERATED_DIST_DIR];

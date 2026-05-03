@@ -66,6 +66,15 @@ async function getInlineStyle(locator: Locator, propertyName: string) {
   }, propertyName);
 }
 
+async function getRequiredBoundingBox(locator: Locator, label: string) {
+  const box = await locator.boundingBox();
+  if (!box) {
+    throw new Error(`Expected ${label} to have a bounding box.`);
+  }
+
+  return box;
+}
+
 async function getComputedStyleValue(locator: Locator, propertyName: string) {
   return locator.evaluate((node, name) => {
     return node.ownerDocument.defaultView?.getComputedStyle(node).getPropertyValue(name) ?? "";
@@ -1354,6 +1363,170 @@ test("selected text element can be moved by dragging the same selection overlay"
   expect(overlayAfter.x).toBeGreaterThan(overlayBefore.x + 25);
   expect(overlayAfter.y).toBeGreaterThan(overlayBefore.y + 12);
   await expect(page.getByTestId("selection-overlay")).toHaveCount(1);
+});
+
+test("dragging a selected element snaps its center to the slide center guide", async ({ page }) => {
+  await gotoEditor(page);
+
+  const frame = coverFrame(page);
+  const textElement = frame.locator('[data-editor-id="text-1"]');
+  const { selectionOverlay } = getHistoryControls(page);
+
+  await textElement.click();
+  await expect(selectionOverlay).toBeVisible();
+
+  const before = await getRequiredBoundingBox(textElement, "selected text before snapping");
+  const overlayBefore = await getRequiredBoundingBox(selectionOverlay, "selection overlay");
+  const iframeBox = await getRequiredBoundingBox(page.getByTestId("slide-iframe"), "slide iframe");
+  const slideCenterX = iframeBox.x + iframeBox.width / 2;
+  const start = {
+    x: overlayBefore.x + overlayBefore.width / 2,
+    y: overlayBefore.y + overlayBefore.height / 2,
+  };
+  const target = {
+    x: start.x + (slideCenterX - (before.x + before.width / 2)) + 5,
+    y: start.y + 34,
+  };
+
+  await page.mouse.move(start.x, start.y);
+  await page.mouse.down();
+  await page.mouse.move(target.x, target.y, { steps: 10 });
+
+  const slideCenterGuide = page.getByTestId("snap-guide-vertical").first();
+  await expect(slideCenterGuide).toBeVisible();
+  await expect
+    .poll(async () => {
+      const guideBox = await slideCenterGuide.boundingBox();
+      return guideBox?.height ?? 0;
+    })
+    .toBeGreaterThan(iframeBox.height - 8);
+  await expect
+    .poll(async () => {
+      const box = await textElement.boundingBox();
+      return box ? box.x + box.width / 2 : Number.NaN;
+    })
+    .toBeCloseTo(slideCenterX, 1);
+
+  await page.mouse.up();
+  await expect(page.getByTestId("snap-guide-vertical")).toHaveCount(0);
+
+  const after = await getRequiredBoundingBox(textElement, "selected text after snapping");
+  expect(after.x + after.width / 2).toBeCloseTo(slideCenterX, 1);
+
+  await page.keyboard.press(`${MODIFIER}+Z`);
+  await expect
+    .poll(async () => {
+      const box = await textElement.boundingBox();
+      return box ? box.x + box.width / 2 : Number.NaN;
+    })
+    .toBeCloseTo(before.x + before.width / 2, 1);
+});
+
+test("dragging a selected block snaps its edge to a sibling edge guide", async ({ page }) => {
+  await gotoEditor(page);
+
+  const frame = coverFrame(page);
+  const siblingBlock = frame.locator('[data-editor-id="block-7"]');
+  const movingBlock = frame.locator('[data-editor-id="block-10"]');
+  const { selectionOverlay } = getHistoryControls(page);
+
+  await movingBlock.click({ position: { x: 12, y: 12 } });
+  await expect(selectionOverlay).toBeVisible();
+
+  const siblingBefore = await getRequiredBoundingBox(siblingBlock, "sibling block");
+  const movingBefore = await getRequiredBoundingBox(movingBlock, "moving block before snapping");
+  const overlayBefore = await getRequiredBoundingBox(selectionOverlay, "selection overlay");
+  const siblingRightEdge = siblingBefore.x + siblingBefore.width;
+  const start = {
+    x: overlayBefore.x + overlayBefore.width / 2,
+    y: overlayBefore.y + overlayBefore.height / 2,
+  };
+  const target = {
+    x: start.x + (siblingRightEdge - movingBefore.x) + 5,
+    y: start.y,
+  };
+
+  await page.mouse.move(start.x, start.y);
+  await page.mouse.down();
+  await page.mouse.move(target.x, target.y, { steps: 8 });
+
+  await expect(page.getByTestId("snap-guide-vertical").first()).toBeVisible();
+  await expect
+    .poll(async () => {
+      const box = await movingBlock.boundingBox();
+      return box ? Math.abs(box.x - siblingRightEdge) : Number.NaN;
+    })
+    .toBeLessThanOrEqual(3);
+
+  await page.mouse.up();
+
+  const movingAfter = await getRequiredBoundingBox(movingBlock, "moving block after snapping");
+  expect(Math.abs(movingAfter.x - siblingRightEdge)).toBeLessThanOrEqual(3);
+});
+
+test("dragging a third block snaps to the spacing established by two sibling blocks", async ({
+  page,
+}) => {
+  await gotoEditor(page);
+  await page.getByLabel("Slide 11").click();
+
+  const frame = coverFrame(page);
+  const firstBlock = frame.locator('[data-editor-id="snap-card-a"]');
+  const secondBlock = frame.locator('[data-editor-id="snap-card-b"]');
+  const movingBlock = frame.locator('[data-editor-id="snap-card-c"]');
+  const { selectionOverlay } = getHistoryControls(page);
+
+  await expect(firstBlock).toBeVisible();
+  await expect(secondBlock).toBeVisible();
+  await expect(movingBlock).toBeVisible();
+  await movingBlock.locator(".snap-drag-surface").click();
+  await expect(selectionOverlay).toBeVisible();
+  await expect
+    .poll(async () => {
+      const [overlayBox, movingBox] = await Promise.all([
+        selectionOverlay.boundingBox(),
+        movingBlock.boundingBox(),
+      ]);
+      return overlayBox && movingBox ? Math.abs(overlayBox.width - movingBox.width) : Number.NaN;
+    })
+    .toBeLessThanOrEqual(3);
+
+  const firstBox = await getRequiredBoundingBox(firstBlock, "first spacing block");
+  const secondBox = await getRequiredBoundingBox(secondBlock, "second spacing block");
+  const movingBefore = await getRequiredBoundingBox(
+    movingBlock,
+    "moving block before spacing snap"
+  );
+  const overlayBefore = await getRequiredBoundingBox(selectionOverlay, "selection overlay");
+  const establishedGap = secondBox.x - (firstBox.x + firstBox.width);
+  const expectedLeft = secondBox.x + secondBox.width + establishedGap;
+  const start = {
+    x: overlayBefore.x + overlayBefore.width / 2,
+    y: overlayBefore.y + overlayBefore.height / 2,
+  };
+  const target = {
+    x: start.x + (expectedLeft - movingBefore.x),
+    y: start.y,
+  };
+
+  await page.mouse.move(start.x, start.y);
+  await page.mouse.down();
+  await page.mouse.move(target.x, target.y, { steps: 8 });
+
+  await expect(
+    page.locator('[data-testid="snap-guide-horizontal"][data-variant="spacing"]').first()
+  ).toBeVisible();
+  await expect
+    .poll(async () => {
+      const box = await movingBlock.boundingBox();
+      return box ? Math.abs(box.x - expectedLeft) : Number.NaN;
+    })
+    .toBeLessThanOrEqual(3);
+
+  await page.mouse.up();
+
+  const movingAfter = await getRequiredBoundingBox(movingBlock, "moving block after spacing snap");
+  expect(Math.abs(movingAfter.x - expectedLeft)).toBeLessThanOrEqual(3);
 });
 
 test("floating toolbar hides while dragging a selected element", async ({ page }) => {

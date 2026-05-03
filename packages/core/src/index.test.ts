@@ -786,7 +786,7 @@ describe("generated slide contract", () => {
     const secondSlide = parseSlide(secondSlideHtml, "generated-slide-2");
 
     expect(manifest.topic).toBe(regressionDeckConfig.topic);
-    expect(manifest.slides).toHaveLength(11);
+    expect(manifest.slides).toHaveLength(12);
 
     expect(firstSlide.id).toBe("generated-slide-1");
     expect(firstSlide.width).toBe(DEFAULT_SLIDE_WIDTH);

@@ -121,8 +121,9 @@ Current status inside Milestone 2:
   - move, resize, and rotate have initial implementation paths through the
     editor surface
   - direct movement and overlay behavior have regression coverage
-  - resize/rotate interaction coverage and snapping/alignment helpers are still
-    pending
+  - drag-time snap/alignment assistance is still pending and should be treated
+    as a Milestone 2 release feature
+  - resize/rotate interaction coverage is still pending
 - Product/release readiness:
   - `pnpm verify` is the expected pre-release gate
   - release notes, version boundary, and public packaging/deployment notes are
@@ -194,8 +195,9 @@ Features:
      - move, resize, and rotate have initial implementation paths wired into
        history and write-back
      - movement and single-overlay behavior are regression-tested
-     - resize/rotate regression depth, snapping, and alignment assistance are
-       still pending
+     - drag-time snap/alignment assistance is still pending and is part of the
+       Milestone 2 release scope
+     - resize/rotate regression depth is still pending
 
 3. Toolbar and property editing
    - After selecting an editable element, the editor should expose element-aware
@@ -217,13 +219,24 @@ Features:
      - both panel and toolbar paths have E2E coverage for core release flows
 
 4. Layout assistance
-   - Layout editing should eventually include assistance behaviors that make
-     direct manipulation more predictable and precise.
-   - Candidate helpers include snapping, alignment assistance, spatial guides,
-     and constraints that reduce accidental drift during drag or resize flows.
-   - Full layout assistance is not required for the Milestone 2 standalone
-     release, but the design should leave room for these features as part of
-     the layout-editing direction.
+   - Layout editing should include a drag-time snap system before the Milestone
+     2 standalone release.
+   - The first snap system should make direct block manipulation feel precise
+     without changing the HTML-first write-back model.
+   - Required snap targets:
+     - slide edges and slide center lines
+     - selected element edges and center lines
+     - sibling editable element edges and center lines
+   - Required interaction behavior:
+     - apply snapping only while dragging or resizing, within a small threshold
+     - show spatial guide lines for the active snap target
+     - commit only the final snapped layout value through the existing
+       `element.layout.update` history operation
+     - avoid creating extra history entries while the user is still dragging
+   - Nice-to-have helpers, if they fit the release schedule:
+     - equal-spacing hints between sibling elements
+     - modifier-key override to temporarily disable snapping
+     - configurable snap threshold
 
 5. Editing-only release preparation
    - Freeze the Milestone 2 release boundary around editor functionality.
@@ -244,6 +257,8 @@ Exit criteria:
   editor functionality.
 - Block manipulation UI reaches a single clear selection model without
   redundant overlays or ambiguous affordances.
+- Dragging and resizing blocks includes a visible snap/alignment system for
+  common slide and sibling-element alignment targets.
 - Each feature slice is verified with the appropriate mix of unit tests and E2E
   regression tests.
 - The editing-only release explicitly excludes Agent functionality and can be
@@ -260,12 +275,20 @@ Remaining Milestone 2 work before release:
    - Document how to generate a deck, open the editor, edit slides, and rely on
      local write-back.
    - Make clear that Agent/chat actions are not active in this release.
-3. Decide whether resize/rotate E2E coverage blocks the release.
+3. Implement drag-time snap/alignment assistance for block manipulation.
+   - Snap to slide edges, slide center lines, and sibling editable element
+     edges/centers.
+   - Show guide lines for active snap targets during drag/resize.
+   - Commit the final snapped layout through the existing layout history
+     operation without recording intermediate drag frames.
+   - Add E2E coverage for at least one slide-center snap and one sibling-edge
+     snap.
+4. Decide whether resize/rotate E2E coverage blocks the release.
    - Movement and overlay behavior are already covered.
    - If resize/rotate is considered release-critical, add targeted E2E tests
      before tagging the Milestone 2 release.
    - If not, track deeper manipulation coverage as follow-up work.
-4. Do a final UX pass on the editing-only surface.
+5. Do a final UX pass on the editing-only surface.
    - Confirm empty/loading/error states.
    - Confirm toolbar and advanced panel copy does not imply active AI behavior.
    - Confirm the static chat panel is hidden, labelled as preview-only, or

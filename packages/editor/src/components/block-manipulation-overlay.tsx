@@ -14,8 +14,16 @@ interface Rect {
   height: number;
 }
 
+interface SnapGuide {
+  orientation: "vertical" | "horizontal";
+  start: Point;
+  end: Point;
+  variant: "alignment" | "spacing";
+}
+
 interface BlockManipulationOverlayProps {
   selectionBounds: Rect;
+  snapGuides: SnapGuide[];
   resizeHandles: Array<{
     corner: ResizeHandleCorner;
     x: number;
@@ -31,6 +39,7 @@ interface BlockManipulationOverlayProps {
 
 function BlockManipulationOverlay({
   selectionBounds: _selectionBounds,
+  snapGuides,
   resizeHandles,
   rotationHandle,
   onResizeHandleMouseDown,
@@ -41,6 +50,38 @@ function BlockManipulationOverlay({
 
   return (
     <>
+      {snapGuides.map((guide, index) => {
+        const lineWidth = guide.variant === "spacing" ? "2px" : "1px";
+        return (
+          <div
+            key={`${guide.orientation}-${guide.start.x}-${guide.start.y}-${guide.end.x}-${guide.end.y}-${guide.variant}-${index}`}
+            className="pointer-events-none absolute z-[4] border-primary"
+            data-testid={`snap-guide-${guide.orientation}`}
+            data-variant={guide.variant}
+            style={
+              guide.orientation === "vertical"
+                ? {
+                    left: `${guide.start.x}px`,
+                    top: `${Math.min(guide.start.y, guide.end.y)}px`,
+                    width: "0",
+                    height: `${Math.max(Math.abs(guide.end.y - guide.start.y), 32)}px`,
+                    borderLeftWidth: lineWidth,
+                    borderLeftStyle: "solid",
+                    opacity: guide.variant === "spacing" ? 0.9 : 0.82,
+                  }
+                : {
+                    left: `${Math.min(guide.start.x, guide.end.x)}px`,
+                    top: `${guide.start.y}px`,
+                    width: `${Math.max(Math.abs(guide.end.x - guide.start.x), 32)}px`,
+                    height: "0",
+                    borderTopWidth: lineWidth,
+                    borderTopStyle: "solid",
+                    opacity: guide.variant === "spacing" ? 0.9 : 0.82,
+                  }
+            }
+          />
+        );
+      })}
       <button
         type="button"
         className={`${handleClassName} cursor-alias`}
