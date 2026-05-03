@@ -1,9 +1,9 @@
 import {
   DEFAULT_SLIDE_HEIGHT,
   DEFAULT_SLIDE_WIDTH,
-  getSlideInlineStyleValue,
   type SlideModel,
   type StyleUpdateOperation,
+  getSlideInlineStyleValue,
 } from "@starry-slides/core";
 import { useRef, useState } from "react";
 import { EditorHeader } from "./components/editor-header";

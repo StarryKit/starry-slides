@@ -1,15 +1,15 @@
 import {
   DEFAULT_SLIDE_HEIGHT,
   DEFAULT_SLIDE_WIDTH,
+  type EditableElement,
+  type EditableType,
   SELECTOR_ATTR,
   SLIDE_ROOT_ATTR,
+  type SlideModel,
   createElementId,
   getSlideElementSelector,
   normalizeSlideId,
   parseDimension,
-  type EditableElement,
-  type EditableType,
-  type SlideModel,
 } from "./slide-contract";
 
 function parseHtmlDocument(html: string): Document | null {
@@ -109,10 +109,7 @@ export function parseSlide(html: string, slideId = "slide-1"): SlideModel {
   const rootSelector = root?.getAttribute(SELECTOR_ATTR)
     ? `[${SELECTOR_ATTR}="${root.getAttribute(SELECTOR_ATTR)}"]`
     : `[${SLIDE_ROOT_ATTR}]`;
-  const width = parseDimension(
-    root?.getAttribute("data-slide-width") ?? null,
-    DEFAULT_SLIDE_WIDTH
-  );
+  const width = parseDimension(root?.getAttribute("data-slide-width") ?? null, DEFAULT_SLIDE_WIDTH);
   const height = parseDimension(
     root?.getAttribute("data-slide-height") ?? null,
     DEFAULT_SLIDE_HEIGHT

@@ -84,10 +84,9 @@ describe("history reducer", () => {
     );
     const undoneState = reduceHistory(committedState, { type: "history.undo" });
     const redoneState = reduceHistory(undoneState, { type: "history.redo" });
-    const fullyUndoneState = reduceHistory(
-      reduceHistory(redoneState, { type: "history.undo" }),
-      { type: "history.undo" }
-    );
+    const fullyUndoneState = reduceHistory(reduceHistory(redoneState, { type: "history.undo" }), {
+      type: "history.undo",
+    });
 
     expect(undoneState.undoStack).toEqual([firstOperation]);
     expect(undoneState.redoStack).toEqual([secondOperation]);

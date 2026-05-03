@@ -1,9 +1,9 @@
 import {
   SELECTOR_ATTR,
-  getSlideElementSelector,
-  querySlideElement,
   type SlideModel,
   type TextUpdateOperation,
+  getSlideElementSelector,
+  querySlideElement,
 } from "@starry-slides/core";
 import type { Dispatch, RefObject, SetStateAction } from "react";
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -208,10 +208,7 @@ function useIframeTextEditing({
       const target = event.target;
       if (!(target instanceof Element)) {
         if (textEditingRef.current) {
-          const editingNode = querySlideElement<HTMLElement>(
-            doc,
-            textEditingRef.current.elementId
-          );
+          const editingNode = querySlideElement<HTMLElement>(doc, textEditingRef.current.elementId);
           if (editingNode) {
             commitNodeText(editingNode);
             return;

@@ -2,13 +2,13 @@ import {
   type EditableElement,
   type ElementLayoutStyleSnapshot,
   type ElementLayoutUpdateOperation,
-  composeTransform,
-  parseTransformParts,
   type SlideModel,
   type StageGeometry,
   type StageRect,
   captureElementLayoutStyleSnapshot,
+  composeTransform,
   elementRectToStageRect,
+  parseTransformParts,
   querySlideElement,
 } from "@starry-slides/core";
 import type { RefObject } from "react";
@@ -888,7 +888,9 @@ function findSnapCandidate(
       }
 
       const effectiveDistance =
-        target.kind === "spacing" ? Math.max(0, distance - SPACING_SNAP_DISTANCE_BONUS_PX) : distance;
+        target.kind === "spacing"
+          ? Math.max(0, distance - SPACING_SNAP_DISTANCE_BONUS_PX)
+          : distance;
       const candidatePriority = effectiveDistance * 100 + target.priority;
       const bestPriority = bestCandidate
         ? getSnapCandidatePriority(bestCandidate)

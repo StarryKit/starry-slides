@@ -1,11 +1,11 @@
-import { parseSlide, querySlideElement } from "./slide-document";
-import type { SlideModel } from "./slide-contract";
 import {
   ELEMENT_LAYOUT_STYLE_KEYS,
+  type ElementLayoutStyleSnapshot,
   composeTransform,
   parseTransformParts,
-  type ElementLayoutStyleSnapshot,
 } from "./layout";
+import type { SlideModel } from "./slide-contract";
+import { parseSlide, querySlideElement } from "./slide-document";
 
 export interface TextUpdateOperation {
   type: "text.update";

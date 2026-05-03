@@ -1,5 +1,5 @@
-import { parseSlide } from "./slide-document";
 import type { ImportedSlideDeck, SlideDeckManifest, SlideModel } from "./slide-contract";
+import { parseSlide } from "./slide-document";
 
 export interface LoadSlidesFromManifestOptions {
   manifestUrl: string;

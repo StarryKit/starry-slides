@@ -1,5 +1,5 @@
-import { applySlideOperation, invertSlideOperation, type SlideOperation } from "./slide-operations";
 import type { SlideModel } from "./slide-contract";
+import { type SlideOperation, applySlideOperation, invertSlideOperation } from "./slide-operations";
 
 export interface HistoryState {
   slides: SlideModel[];

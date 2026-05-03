@@ -1393,7 +1393,83 @@ function buildCoverageSlide() {
   );
 }
 
-function buildSnapSpacingSlide() {
+function buildSnapCenterSlide() {
+  return wrapHtml(
+    `${baseStyles("linear-gradient(135deg, #f8fafc 0%, #eef2ff 48%, #f8fafc 100%)", "#172033")}
+    .stage-label {
+      position: absolute;
+      left: 96px;
+      top: 72px;
+      display: grid;
+      gap: 14px;
+    }
+    .stage-label .kicker {
+      width: fit-content;
+      background: rgba(127, 29, 29, 0.08);
+      color: #8a3b12;
+    }
+    .stage-label h1 {
+      max-width: 920px;
+      font-size: 62px;
+      line-height: 1;
+      letter-spacing: -0.03em;
+    }
+    .stage-label p {
+      max-width: 720px;
+      font-size: 24px;
+      line-height: 1.45;
+      color: rgba(23, 32, 51, 0.68);
+    }
+    .center-probe {
+      position: absolute;
+      left: 1260px;
+      top: 520px;
+      width: 260px;
+      height: 180px;
+      border-radius: 20px;
+      padding: 24px;
+      background: rgba(255, 247, 237, 0.92);
+      border: 1px solid rgba(74, 85, 104, 0.16);
+      box-shadow: 0 22px 46px rgba(30, 41, 59, 0.13);
+    }
+    .snap-drag-surface {
+      position: absolute;
+      right: 18px;
+      bottom: 18px;
+      width: 76px;
+      height: 34px;
+      border-radius: 999px;
+      background: rgba(15, 23, 42, 0.08);
+      border: 1px solid rgba(15, 23, 42, 0.1);
+    }
+    .center-probe strong {
+      display: block;
+      margin-bottom: 12px;
+      font-size: 28px;
+      color: #172033;
+    }
+    .center-probe span {
+      display: block;
+      font-size: 20px;
+      line-height: 1.35;
+      color: rgba(23, 32, 51, 0.66);
+    }`,
+    `
+      <section class="stage-label">
+        <div class="kicker" data-editable="text">Snap center fixture</div>
+        <h1 data-editable="text">One isolated block for slide center snapping</h1>
+        <p data-editable="text">This page keeps the slide center test clean: one editable block, no sibling targets, and a predictable drag surface.</p>
+      </section>
+      <article class="center-probe" data-editable="block" data-editor-id="snap-center-probe">
+        <strong data-editable="text">Center probe</strong>
+        <span data-editable="text">Use this block for slide center snaps.</span>
+        <div class="snap-drag-surface"></div>
+      </article>
+    `
+  );
+}
+
+function buildSnapSiblingSlide() {
   return wrapHtml(
     `${baseStyles("linear-gradient(135deg, #f8fafc 0%, #eef2ff 48%, #f8fafc 100%)", "#172033")}
     .stage-label {
@@ -1464,16 +1540,12 @@ function buildSnapSpacingSlide() {
       left: 1220px;
       top: 470px;
     }
-    .center-probe {
-      left: 1260px;
-      top: 770px;
-      background: rgba(255, 247, 237, 0.92);
     }`,
     `
       <section class="stage-label">
-        <div class="kicker" data-editable="text">Snap fixture</div>
-        <h1 data-editable="text">A clean slide for alignment and spacing behavior</h1>
-        <p data-editable="text">The three top cards are intentionally identical. Drag the right card near the empty slot after the first two cards to test equal spacing.</p>
+        <div class="kicker" data-editable="text">Snap sibling fixture</div>
+        <h1 data-editable="text">Three isolated cards for sibling edge and equal spacing snaps</h1>
+        <p data-editable="text">The cards are intentionally identical. Drag Card C to the sibling edge or empty equal-spacing slot after Card B.</p>
       </section>
       <article class="snap-card snap-a" data-editable="block" data-editor-id="snap-card-a">
         <strong data-editable="text">Card A</strong>
@@ -1488,11 +1560,6 @@ function buildSnapSpacingSlide() {
       <article class="snap-card snap-c" data-editable="block" data-editor-id="snap-card-c">
         <strong data-editable="text">Card C</strong>
         <span data-editable="text">Drag this card</span>
-        <div class="snap-drag-surface"></div>
-      </article>
-      <article class="snap-card center-probe" data-editable="block" data-editor-id="snap-center-probe">
-        <strong data-editable="text">Center probe</strong>
-        <span data-editable="text">Use this block for slide center snaps.</span>
         <div class="snap-drag-surface"></div>
       </article>
     `
@@ -1644,12 +1711,17 @@ const slides = [
     html: buildCoverageSlide(),
   },
   {
-    file: "11-snap-spacing.html",
-    title: "Snap and spacing fixture",
-    html: buildSnapSpacingSlide(),
+    file: "11-snap-center.html",
+    title: "Snap center fixture",
+    html: buildSnapCenterSlide(),
   },
   {
-    file: "12-closing.html",
+    file: "12-snap-siblings.html",
+    title: "Snap sibling fixture",
+    html: buildSnapSiblingSlide(),
+  },
+  {
+    file: "13-closing.html",
     title: "Closing and next steps",
     html: buildClosingSlide(),
   },

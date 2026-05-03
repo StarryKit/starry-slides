@@ -90,7 +90,11 @@ function roundNumber(value: number): number {
   return Math.round(value * 100) / 100;
 }
 
-export function composeTransform(translateX: number, translateY: number, rotate: number): string | null {
+export function composeTransform(
+  translateX: number,
+  translateY: number,
+  rotate: number
+): string | null {
   const parts: string[] = [];
 
   if (Math.abs(translateX) > 0.01 || Math.abs(translateY) > 0.01) {

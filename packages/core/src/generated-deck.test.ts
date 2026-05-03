@@ -121,13 +121,14 @@ describe("generated deck import", () => {
     const secondSlide = parseSlide(secondSlideHtml, "generated-slide-2");
 
     expect(manifest.topic).toBe(regressionDeckConfig.topic);
-    expect(manifest.slides).toHaveLength(12);
+    expect(manifest.slides).toHaveLength(13);
     expect(firstSlide.id).toBe("generated-slide-1");
     expect(firstSlide.width).toBe(DEFAULT_SLIDE_WIDTH);
     expect(firstSlide.height).toBe(DEFAULT_SLIDE_HEIGHT);
     expect(firstSlide.rootSelector).toBe('[data-editor-id="slide-root"]');
-    expect(firstSlide.elements.some((element) => element.content === regressionDeckConfig.heroKicker))
-      .toBe(true);
+    expect(
+      firstSlide.elements.some((element) => element.content === regressionDeckConfig.heroKicker)
+    ).toBe(true);
     expect(firstSlide.elements.some((element) => element.tagName === "div")).toBe(true);
     expect(secondSlide.elements.some((element) => element.type === "block")).toBe(true);
     expect(

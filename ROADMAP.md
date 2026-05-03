@@ -283,11 +283,11 @@ Remaining Milestone 2 work before release:
      operation without recording intermediate drag frames.
    - Add E2E coverage for at least one slide-center snap and one sibling-edge
      snap.
-   - Known follow-up: stabilize the Snap E2E tests for slide-center guides and
-     equal-spacing guides after the Starry Slides package/core refactor. Manual
-     testing did not show a product issue, but the current Playwright drag
-     trajectories can miss the intended guide window or assert too tightly on
-     sub-pixel placement.
+   - E2E fixture stabilization approach: use dedicated generated slides for
+     targeted interaction coverage. Slide-center snapping is tested on a clean
+     one-block slide, while sibling-edge and equal-spacing snapping are tested
+     on a separate three-block slide. This keeps Playwright assertions away
+     from unrelated deck content and reduces false failures from busy layouts.
 4. Decide whether resize/rotate E2E coverage blocks the release.
    - Movement and overlay behavior are already covered.
    - If resize/rotate is considered release-critical, add targeted E2E tests

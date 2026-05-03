@@ -1,8 +1,4 @@
-import {
-  composeTransform,
-  parseTransformParts,
-  type StageRect,
-} from "@starry-slides/core";
+import { type StageRect, composeTransform, parseTransformParts } from "@starry-slides/core";
 import {
   AlignCenter,
   AlignCenterHorizontal,

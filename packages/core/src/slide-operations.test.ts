@@ -224,8 +224,10 @@ describe("slide operations", () => {
     };
 
     expect(
-      applySlideOperation(applySlideOperation(originalSlide, textOperation), invertSlideOperation(textOperation))
-        .htmlSource
+      applySlideOperation(
+        applySlideOperation(originalSlide, textOperation),
+        invertSlideOperation(textOperation)
+      ).htmlSource
     ).toBe(originalSlide.htmlSource);
     expect(invertSlideOperation(styleOperation)).toMatchObject({
       previousValue: "72px",
