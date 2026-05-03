@@ -3,6 +3,7 @@ import {
   type SlideModel,
   type StageRect,
   elementRectToStageRect,
+  querySlideElement,
 } from "@starry-slides/core";
 import type { RefObject } from "react";
 import { useEffect, useState } from "react";
@@ -54,7 +55,7 @@ function useSlideInspector({
 
     const rootNode = doc.querySelector<HTMLElement>(activeSlide.rootSelector);
     const inspectedNode = selectedElementId
-      ? doc.querySelector<HTMLElement>(`[data-editor-id="${selectedElementId}"]`)
+      ? querySlideElement<HTMLElement>(doc, selectedElementId)
       : rootNode;
 
     if (!inspectedNode) {

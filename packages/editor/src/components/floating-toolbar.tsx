@@ -1,4 +1,8 @@
-import type { StageRect } from "@starry-slides/core";
+import {
+  composeTransform,
+  parseTransformParts,
+  type StageRect,
+} from "@starry-slides/core";
 import {
   AlignCenter,
   AlignCenterHorizontal,
@@ -37,7 +41,6 @@ import {
   FONT_FAMILY_OPTIONS,
   FONT_SIZE_OPTIONS,
   type TextAlign,
-  composeTransform,
   getColorInputValue,
   getFontFamilyLabel,
   getStyleValue,
@@ -45,7 +48,6 @@ import {
   isFontFamilySelected,
   parsePixelValue,
   parseTextDecorationLines,
-  parseTransformParts,
 } from "../lib/style-controls";
 import { cn } from "../lib/utils";
 import { ColorPicker } from "./color-picker";
@@ -312,7 +314,7 @@ function FloatingToolbar({
         transformParts.translateX + deltaX,
         transformParts.translateY + deltaY,
         transformParts.rotate
-      )
+      ) ?? ""
     );
   }
 

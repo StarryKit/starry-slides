@@ -2,10 +2,13 @@ import {
   type EditableElement,
   type ElementLayoutStyleSnapshot,
   type ElementLayoutUpdateOperation,
+  composeTransform,
+  parseTransformParts,
   type SlideModel,
   type StageGeometry,
   type StageRect,
   captureElementLayoutStyleSnapshot,
+  querySlideElement,
 } from "@starry-slides/core";
 import type { RefObject } from "react";
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -72,34 +75,6 @@ function clampSize(value: number): number {
 
 function clampStageSize(value: number, scale: number): number {
   return Math.max(value, 48 * scale);
-}
-
-function parseTransformParts(transformValue: string | null | undefined) {
-  const rawValue = transformValue || "";
-  const translateMatch = rawValue.match(/translate\(([-\d.]+)px,\s*([-\d.]+)px\)/i);
-  const rotateMatch = rawValue.match(/rotate\(([-\d.]+)deg\)/i);
-
-  return {
-    translateX: translateMatch ? Number.parseFloat(translateMatch[1] || "0") || 0 : 0,
-    translateY: translateMatch ? Number.parseFloat(translateMatch[2] || "0") || 0 : 0,
-    rotate: rotateMatch ? Number.parseFloat(rotateMatch[1] || "0") || 0 : 0,
-  };
-}
-
-function composeTransform(translateX: number, translateY: number, rotate: number): string | null {
-  const parts: string[] = [];
-
-  if (Math.abs(translateX) > 0.01 || Math.abs(translateY) > 0.01) {
-    parts.push(
-      `translate(${Math.round(translateX * 100) / 100}px, ${Math.round(translateY * 100) / 100}px)`
-    );
-  }
-
-  if (Math.abs(rotate) > 0.01) {
-    parts.push(`rotate(${Math.round(rotate * 100) / 100}deg)`);
-  }
-
-  return parts.length ? parts.join(" ") : null;
 }
 
 function isLayoutEditable(element: EditableElement | undefined): boolean {
@@ -230,7 +205,7 @@ function useBlockManipulation({
       }
 
       const rootNode = doc.querySelector<HTMLElement>(activeSlide.rootSelector);
-      const targetNode = doc.querySelector<HTMLElement>(`[data-editor-id="${selectedElementId}"]`);
+      const targetNode = querySlideElement<HTMLElement>(doc, selectedElementId);
       if (!rootNode || !targetNode) {
         return;
       }

@@ -1,4 +1,10 @@
-import type { SlideModel, TextUpdateOperation } from "@starry-slides/core";
+import {
+  SELECTOR_ATTR,
+  getSlideElementSelector,
+  querySlideElement,
+  type SlideModel,
+  type TextUpdateOperation,
+} from "@starry-slides/core";
 import type { Dispatch, RefObject, SetStateAction } from "react";
 import { useCallback, useEffect, useRef, useState } from "react";
 
@@ -69,7 +75,7 @@ function useIframeTextEditing({
       }
 
       const doc = iframeRef.current?.contentDocument;
-      const node = doc?.querySelector<HTMLElement>(`[data-editor-id="${elementId}"]`);
+      const node = doc ? querySlideElement<HTMLElement>(doc, elementId) : null;
       if (!node || node.getAttribute("data-editable") !== "text") {
         return;
       }
@@ -123,9 +129,7 @@ function useIframeTextEditing({
     const editing = textEditingRef.current;
 
     if (editing && doc) {
-      const editableNode = doc.querySelector<HTMLElement>(
-        `[data-editor-id="${editing.elementId}"]`
-      );
+      const editableNode = querySlideElement<HTMLElement>(doc, editing.elementId);
 
       if (editableNode) {
         editableNode.textContent = editing.initialText;
@@ -192,7 +196,7 @@ function useIframeTextEditing({
     }
 
     const commitNodeText = (node: HTMLElement) => {
-      const elementId = node.getAttribute("data-editor-id");
+      const elementId = node.getAttribute(SELECTOR_ATTR);
       if (!elementId) {
         return;
       }
@@ -204,8 +208,9 @@ function useIframeTextEditing({
       const target = event.target;
       if (!(target instanceof Element)) {
         if (textEditingRef.current) {
-          const editingNode = doc.querySelector<HTMLElement>(
-            `[data-editor-id="${textEditingRef.current.elementId}"]`
+          const editingNode = querySlideElement<HTMLElement>(
+            doc,
+            textEditingRef.current.elementId
           );
           if (editingNode) {
             commitNodeText(editingNode);
@@ -219,9 +224,7 @@ function useIframeTextEditing({
 
       const activeEditing = textEditingRef.current;
       if (activeEditing) {
-        const editingNode = doc.querySelector<HTMLElement>(
-          `[data-editor-id="${activeEditing.elementId}"]`
-        );
+        const editingNode = querySlideElement<HTMLElement>(doc, activeEditing.elementId);
 
         if (editingNode && !editingNode.contains(target)) {
           commitNodeText(editingNode);
@@ -231,19 +234,21 @@ function useIframeTextEditing({
         return;
       }
 
-      const editableTarget = target.closest<HTMLElement>("[data-editable][data-editor-id]");
+      const editableTarget = target.closest<HTMLElement>(`[data-editable][${SELECTOR_ATTR}]`);
       if (!editableTarget) {
         setSelectedElementId(null);
         return;
       }
 
-      const id = editableTarget.getAttribute("data-editor-id");
+      const id = editableTarget.getAttribute(SELECTOR_ATTR);
       if (id) {
         setSelectedElementId(id);
       }
     };
 
-    const nodes = Array.from(doc.querySelectorAll<HTMLElement>("[data-editable][data-editor-id]"));
+    const nodes = Array.from(
+      doc.querySelectorAll<HTMLElement>(`[data-editable][${SELECTOR_ATTR}]`)
+    );
     for (const node of nodes) {
       node.style.cursor = "pointer";
       node.ondblclick = null;
@@ -252,11 +257,11 @@ function useIframeTextEditing({
       node.onclick = (event) => {
         event.stopPropagation();
 
-        if (textEditingRef.current?.elementId === node.getAttribute("data-editor-id")) {
+        if (textEditingRef.current?.elementId === node.getAttribute(SELECTOR_ATTR)) {
           return;
         }
 
-        const id = node.getAttribute("data-editor-id");
+        const id = node.getAttribute(SELECTOR_ATTR);
         if (id) {
           setSelectedElementId(id);
         }
@@ -267,7 +272,7 @@ function useIframeTextEditing({
       }
 
       node.ondblclick = (event) => {
-        const elementId = node.getAttribute("data-editor-id");
+        const elementId = node.getAttribute(SELECTOR_ATTR);
         const activeEditing = textEditingRef.current;
 
         if (
@@ -299,7 +304,7 @@ function useIframeTextEditing({
       return;
     }
 
-    const editableNode = doc.querySelector<HTMLElement>(`[data-editor-id="${editing.elementId}"]`);
+    const editableNode = doc.querySelector<HTMLElement>(getSlideElementSelector(editing.elementId));
     if (!editableNode) {
       return;
     }

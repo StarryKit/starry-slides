@@ -1,6 +1,7 @@
 import {
   DEFAULT_SLIDE_HEIGHT,
   DEFAULT_SLIDE_WIDTH,
+  getSlideInlineStyleValue,
   type SlideModel,
   type StyleUpdateOperation,
 } from "@starry-slides/core";
@@ -23,16 +24,6 @@ export interface SlidesEditorProps {
   sourceLabel: string;
   isSaving?: boolean;
   onSlidesChange?: (slides: SlideModel[]) => void;
-}
-
-function getInlineStyleValue(slide: SlideModel, elementId: string, propertyName: string) {
-  if (typeof DOMParser === "undefined") {
-    return "";
-  }
-
-  const doc = new DOMParser().parseFromString(slide.htmlSource, "text/html");
-  const node = doc.querySelector<HTMLElement>(`[data-editor-id="${elementId}"]`);
-  return node?.style.getPropertyValue(propertyName).trim() || "";
 }
 
 function SlidesEditor({
@@ -267,6 +258,10 @@ function SlidesEditor({
       </div>
     </TooltipProvider>
   );
+}
+
+function getInlineStyleValue(slide: SlideModel, elementId: string, propertyName: string) {
+  return getSlideInlineStyleValue(slide, elementId, propertyName);
 }
 
 export { SlidesEditor };

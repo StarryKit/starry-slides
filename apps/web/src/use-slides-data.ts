@@ -99,14 +99,21 @@ export function useSlidesData(): SlidesDataResult {
 
     isSaveInFlightRef.current = true;
 
+    const sourceFileBySlideId = new Map(
+      loadedSlidesRef.current.map((slide, index) => [
+        slide.id,
+        slide.sourceFile ?? manifest.slides?.[index]?.file,
+      ])
+    );
+
     void fetch(GENERATED_SAVE_URL, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        slides: nextSlides.map((slide, index) => ({
-          file: manifest.slides?.[index]?.file,
+        slides: nextSlides.map((slide) => ({
+          file: slide.sourceFile ?? sourceFileBySlideId.get(slide.id),
           htmlSource: slide.htmlSource,
         })),
       }),

@@ -136,36 +136,6 @@ export function isHexColor(value: string): boolean {
   return /^#(?:[0-9a-f]{3}|[0-9a-f]{6})$/i.test(value.trim());
 }
 
-export function parseTransformParts(transformValue: string | null | undefined): {
-  translateX: number;
-  translateY: number;
-  rotate: number;
-} {
-  const rawValue = transformValue || "";
-  const translateMatch = rawValue.match(/translate\(([-\d.]+)px,\s*([-\d.]+)px\)/i);
-  const rotateMatch = rawValue.match(/rotate\(([-\d.]+)deg\)/i);
-
-  return {
-    translateX: translateMatch ? Number.parseFloat(translateMatch[1] || "0") || 0 : 0,
-    translateY: translateMatch ? Number.parseFloat(translateMatch[2] || "0") || 0 : 0,
-    rotate: rotateMatch ? Number.parseFloat(rotateMatch[1] || "0") || 0 : 0,
-  };
-}
-
-export function composeTransform(translateX: number, translateY: number, rotate: number): string {
-  const parts: string[] = [];
-
-  if (Math.abs(translateX) > 0.01 || Math.abs(translateY) > 0.01) {
-    parts.push(`translate(${roundNumber(translateX)}px, ${roundNumber(translateY)}px)`);
-  }
-
-  if (Math.abs(rotate) > 0.01) {
-    parts.push(`rotate(${roundNumber(rotate)}deg)`);
-  }
-
-  return parts.join(" ");
-}
-
 function getFontFamilyOption(value: string): FontFamilyOption | undefined {
   return FONT_FAMILY_OPTIONS.find((option) => isFontFamilySelected(value, option.value));
 }
@@ -180,10 +150,6 @@ function normalizeFontFamily(value: string): string {
 
 function normalizeFontName(value: string): string {
   return value.toLowerCase().replace(/["']/g, "").trim();
-}
-
-function roundNumber(value: number): number {
-  return Math.round(value * 100) / 100;
 }
 
 function toHexChannel(value: string): string {
