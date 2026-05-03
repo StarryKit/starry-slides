@@ -1,4 +1,4 @@
-# HTML Slides Editor — 项目方案文档
+# Starry Slides — 项目方案文档
 
 ## 项目概述
 
@@ -324,7 +324,7 @@ function redo() {
 ## 项目结构
 
 ```
-html-slides-editor/
+starry-slide/
 ├── packages/
 │   ├── skill/                    # AI Skill（生成 HTML slides）
 │   │   ├── SKILL.md              # Skill 规范文档（给 AI 的 prompt）

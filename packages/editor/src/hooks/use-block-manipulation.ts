@@ -6,7 +6,7 @@ import {
   type StageGeometry,
   type StageRect,
   captureElementLayoutStyleSnapshot,
-} from "@html-slides-editor/core";
+} from "@starry-slide/core";
 import type { RefObject } from "react";
 import { useCallback, useEffect, useRef, useState } from "react";
 

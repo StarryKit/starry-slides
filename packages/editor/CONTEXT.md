@@ -5,7 +5,7 @@
 `packages/editor` owns the interactive editor UI.
 
 Shared roadmap lives in
-[ROADMAP.md](/Users/haichao/code/html-slides-editor/ROADMAP.md).
+[ROADMAP.md](/Users/haichao/code/starry-slide/ROADMAP.md).
 
 This package is responsible for:
 

@@ -5,7 +5,7 @@
 `apps/web` owns app composition and runtime loading behavior for the editor.
 
 Shared roadmap lives in
-[ROADMAP.md](/Users/haichao/code/html-slides-editor/ROADMAP.md).
+[ROADMAP.md](/Users/haichao/code/starry-slide/ROADMAP.md).
 
 This package is responsible for:
 

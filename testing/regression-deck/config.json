@@ -1,6 +1,6 @@
 {
-  "topic": "HTML Slides Editor Project Overview",
-  "summary": "A generated project deck that doubles as a broad regression fixture for the HTML Slides Editor.",
+  "topic": "Starry Slides Project Overview",
+  "summary": "A generated project deck that doubles as a broad regression fixture for Starry Slides.",
   "points": [
     "Problem framing",
     "Architecture",
@@ -11,6 +11,6 @@
     "Comparison",
     "Coverage"
   ],
-  "heroKicker": "HTML Slides Editor",
-  "agendaParagraph": "How html slides editor project overview handles problem framing in a browser-native workflow."
+  "heroKicker": "Starry Slides",
+  "agendaParagraph": "How starry slide project overview handles problem framing in a browser-native workflow."
 }

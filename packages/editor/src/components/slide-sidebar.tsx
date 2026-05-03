@@ -1,4 +1,4 @@
-import type { SlideModel } from "@html-slides-editor/core";
+import type { SlideModel } from "@starry-slide/core";
 import { useCallback } from "react";
 import { cn } from "../lib/utils";
 import { ScrollArea } from "./ui/scroll-area";

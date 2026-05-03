@@ -1,21 +1,21 @@
-# HTML Slides Editor Context
+# Starry Slides Context
 
 This repo now uses a multi-context documentation layout.
 
 Start here:
 
-- [CONTEXT-MAP.md](/Users/haichao/code/html-slides-editor/CONTEXT-MAP.md)
+- [CONTEXT-MAP.md](/Users/haichao/code/starry-slide/CONTEXT-MAP.md)
 
 Relevant per-context docs:
 
-- [packages/core/CONTEXT.md](/Users/haichao/code/html-slides-editor/packages/core/CONTEXT.md)
-- [packages/editor/CONTEXT.md](/Users/haichao/code/html-slides-editor/packages/editor/CONTEXT.md)
-- [apps/web/CONTEXT.md](/Users/haichao/code/html-slides-editor/apps/web/CONTEXT.md)
+- [packages/core/CONTEXT.md](/Users/haichao/code/starry-slide/packages/core/CONTEXT.md)
+- [packages/editor/CONTEXT.md](/Users/haichao/code/starry-slide/packages/editor/CONTEXT.md)
+- [apps/web/CONTEXT.md](/Users/haichao/code/starry-slide/apps/web/CONTEXT.md)
 
 Shared planning:
 
-- [ROADMAP.md](/Users/haichao/code/html-slides-editor/ROADMAP.md)
+- [ROADMAP.md](/Users/haichao/code/starry-slide/ROADMAP.md)
 
 Cross-context architectural decisions remain in:
 
-- [docs/adr/README.md](/Users/haichao/code/html-slides-editor/docs/adr/README.md)
+- [docs/adr/README.md](/Users/haichao/code/starry-slide/docs/adr/README.md)

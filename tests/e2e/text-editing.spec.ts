@@ -721,7 +721,7 @@ test("text editing preserves leading and trailing whitespace and keeps exact und
 
   const frame = coverFrame(page);
   const editableHeading = frame.locator('[data-editor-id="text-1"]');
-  const nextText = "  HTML Slides Editor  ";
+  const nextText = "  Starry Slides  ";
 
   await editableHeading.dblclick();
   await selectAllAndFill(editableHeading, nextText);

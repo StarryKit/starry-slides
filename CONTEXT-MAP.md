@@ -1,6 +1,6 @@
 # Context Map
 
-`html-slides-editor` edits HTML slides directly in the browser without converting
+`starry-slide` edits HTML slides directly in the browser without converting
 them into a proprietary document model.
 
 The product rule is simple: HTML stays the source of truth.
@@ -75,7 +75,7 @@ Use these repo terms consistently:
 
 ## Shared Planning
 
-- [ROADMAP.md](/Users/haichao/code/html-slides-editor/ROADMAP.md) is the single
+- [ROADMAP.md](/Users/haichao/code/starry-slide/ROADMAP.md) is the single
   shared roadmap for the whole repo
 - package `CONTEXT.md` files should reference the roadmap when needed, but
   should only define package boundaries, package-specific constraints, and
@@ -83,22 +83,22 @@ Use these repo terms consistently:
 
 ## Contexts
 
-- [packages/core/CONTEXT.md](/Users/haichao/code/html-slides-editor/packages/core/CONTEXT.md)
+- [packages/core/CONTEXT.md](/Users/haichao/code/starry-slide/packages/core/CONTEXT.md)
   — slide model, parsing, normalization, HTML mutation, operations, shared
   history, geometry, import helpers
-- [packages/editor/CONTEXT.md](/Users/haichao/code/html-slides-editor/packages/editor/CONTEXT.md)
+- [packages/editor/CONTEXT.md](/Users/haichao/code/starry-slide/packages/editor/CONTEXT.md)
   — editor UI, overlays, selection, inspector, text editing, future CSS/layout
   editing interactions
-- [apps/web/CONTEXT.md](/Users/haichao/code/html-slides-editor/apps/web/CONTEXT.md)
+- [apps/web/CONTEXT.md](/Users/haichao/code/starry-slide/apps/web/CONTEXT.md)
   — app composition, generated-deck loading policy, runtime integration
 
 ## Shared Decisions
 
-- [docs/adr/README.md](/Users/haichao/code/html-slides-editor/docs/adr/README.md)
+- [docs/adr/README.md](/Users/haichao/code/starry-slide/docs/adr/README.md)
   indexes cross-context ADRs
-- [docs/adr/0001-editing-pipeline-and-versioning.md](/Users/haichao/code/html-slides-editor/docs/adr/0001-editing-pipeline-and-versioning.md)
+- [docs/adr/0001-editing-pipeline-and-versioning.md](/Users/haichao/code/starry-slide/docs/adr/0001-editing-pipeline-and-versioning.md)
   defines the editing pipeline
-- [docs/adr/0002-package-boundaries-for-core-editor-and-app.md](/Users/haichao/code/html-slides-editor/docs/adr/0002-package-boundaries-for-core-editor-and-app.md)
+- [docs/adr/0002-package-boundaries-for-core-editor-and-app.md](/Users/haichao/code/starry-slide/docs/adr/0002-package-boundaries-for-core-editor-and-app.md)
   defines package boundaries
 
 ## Reading Guide

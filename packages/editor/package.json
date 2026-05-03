@@ -1,5 +1,5 @@
 {
-  "name": "@html-slides-editor/editor",
+  "name": "@starry-slide/editor",
   "version": "0.1.0",
   "private": true,
   "type": "module",
@@ -24,7 +24,7 @@
     "build:css": "tailwindcss -i src/styles/index.css -o dist/index.css --minify"
   },
   "dependencies": {
-    "@html-slides-editor/core": "workspace:*",
+    "@starry-slide/core": "workspace:*",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "html-to-image": "^1.11.11",

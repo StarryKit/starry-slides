@@ -1,4 +1,4 @@
-import type { SlideModel } from "@html-slides-editor/core";
+import type { SlideModel } from "@starry-slide/core";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { renderSlideThumbnail } from "../lib/thumbnail-renderer";
 

@@ -12,7 +12,7 @@ const GENERATED_PUBLIC_DIR = path.resolve(workspaceRoot, "apps/web/public/genera
 const GENERATED_DIST_DIR = path.resolve(workspaceRoot, "apps/web/dist/generated/current");
 const GENERATED_SOURCE_ROOT = path.resolve(
   workspaceRoot,
-  "generated/html-slides-editor-project-overview"
+  "generated/starry-slide-project-overview"
 );
 const GENERATED_BASELINE_DIR = path.resolve(workspaceRoot, ".tmp/generated-deck-baseline");
 const NOT_FOUND_ERROR_CODE = "ENOENT";

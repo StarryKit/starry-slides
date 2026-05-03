@@ -3,7 +3,7 @@ import {
   type SlideModel,
   type StageRect,
   elementRectToStageRect,
-} from "@html-slides-editor/core";
+} from "@starry-slide/core";
 import type { RefObject } from "react";
 import { useEffect, useState } from "react";
 import { type CssPropertyRow, collectCssProperties } from "../lib/collect-css-properties";

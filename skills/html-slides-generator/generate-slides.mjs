@@ -235,7 +235,7 @@ function buildHeroSlide(topic, summary) {
     `
       <div class="hero-grid">
         <section class="hero-copy">
-          <div class="kicker" data-editable="text">HTML Slides Editor</div>
+          <div class="kicker" data-editable="text">Starry Slides</div>
           <h1 data-editable="text">${escapeHtml(topic)}</h1>
           <p data-editable="text">${escapeHtml(summary)}</p>
           <div class="notes">
@@ -1252,7 +1252,7 @@ function buildComparisonSlide() {
           </div>
         </section>
         <section class="panel right" data-editable="block">
-          <strong data-editable="text">HTML Slides Editor</strong>
+          <strong data-editable="text">Starry Slides</strong>
           <p data-editable="text">This project keeps the generated HTML as the canonical document and layers editing behavior on top.</p>
           <ul>
             <li data-editable="text">Generated files stay inspectable and git-friendly.</li>
@@ -1469,7 +1469,7 @@ function buildClosingSlide() {
   );
 }
 
-const topic = getArg("--topic", "HTML Slides Editor");
+const topic = getArg("--topic", "Starry Slides");
 const summary = getArg(
   "--summary",
   `A project overview deck for ${topic} that also serves as a broad HTML fixture for editor testing.`

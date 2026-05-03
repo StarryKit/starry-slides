@@ -1,6 +1,6 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
-import "@html-slides-editor/editor/styles.css";
+import "@starry-slide/editor/styles.css";
 import App from "./App";
 
 const rootElement = document.getElementById("root");

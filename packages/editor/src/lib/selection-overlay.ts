@@ -1,4 +1,4 @@
-import type { StageRect } from "@html-slides-editor/core";
+import type { StageRect } from "@starry-slide/core";
 
 export const SELECTION_OVERLAY_PADDING_X = 8;
 export const SELECTION_OVERLAY_PADDING_Y = 14;

@@ -2,7 +2,7 @@ import {
   type SlideDeckManifest,
   type SlideModel,
   loadSlidesFromManifest,
-} from "@html-slides-editor/core";
+} from "@starry-slide/core";
 import { useEffect, useRef, useState } from "react";
 
 interface SlidesDataResult {
