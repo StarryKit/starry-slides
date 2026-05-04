@@ -33,3 +33,4 @@ Update this directory whenever a change affects:
 | [0002](./0002-package-boundaries-for-core-editor-and-app.md) | Package boundaries for core, editor, and app | accepted |
 | [0003](./0003-adopt-tailwind-shadcn-for-editor-ui.md) | Adopt Tailwind and shadcn/ui for editor UI | accepted |
 | [0004](./0004-deepen-core-document-modules.md) | Deepen core by splitting document, history, geometry, and import modules | accepted |
+| [0006](./0006-unify-element-tooling-into-shared-toolbar-model.md) | Unify element tooling into a shared toolbar model | accepted |
