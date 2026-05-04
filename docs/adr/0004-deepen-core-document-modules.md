@@ -1,7 +1,18 @@
 # ADR-0004: Deepen core by splitting document, history, geometry, and import modules
 
-- Status: accepted
+- Status: superseded
 - Date: 2026-05-04
+- Superseded by: [ADR-0005](./0005-adopt-two-subject-skill-and-editor-architecture.md)
+
+## Supersession note
+
+ADR-0005 supersedes the parts of this decision that require core to remain a
+separate public package. The module-deepening intent still applies, but the
+target location changes from `packages/core/src/` to
+`packages/editor/src/lib/core/`.
+
+Historical details below remain useful context, but future implementation
+should follow ADR-0005 where package boundaries conflict.
 
 ## Context
 

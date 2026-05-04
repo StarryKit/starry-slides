@@ -1,7 +1,22 @@
 # ADR-0002: Package boundaries for core, editor, and app
 
-- Status: accepted
+- Status: superseded
 - Date: 2026-04-30
+- Superseded by: [ADR-0005](./0005-adopt-two-subject-skill-and-editor-architecture.md)
+
+## Supersession note
+
+ADR-0005 supersedes the package-boundary parts of this decision that require
+`packages/core` to remain a separate public package. The current direction is a
+two-subject architecture:
+
+- `starry-slides-skill` owns the agent-side generation, contract validation,
+  feedback, and editor-opening workflow.
+- Starry Slides Editor, published as `@starry-slides/editor`, owns the editor UI
+  and internal core library code under `packages/editor/src/lib/core`.
+
+Historical details below remain useful context, but future implementation
+should follow ADR-0005 where package boundaries conflict.
 
 ## Context
 

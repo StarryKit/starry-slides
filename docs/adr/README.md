@@ -30,6 +30,7 @@ Update this directory whenever a change affects:
 | ADR | Title | Status |
 | --- | --- | --- |
 | [0001](./0001-editing-pipeline-and-versioning.md) | Editing pipeline and versioning strategy | accepted |
-| [0002](./0002-package-boundaries-for-core-editor-and-app.md) | Package boundaries for core, editor, and app | accepted |
+| [0002](./0002-package-boundaries-for-core-editor-and-app.md) | Package boundaries for core, editor, and app | superseded |
 | [0003](./0003-adopt-tailwind-shadcn-for-editor-ui.md) | Adopt Tailwind and shadcn/ui for editor UI | accepted |
-| [0004](./0004-deepen-core-document-modules.md) | Deepen core by splitting document, history, geometry, and import modules | accepted |
+| [0004](./0004-deepen-core-document-modules.md) | Deepen core by splitting document, history, geometry, and import modules | superseded |
+| [0005](./0005-adopt-two-subject-skill-and-editor-architecture.md) | Adopt two-subject architecture for Starry Slides Skill and Editor | accepted |
