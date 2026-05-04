@@ -1,8 +1,4 @@
-import {
-  composeTransform,
-  parseTransformParts,
-  type StageRect,
-} from "@starry-slides/core";
+import { type StageRect, composeTransform, parseTransformParts } from "@starry-slides/core";
 import {
   AlignCenter,
   AlignCenterHorizontal,
@@ -112,6 +108,7 @@ function FloatingToolbar({
   const [activeMenu, setActiveMenu] = useState<MenuId | null>(null);
   const [panelLeft, setPanelLeft] = useState(0);
   const [toolbarOffsetX, setToolbarOffsetX] = useState(0);
+  const toolbarOffsetXRef = useRef(0);
   const fontFamily = getStyleValue(inspectedStyles, "font-family");
   const fontSize = Math.round(parsePixelValue(getStyleValue(inspectedStyles, "font-size"), 24));
   const textColor = getColorInputValue(getStyleValue(inspectedStyles, "color"));
@@ -180,8 +177,8 @@ function FloatingToolbar({
     }
 
     const rect = node.getBoundingClientRect();
-    const baseLeft = rect.left - toolbarOffsetX;
-    const baseRight = rect.right - toolbarOffsetX;
+    const baseLeft = rect.left - toolbarOffsetXRef.current;
+    const baseRight = rect.right - toolbarOffsetXRef.current;
     const viewportPadding = 16;
     let nextOffsetX = 0;
 
@@ -193,10 +190,11 @@ function FloatingToolbar({
       nextOffsetX += window.innerWidth - viewportPadding - (baseRight + nextOffsetX);
     }
 
-    if (shouldUpdateOffset(toolbarOffsetX, nextOffsetX)) {
+    if (shouldUpdateOffset(toolbarOffsetXRef.current, nextOffsetX)) {
+      toolbarOffsetXRef.current = nextOffsetX;
       setToolbarOffsetX(nextOffsetX);
     }
-  });
+  }, []);
 
   useEffect(() => {
     function closeOnOutsidePointer(event: MouseEvent) {

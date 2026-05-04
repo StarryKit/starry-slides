@@ -28,7 +28,13 @@ function useStageViewport({
 
     const updateViewport = () => {
       const rect = viewport.getBoundingClientRect();
-      setViewportSize({ width: rect.width, height: rect.height });
+      setViewportSize((currentSize) => {
+        if (currentSize.width === rect.width && currentSize.height === rect.height) {
+          return currentSize;
+        }
+
+        return { width: rect.width, height: rect.height };
+      });
     };
 
     updateViewport();

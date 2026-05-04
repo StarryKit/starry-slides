@@ -1093,6 +1093,35 @@ test("clicking blank space clears the current selection", async ({ page }) => {
   await expect(selectionOverlay).toBeHidden();
 });
 
+test("selecting another element after clearing selection keeps the app mounted", async ({
+  page,
+}) => {
+  const pageErrors: string[] = [];
+  page.on("pageerror", (error) => {
+    pageErrors.push(error.message);
+  });
+
+  await gotoEditor(page);
+
+  const frame = coverFrame(page);
+  const firstElement = frame.locator('[data-editor-id="text-1"]');
+  const secondElement = frame.locator('[data-editor-id="text-2"]');
+  const stagePanel = page.getByTestId("stage-panel");
+  const { selectionOverlay } = getHistoryControls(page);
+
+  await firstElement.click();
+  await expect(selectionOverlay).toBeVisible();
+
+  await stagePanel.click({ position: { x: 12, y: 12 } });
+  await expect(selectionOverlay).toBeHidden();
+
+  await secondElement.click();
+  await expect(selectionOverlay).toBeVisible();
+  await expect(page.getByTestId("stage-panel")).toBeVisible();
+  await expect(page.getByTestId("sidebar-tool-panel")).toBeVisible();
+  expect(pageErrors).toEqual([]);
+});
+
 test("sidebar scrolls with overflow and expands on hover without shifting the stage", async ({
   page,
 }) => {
@@ -1378,7 +1407,10 @@ test("dragging a selected element snaps its center to the slide center guide", a
   await centerProbe.locator(".snap-drag-surface").click();
   await expect(selectionOverlay).toBeVisible();
 
-  const before = await getRequiredBoundingBox(selectionOverlay, "selection overlay before snapping");
+  const before = await getRequiredBoundingBox(
+    selectionOverlay,
+    "selection overlay before snapping"
+  );
   const overlayBefore = await getRequiredBoundingBox(selectionOverlay, "selection overlay");
   const iframeBox = await getRequiredBoundingBox(page.getByTestId("slide-iframe"), "slide iframe");
   const slideCenterX = iframeBox.x + iframeBox.width / 2;
@@ -1415,7 +1447,6 @@ test("dragging a selected element snaps its center to the slide center guide", a
 
   const after = await getRequiredBoundingBox(centerProbe, "selected block after snapping");
   expect(Math.abs(after.x + after.width / 2 - slideCenterX)).toBeLessThanOrEqual(8);
-
 });
 
 test("dragging a selected block snaps its edge to a sibling edge guide", async ({ page }) => {

@@ -1,9 +1,12 @@
 import {
+  type AttributeUpdateOperation,
   DEFAULT_SLIDE_HEIGHT,
   DEFAULT_SLIDE_WIDTH,
-  getSlideInlineStyleValue,
+  type ElementDuplicateOperation,
+  SELECTOR_ATTR,
   type SlideModel,
   type StyleUpdateOperation,
+  getSlideInlineStyleValue,
 } from "@starry-slides/core";
 import { useRef, useState } from "react";
 import { EditorHeader } from "./components/editor-header";
@@ -151,6 +154,32 @@ function SlidesEditor({
     commitOperation(operation);
   }
 
+  function commitAttributeChange(attributeName: string, nextValue: string) {
+    if (!activeSlide) {
+      return;
+    }
+
+    const targetElementId = selectedElementId ?? "slide-root";
+    const previousValue = getHtmlAttributeValue(activeSlide, targetElementId, attributeName);
+    const normalizedNextValue = nextValue.trim();
+
+    if (previousValue === normalizedNextValue) {
+      return;
+    }
+
+    const operation: AttributeUpdateOperation = {
+      type: "attribute.update",
+      slideId: activeSlide.id,
+      elementId: targetElementId,
+      attributeName,
+      previousValue,
+      nextValue: normalizedNextValue,
+      timestamp: Date.now(),
+    };
+
+    commitOperation(operation);
+  }
+
   function deleteSelectedElement() {
     if (!selectedElementId) {
       return;
@@ -158,6 +187,27 @@ function SlidesEditor({
 
     commitStyleChange("display", "none");
     setSelectedElementId(null);
+  }
+
+  function duplicateSelectedElement() {
+    if (!activeSlide || !selectedElementId) {
+      return;
+    }
+
+    const nextElementId = createDuplicateElementId(
+      selectedElementId,
+      activeSlide.elements.map((element) => element.id)
+    );
+    const operation: ElementDuplicateOperation = {
+      type: "element.duplicate",
+      slideId: activeSlide.id,
+      sourceElementId: selectedElementId,
+      nextElementId,
+      timestamp: Date.now(),
+    };
+
+    commitOperation(operation);
+    setSelectedElementId(nextElementId);
   }
 
   if (!activeSlide) {
@@ -189,7 +239,7 @@ function SlidesEditor({
             }}
           />
 
-          <main className="flex min-h-0 min-w-0 flex-auto gap-[18px] overflow-visible max-[1200px]:block">
+          <main className="flex min-h-0 min-w-0 flex-auto overflow-visible max-[1200px]:block">
             <StageCanvas
               slideWidth={slideWidth}
               slideHeight={slideHeight}
@@ -197,7 +247,6 @@ function SlidesEditor({
               offsetY={offsetY}
               scale={scale}
               selectionOverlay={unifiedSelectionOverlay}
-              selectionLabel={unifiedSelectionLabel}
               toolbarKey={selectedElementId ? `${activeSlide.id}:${selectedElementId}` : null}
               inspectedStyles={inspectedStyles}
               inlineStyleValues={selectedInlineStyleValues}
@@ -250,8 +299,49 @@ function SlidesEditor({
               isEditingText={isEditingText}
               isOpen={isInspectorOpen}
               canEditStyles={Boolean(activeSlide)}
+              selectedElementType={selectedElement?.type ?? "block"}
+              selectedElementLabel={selectedElementId ? unifiedSelectionLabel : "slide"}
+              attributeValues={{
+                name: getHtmlAttributeValue(
+                  activeSlide,
+                  selectedElementId ?? "slide-root",
+                  "data-editor-name"
+                ),
+                locked: getHtmlAttributeValue(
+                  activeSlide,
+                  selectedElementId ?? "slide-root",
+                  "data-editor-locked"
+                ),
+                altText: getHtmlAttributeValue(
+                  activeSlide,
+                  selectedElementId ?? "slide-root",
+                  "alt"
+                ),
+                ariaLabel: getHtmlAttributeValue(
+                  activeSlide,
+                  selectedElementId ?? "slide-root",
+                  "aria-label"
+                ),
+                clickAction: getHtmlAttributeValue(
+                  activeSlide,
+                  selectedElementId ?? "slide-root",
+                  "data-click-action"
+                ),
+                linkUrl: getHtmlAttributeValue(
+                  activeSlide,
+                  selectedElementId ?? "slide-root",
+                  "data-link-url"
+                ),
+                targetSlide: getHtmlAttributeValue(
+                  activeSlide,
+                  selectedElementId ?? "slide-root",
+                  "data-target-slide"
+                ),
+              }}
               selectedElementId={selectedElementId}
               onStyleChange={commitStyleChange}
+              onAttributeChange={commitAttributeChange}
+              onDuplicateSelection={duplicateSelectedElement}
             />
           </main>
         </div>
@@ -262,6 +352,33 @@ function SlidesEditor({
 
 function getInlineStyleValue(slide: SlideModel, elementId: string, propertyName: string) {
   return getSlideInlineStyleValue(slide, elementId, propertyName);
+}
+
+function getHtmlAttributeValue(slide: SlideModel, elementId: string, attributeName: string) {
+  if (typeof DOMParser === "undefined") {
+    return "";
+  }
+
+  const doc = new DOMParser().parseFromString(slide.htmlSource, "text/html");
+  const node = doc.querySelector<HTMLElement>(`[${SELECTOR_ATTR}="${elementId}"]`);
+  return node?.getAttribute(attributeName)?.trim() ?? "";
+}
+
+function createDuplicateElementId(sourceElementId: string, existingElementIds: string[]) {
+  const existingIds = new Set(existingElementIds);
+  const baseId = `${sourceElementId}-copy`;
+  if (!existingIds.has(baseId)) {
+    return baseId;
+  }
+
+  for (let index = 2; index < 10_000; index += 1) {
+    const candidate = `${baseId}-${index}`;
+    if (!existingIds.has(candidate)) {
+      return candidate;
+    }
+  }
+
+  return `${baseId}-${Date.now()}`;
 }
 
 export { SlidesEditor };

@@ -65,11 +65,16 @@ function useSlideInspector({
       return;
     }
 
-    setInspectedStyles(collectCssProperties(inspectedNode));
+    const nextInspectedStyles = collectCssProperties(inspectedNode);
+    setInspectedStyles((currentStyles) =>
+      areCssPropertyRowsEqual(currentStyles, nextInspectedStyles)
+        ? currentStyles
+        : nextInspectedStyles
+    );
 
     if (!selectedElementId || !rootNode) {
-      setSelectedStageRect(null);
-      setSelectionOverlay(null);
+      setSelectedStageRect((currentRect) => (currentRect === null ? currentRect : null));
+      setSelectionOverlay((currentRect) => (currentRect === null ? currentRect : null));
       return;
     }
 
@@ -83,8 +88,12 @@ function useSlideInspector({
       slideHeight,
     });
 
-    setSelectedStageRect(stageRect);
-    setSelectionOverlay(stageRect);
+    setSelectedStageRect((currentRect) =>
+      areStageRectsEqual(currentRect, stageRect) ? currentRect : stageRect
+    );
+    setSelectionOverlay((currentRect) =>
+      areStageRectsEqual(currentRect, stageRect) ? currentRect : stageRect
+    );
   }, [activeSlide, iframeRef, offsetX, offsetY, scale, selectedElementId, slideHeight, slideWidth]);
 
   return {
@@ -93,6 +102,34 @@ function useSlideInspector({
     selectionLabel: selectedElement?.type || "element",
     inspectedStyles,
   };
+}
+
+function areStageRectsEqual(left: StageRect | null, right: StageRect | null): boolean {
+  if (left === right) {
+    return true;
+  }
+
+  if (!left || !right) {
+    return false;
+  }
+
+  return (
+    left.x === right.x &&
+    left.y === right.y &&
+    left.width === right.width &&
+    left.height === right.height
+  );
+}
+
+function areCssPropertyRowsEqual(left: CssPropertyRow[], right: CssPropertyRow[]): boolean {
+  if (left.length !== right.length) {
+    return false;
+  }
+
+  return left.every((row, index) => {
+    const rightRow = right[index];
+    return rightRow?.name === row.name && rightRow.value === row.value;
+  });
 }
 
 export { useSlideInspector };

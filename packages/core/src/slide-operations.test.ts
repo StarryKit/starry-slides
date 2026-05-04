@@ -1,9 +1,12 @@
 import { describe, expect, test } from "vitest";
 import {
   applySlideOperation,
+  duplicateSlideElement,
   ensureEditableSelectors,
   invertSlideOperation,
   parseSlide,
+  removeSlideElement,
+  updateSlideAttribute,
   updateSlideElementLayout,
   updateSlideElementTransform,
   updateSlideStyle,
@@ -50,6 +53,53 @@ describe("HTML write-back", () => {
     expect(emptyStyleDoc.querySelector('[data-editor-id="text-1"]')?.hasAttribute("style")).toBe(
       false
     );
+  });
+
+  test("writes and removes element attributes", () => {
+    const html = ensureEditableSelectors(`<!DOCTYPE html>
+<html lang="en">
+  <body>
+    <div class="slide-container" data-slide-root="true">
+      <button data-editable="block">Action</button>
+    </div>
+  </body>
+</html>`);
+
+    const updatedHtml = updateSlideAttribute(html, "block-1", "aria-label", "Action button");
+    const doc = new DOMParser().parseFromString(updatedHtml, "text/html");
+
+    expect(doc.querySelector('[data-editor-id="block-1"]')?.getAttribute("aria-label")).toBe(
+      "Action button"
+    );
+
+    const clearedHtml = updateSlideAttribute(updatedHtml, "block-1", "aria-label", "");
+    const clearedDoc = new DOMParser().parseFromString(clearedHtml, "text/html");
+    expect(clearedDoc.querySelector('[data-editor-id="block-1"]')?.hasAttribute("aria-label")).toBe(
+      false
+    );
+  });
+
+  test("duplicates and removes editable elements by editor id", () => {
+    const html = ensureEditableSelectors(`<!DOCTYPE html>
+<html lang="en">
+  <body>
+    <div class="slide-container" data-slide-root="true">
+      <p data-editable="text">Copy me</p>
+    </div>
+  </body>
+</html>`);
+
+    const duplicatedHtml = duplicateSlideElement(html, "text-1", "text-1-copy");
+    const duplicatedDoc = new DOMParser().parseFromString(duplicatedHtml, "text/html");
+
+    expect(duplicatedDoc.querySelector('[data-editor-id="text-1"]')?.textContent).toBe("Copy me");
+    expect(duplicatedDoc.querySelector('[data-editor-id="text-1-copy"]')?.textContent).toBe(
+      "Copy me"
+    );
+
+    const removedHtml = removeSlideElement(duplicatedHtml, "text-1-copy");
+    const removedDoc = new DOMParser().parseFromString(removedHtml, "text/html");
+    expect(removedDoc.querySelector('[data-editor-id="text-1-copy"]')).toBeNull();
   });
 
   test("layout updates write block position, size, and rotation back into htmlSource", () => {
@@ -194,6 +244,15 @@ describe("slide operations", () => {
       nextValue: "72px",
       timestamp: 2,
     };
+    const attributeOperation = {
+      type: "attribute.update" as const,
+      slideId: originalSlide.id,
+      elementId: "block-2",
+      attributeName: "aria-label",
+      previousValue: "",
+      nextValue: "Card",
+      timestamp: 2.5,
+    };
     const layoutOperation = {
       type: "element.layout.update" as const,
       slideId: originalSlide.id,
@@ -224,12 +283,18 @@ describe("slide operations", () => {
     };
 
     expect(
-      applySlideOperation(applySlideOperation(originalSlide, textOperation), invertSlideOperation(textOperation))
-        .htmlSource
+      applySlideOperation(
+        applySlideOperation(originalSlide, textOperation),
+        invertSlideOperation(textOperation)
+      ).htmlSource
     ).toBe(originalSlide.htmlSource);
     expect(invertSlideOperation(styleOperation)).toMatchObject({
       previousValue: "72px",
       nextValue: "48px",
+    });
+    expect(invertSlideOperation(attributeOperation)).toMatchObject({
+      previousValue: "Card",
+      nextValue: "",
     });
     expect(
       applySlideOperation(

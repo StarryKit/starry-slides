@@ -14,7 +14,6 @@ interface StageCanvasProps {
   offsetY: number;
   scale: number;
   selectionOverlay: StageRect | null;
-  selectionLabel: string;
   toolbarKey: string | null;
   inspectedStyles: CssPropertyRow[];
   inlineStyleValues: Record<string, string>;
@@ -58,7 +57,6 @@ function StageCanvas({
   offsetY,
   scale,
   selectionOverlay,
-  selectionLabel,
   toolbarKey,
   inspectedStyles,
   inlineStyleValues,
@@ -168,11 +166,7 @@ function StageCanvas({
           onDoubleClick={() => {
             onSelectionOverlayDoubleClick();
           }}
-        >
-          <div className="pointer-events-none absolute -top-[22px] left-0 whitespace-nowrap rounded-full bg-primary px-1.5 py-0.5 text-[9px] uppercase leading-tight tracking-[0.08em] text-primary-foreground">
-            {selectionLabel}
-          </div>
-        </div>
+        />
       ) : null}
       {manipulationOverlay ? (
         <BlockManipulationOverlay
