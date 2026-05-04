@@ -32,7 +32,6 @@ import {
   isFontFamilySelected,
 } from "../lib/style-controls";
 import { cn } from "../lib/utils";
-import { ChatPanel } from "./chat-panel";
 import { ColorPicker } from "./color-picker";
 import {
   Select,
@@ -42,7 +41,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "./ui/select";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "./ui/tabs";
 
 interface SidebarToolPanelProps {
   inspectedStyles: CssPropertyRow[];
@@ -317,7 +315,6 @@ function SidebarToolPanel({
   const [draftValues, setDraftValues] = useState<Record<string, string>>({});
   const [customPropertyName, setCustomPropertyName] = useState("");
   const [customPropertyValue, setCustomPropertyValue] = useState("");
-  const [activeTab, setActiveTab] = useState<"edit" | "chat">("edit");
   const isStyleEditingDisabled =
     !canEditStyles || isEditingText || attributeValues.locked === "true";
   const editingTargetId = selectedElementId ?? "slide-root";
@@ -610,32 +607,6 @@ function SidebarToolPanel({
             </IconButton>
           </div>
         </div>
-
-        <Tabs
-          value={activeTab}
-          onValueChange={(value) => {
-            setActiveTab(value === "chat" ? "chat" : "edit");
-          }}
-          className="mt-3 min-h-0 gap-0"
-        >
-          <TabsList
-            aria-label="Inspector tabs"
-            className="grid h-auto w-full grid-cols-2 gap-0.5 rounded-md bg-foreground/[0.04] p-0.5"
-          >
-            <TabsTrigger
-              value="edit"
-              className="h-7 rounded text-[11px] font-medium data-[state=active]:bg-white data-[state=active]:shadow-sm"
-            >
-              Edit
-            </TabsTrigger>
-            <TabsTrigger
-              value="chat"
-              className="h-7 rounded text-[11px] font-medium data-[state=active]:bg-white data-[state=active]:shadow-sm"
-            >
-              Chat
-            </TabsTrigger>
-          </TabsList>
-        </Tabs>
       </div>
 
       {isEditingText ? (
@@ -644,192 +615,181 @@ function SidebarToolPanel({
         </p>
       ) : null}
 
-      <Tabs
-        value={activeTab}
-        onValueChange={(value) => {
-          setActiveTab(value === "chat" ? "chat" : "edit");
-        }}
-        className="min-h-0 flex-1 gap-0"
-      >
-        <TabsContent value="edit" className="min-h-0 overflow-y-auto p-0">
-          {INSPECTOR_SECTIONS.map((section) => (
-            <Section
-              key={section.id}
-              icon={section.icon}
-              title={section.title}
-              open={openSectionIds.has(section.id)}
-              onOpenChange={(nextOpen) => {
-                setOpenSectionIds((current) => {
-                  const next = new Set(current);
-                  if (nextOpen) {
-                    next.add(section.id);
-                  } else {
-                    next.delete(section.id);
-                  }
-                  return next;
-                });
+      <div className="min-h-0 flex-1 overflow-y-auto p-0">
+        {INSPECTOR_SECTIONS.map((section) => (
+          <Section
+            key={section.id}
+            icon={section.icon}
+            title={section.title}
+            open={openSectionIds.has(section.id)}
+            onOpenChange={(nextOpen) => {
+              setOpenSectionIds((current) => {
+                const next = new Set(current);
+                if (nextOpen) {
+                  next.add(section.id);
+                } else {
+                  next.delete(section.id);
+                }
+                return next;
+              });
+            }}
+          >
+            {section.fields.map(renderField)}
+          </Section>
+        ))}
+
+        <Section
+          icon={<MousePointerClick className="size-3.5" />}
+          title="Interaction"
+          open={openSectionIds.has("interaction")}
+          onOpenChange={(nextOpen) => {
+            setOpenSectionIds((current) => toggleSetValue(current, "interaction", nextOpen));
+          }}
+        >
+          <AttributeSelect
+            label="Action"
+            value={attributeValues.clickAction || "none"}
+            options={[
+              { label: "None", value: "none" },
+              { label: "Next slide", value: "next" },
+              { label: "Previous slide", value: "prev" },
+              { label: "Go to slide", value: "slide" },
+              { label: "Open link", value: "url" },
+            ]}
+            disabled={isStyleEditingDisabled}
+            onChange={(nextValue) =>
+              onAttributeChange("data-click-action", nextValue === "none" ? "" : nextValue)
+            }
+          />
+          {attributeValues.clickAction === "url" ? (
+            <AttributeInput
+              label="Link"
+              value={attributeValues.linkUrl}
+              placeholder="https://"
+              disabled={isStyleEditingDisabled}
+              onCommit={(nextValue) => onAttributeChange("data-link-url", nextValue)}
+            />
+          ) : null}
+          {attributeValues.clickAction === "slide" ? (
+            <AttributeInput
+              label="Slide"
+              value={attributeValues.targetSlide}
+              placeholder="slide-2"
+              disabled={isStyleEditingDisabled}
+              onCommit={(nextValue) => onAttributeChange("data-target-slide", nextValue)}
+            />
+          ) : null}
+        </Section>
+
+        <Section
+          icon={<Info className="size-3.5" />}
+          title="Accessibility"
+          open={openSectionIds.has("accessibility")}
+          onOpenChange={(nextOpen) => {
+            setOpenSectionIds((current) => toggleSetValue(current, "accessibility", nextOpen));
+          }}
+        >
+          <AttributeInput
+            label="Alt text"
+            value={attributeValues.altText}
+            placeholder="Describe this element"
+            disabled={isStyleEditingDisabled}
+            onCommit={(nextValue) => onAttributeChange("alt", nextValue)}
+          />
+          <AttributeInput
+            label="ARIA"
+            value={attributeValues.ariaLabel}
+            placeholder="aria-label"
+            disabled={isStyleEditingDisabled}
+            onCommit={(nextValue) => onAttributeChange("aria-label", nextValue)}
+          />
+        </Section>
+
+        <Section
+          icon={<Hash className="size-3.5" />}
+          title="Custom CSS"
+          open={openSectionIds.has(FALLBACK_CUSTOM_PROPERTY_SECTION_ID)}
+          onOpenChange={(nextOpen) => {
+            setOpenSectionIds((current) =>
+              toggleSetValue(current, FALLBACK_CUSTOM_PROPERTY_SECTION_ID, nextOpen)
+            );
+          }}
+        >
+          <label className="grid gap-1.5" htmlFor={customPropertyNameId}>
+            <span className="text-[10px] font-medium uppercase tracking-wider text-foreground/50">
+              Property name
+            </span>
+            <input
+              id={customPropertyNameId}
+              type="text"
+              value={customPropertyName}
+              placeholder="e.g. justify-content"
+              disabled={isStyleEditingDisabled}
+              onChange={(event) => setCustomPropertyName(event.target.value)}
+              className="h-8 rounded-md border border-transparent bg-foreground/[0.03] px-2 text-xs outline-none transition focus:bg-white focus:border-foreground/20 disabled:opacity-50"
+            />
+          </label>
+          <label className="grid gap-1.5" htmlFor={customPropertyValueId}>
+            <span className="text-[10px] font-medium uppercase tracking-wider text-foreground/50">
+              Property value
+            </span>
+            <input
+              id={customPropertyValueId}
+              type="text"
+              value={customPropertyValue}
+              placeholder="e.g. space-between"
+              disabled={isStyleEditingDisabled}
+              onChange={(event) => setCustomPropertyValue(event.target.value)}
+              onKeyDown={(event) => {
+                if (event.key === "Enter") {
+                  event.preventDefault();
+                  applyCustomProperty();
+                }
               }}
-            >
-              {section.fields.map(renderField)}
-            </Section>
-          ))}
-
-          <Section
-            icon={<MousePointerClick className="size-3.5" />}
-            title="Interaction"
-            open={openSectionIds.has("interaction")}
-            onOpenChange={(nextOpen) => {
-              setOpenSectionIds((current) => toggleSetValue(current, "interaction", nextOpen));
-            }}
-          >
-            <AttributeSelect
-              label="Action"
-              value={attributeValues.clickAction || "none"}
-              options={[
-                { label: "None", value: "none" },
-                { label: "Next slide", value: "next" },
-                { label: "Previous slide", value: "prev" },
-                { label: "Go to slide", value: "slide" },
-                { label: "Open link", value: "url" },
-              ]}
-              disabled={isStyleEditingDisabled}
-              onChange={(nextValue) =>
-                onAttributeChange("data-click-action", nextValue === "none" ? "" : nextValue)
-              }
+              className="h-8 rounded-md border border-transparent bg-foreground/[0.03] px-2 text-xs outline-none transition focus:bg-white focus:border-foreground/20 disabled:opacity-50"
             />
-            {attributeValues.clickAction === "url" ? (
-              <AttributeInput
-                label="Link"
-                value={attributeValues.linkUrl}
-                placeholder="https://"
-                disabled={isStyleEditingDisabled}
-                onCommit={(nextValue) => onAttributeChange("data-link-url", nextValue)}
-              />
-            ) : null}
-            {attributeValues.clickAction === "slide" ? (
-              <AttributeInput
-                label="Slide"
-                value={attributeValues.targetSlide}
-                placeholder="slide-2"
-                disabled={isStyleEditingDisabled}
-                onCommit={(nextValue) => onAttributeChange("data-target-slide", nextValue)}
-              />
-            ) : null}
-          </Section>
-
-          <Section
-            icon={<Info className="size-3.5" />}
-            title="Accessibility"
-            open={openSectionIds.has("accessibility")}
-            onOpenChange={(nextOpen) => {
-              setOpenSectionIds((current) => toggleSetValue(current, "accessibility", nextOpen));
-            }}
+          </label>
+          <button
+            className="h-8 rounded-md border border-foreground/[0.08] bg-foreground/[0.03] text-xs font-medium text-foreground/70 transition-colors hover:bg-foreground/[0.06] hover:text-foreground disabled:pointer-events-none disabled:opacity-50"
+            type="button"
+            disabled={isStyleEditingDisabled || customPropertyName.trim().length === 0}
+            onClick={applyCustomProperty}
           >
-            <AttributeInput
-              label="Alt text"
-              value={attributeValues.altText}
-              placeholder="Describe this element"
-              disabled={isStyleEditingDisabled}
-              onCommit={(nextValue) => onAttributeChange("alt", nextValue)}
-            />
-            <AttributeInput
-              label="ARIA"
-              value={attributeValues.ariaLabel}
-              placeholder="aria-label"
-              disabled={isStyleEditingDisabled}
-              onCommit={(nextValue) => onAttributeChange("aria-label", nextValue)}
-            />
-          </Section>
+            Apply property
+          </button>
+        </Section>
 
-          <Section
-            icon={<Hash className="size-3.5" />}
-            title="Custom CSS"
-            open={openSectionIds.has(FALLBACK_CUSTOM_PROPERTY_SECTION_ID)}
-            onOpenChange={(nextOpen) => {
-              setOpenSectionIds((current) =>
-                toggleSetValue(current, FALLBACK_CUSTOM_PROPERTY_SECTION_ID, nextOpen)
-              );
-            }}
-          >
-            <label className="grid gap-1.5" htmlFor={customPropertyNameId}>
-              <span className="text-[10px] font-medium uppercase tracking-wider text-foreground/50">
-                Property name
-              </span>
-              <input
-                id={customPropertyNameId}
-                type="text"
-                value={customPropertyName}
-                placeholder="e.g. justify-content"
-                disabled={isStyleEditingDisabled}
-                onChange={(event) => setCustomPropertyName(event.target.value)}
-                className="h-8 rounded-md border border-transparent bg-foreground/[0.03] px-2 text-xs outline-none transition focus:bg-white focus:border-foreground/20 disabled:opacity-50"
-              />
-            </label>
-            <label className="grid gap-1.5" htmlFor={customPropertyValueId}>
-              <span className="text-[10px] font-medium uppercase tracking-wider text-foreground/50">
-                Property value
-              </span>
-              <input
-                id={customPropertyValueId}
-                type="text"
-                value={customPropertyValue}
-                placeholder="e.g. space-between"
-                disabled={isStyleEditingDisabled}
-                onChange={(event) => setCustomPropertyValue(event.target.value)}
-                onKeyDown={(event) => {
-                  if (event.key === "Enter") {
-                    event.preventDefault();
-                    applyCustomProperty();
-                  }
-                }}
-                className="h-8 rounded-md border border-transparent bg-foreground/[0.03] px-2 text-xs outline-none transition focus:bg-white focus:border-foreground/20 disabled:opacity-50"
-              />
-            </label>
+        <Section
+          icon={<Wand2 className="size-3.5" />}
+          title="Actions"
+          open={openSectionIds.has("actions")}
+          onOpenChange={(nextOpen) => {
+            setOpenSectionIds((current) => toggleSetValue(current, "actions", nextOpen));
+          }}
+        >
+          <div className="grid grid-cols-2 gap-2">
             <button
-              className="h-8 rounded-md border border-foreground/[0.08] bg-foreground/[0.03] text-xs font-medium text-foreground/70 transition-colors hover:bg-foreground/[0.06] hover:text-foreground disabled:pointer-events-none disabled:opacity-50"
+              className="flex h-8 items-center justify-center gap-1.5 rounded-md border border-foreground/[0.08] bg-foreground/[0.03] text-xs font-medium text-foreground/70 transition-colors hover:bg-foreground/[0.06] hover:text-foreground"
               type="button"
-              disabled={isStyleEditingDisabled || customPropertyName.trim().length === 0}
-              onClick={applyCustomProperty}
+              disabled={!selectedElementId}
+              onClick={onDuplicateSelection}
             >
-              Apply property
+              <Copy className="size-3.5" />
+              Copy
             </button>
-          </Section>
-
-          <Section
-            icon={<Wand2 className="size-3.5" />}
-            title="Actions"
-            open={openSectionIds.has("actions")}
-            onOpenChange={(nextOpen) => {
-              setOpenSectionIds((current) => toggleSetValue(current, "actions", nextOpen));
-            }}
-          >
-            <div className="grid grid-cols-2 gap-2">
-              <button
-                className="flex h-8 items-center justify-center gap-1.5 rounded-md border border-foreground/[0.08] bg-foreground/[0.03] text-xs font-medium text-foreground/70 transition-colors hover:bg-foreground/[0.06] hover:text-foreground"
-                type="button"
-                disabled={!selectedElementId}
-                onClick={onDuplicateSelection}
-              >
-                <Copy className="size-3.5" />
-                Copy
-              </button>
-              <button
-                className="flex h-8 items-center justify-center gap-1.5 rounded-md border border-foreground/[0.08] bg-foreground/[0.03] text-xs font-medium text-foreground/60 transition-colors hover:bg-destructive/10 hover:text-destructive"
-                type="button"
-                disabled={!selectedElementId}
-                onClick={onDeleteSelection}
-              >
-                <Trash2 className="size-3.5" />
-                Delete
-              </button>
-            </div>
-          </Section>
-          <div className="h-4" />
-        </TabsContent>
-        <TabsContent value="chat" className="min-h-0 overflow-y-auto p-4">
-          <ChatPanel />
-        </TabsContent>
-      </Tabs>
+            <button
+              className="flex h-8 items-center justify-center gap-1.5 rounded-md border border-foreground/[0.08] bg-foreground/[0.03] text-xs font-medium text-foreground/60 transition-colors hover:bg-destructive/10 hover:text-destructive"
+              type="button"
+              disabled={!selectedElementId}
+              onClick={onDeleteSelection}
+            >
+              <Trash2 className="size-3.5" />
+              Delete
+            </button>
+          </div>
+        </Section>
+        <div className="h-4" />
+      </div>
     </section>
   );
 }
