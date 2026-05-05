@@ -269,13 +269,6 @@ function SlidesEditor({
           deckTitle={resolvedDeckTitle}
           sourceLabel={sourceLabel}
           isSaving={isSaving}
-          isInspectorOpen={isInspectorOpen}
-          elementToolMode={elementToolMode}
-          canSwitchElementToolMode={hasEditableSelection && !isEditingText && !isManipulating}
-          onElementToolModeChange={setElementToolMode}
-          onToggleInspector={() => {
-            setIsInspectorOpen((currentValue) => !currentValue);
-          }}
         />
 
         <div className="flex min-h-0 flex-auto gap-3 overflow-hidden max-[1200px]:block">

@@ -1,4 +1,4 @@
-import { PanelRightOpen } from "lucide-react";
+import { PanelLeftOpen } from "lucide-react";
 import type { MouseEvent as ReactMouseEvent } from "react";
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import type { CssPropertyRow } from "../lib/collect-css-properties";
@@ -202,7 +202,7 @@ function FloatingToolbar({
         ))}
         <Divider />
         <IconButton label="Use tool panel mode" onClick={onModeChange}>
-          <ToolbarIcon icon={PanelRightOpen} />
+          <ToolbarIcon icon={PanelLeftOpen} />
         </IconButton>
       </div>
 

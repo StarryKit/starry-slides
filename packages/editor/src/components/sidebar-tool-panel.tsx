@@ -1,4 +1,4 @@
-import { PanelTopOpen, Square, Type } from "lucide-react";
+import { PanelRightClose, Square, Type } from "lucide-react";
 import { useId, useState } from "react";
 import type { CssPropertyRow } from "../lib/collect-css-properties";
 import { commitElementToolFeature } from "../lib/element-tool-commit";
@@ -320,7 +320,7 @@ function SidebarToolPanel({
             data-testid="tool-mode-floating-button"
             onClick={onModeChange}
           >
-            <PanelTopOpen />
+            <PanelRightClose />
           </Button>
         </div>
       </div>
