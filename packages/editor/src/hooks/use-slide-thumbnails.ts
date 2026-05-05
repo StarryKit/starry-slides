@@ -1,5 +1,5 @@
-import type { SlideModel } from "@starry-slides/core";
 import { useEffect, useMemo, useRef, useState } from "react";
+import type { SlideModel } from "../lib/core";
 import { renderSlideThumbnail } from "../lib/thumbnail-renderer";
 
 const DEBOUNCE_MS = 300;

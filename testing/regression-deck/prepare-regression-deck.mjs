@@ -30,7 +30,7 @@ function main() {
   execFileSync(
     "node",
     [
-      path.join(workspaceRoot, "skills/html-slides-generator/generate-slides.mjs"),
+      path.join(workspaceRoot, "packages/editor/tools/e2e/generate-regression-deck.mjs"),
       "--topic",
       regressionConfig.topic,
       "--summary",

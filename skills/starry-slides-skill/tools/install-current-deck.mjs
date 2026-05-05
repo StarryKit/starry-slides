@@ -27,23 +27,25 @@ function copyDirectory(sourceDir, targetDir) {
 }
 
 function main() {
-  const outDir = getArg("--out-dir", "");
-  if (!outDir) {
-    console.error("Usage: node create-style-pack.mjs --out-dir <dir>");
+  const deckDir = getArg("--deck-dir", "");
+  if (!deckDir) {
+    console.error("Usage: node install-current-deck.mjs --deck-dir <deck-package-dir>");
     process.exit(1);
   }
 
-  const skillRoot = path.resolve(import.meta.dirname, "..", "..");
-  const starterDir = path.join(skillRoot, "slides-style-pack-starter", "template");
-  const targetDir = path.resolve(process.cwd(), outDir);
+  const workspaceRoot = path.resolve(import.meta.dirname, "..", "..", "..");
+  const sourceDir = path.resolve(process.cwd(), deckDir);
+  const targetDir = path.join(workspaceRoot, "apps/web/public/generated/current");
+  const manifestPath = path.join(sourceDir, "manifest.json");
 
-  if (fs.existsSync(targetDir) && fs.readdirSync(targetDir).length > 0) {
-    console.error(`Target directory is not empty: ${targetDir}`);
+  if (!fs.existsSync(manifestPath)) {
+    console.error(`Deck package is missing manifest.json: ${manifestPath}`);
     process.exit(1);
   }
 
-  copyDirectory(starterDir, targetDir);
-  console.log(`Created style pack scaffold at ${targetDir}`);
+  fs.rmSync(targetDir, { recursive: true, force: true });
+  copyDirectory(sourceDir, targetDir);
+  console.log(`Installed deck package into ${targetDir}`);
 }
 
 main();

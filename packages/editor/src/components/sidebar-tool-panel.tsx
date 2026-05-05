@@ -1,38 +1,19 @@
-import {
-  AlignCenter,
-  AlignLeft,
-  AlignRight,
-  Box,
-  ChevronDown,
-  Copy,
-  Eye,
-  EyeOff,
-  Hash,
-  Image as ImageIcon,
-  Info,
-  Link2,
-  Lock,
-  Minus,
-  MoreHorizontal,
-  MousePointerClick,
-  Move,
-  Palette,
-  Plus,
-  Square,
-  Trash2,
-  Type,
-  Unlock,
-  Wand2,
-} from "lucide-react";
-import { type ReactNode, useCallback, useEffect, useId, useMemo, useRef, useState } from "react";
+import { PanelTopOpen, Square, Type } from "lucide-react";
+import type { LucideIcon } from "lucide-react";
+import { useId, useState } from "react";
+import type { ReactNode } from "react";
 import type { CssPropertyRow } from "../lib/collect-css-properties";
+import { ELEMENT_TOOL_GROUPS, type ElementToolFeature } from "../lib/element-tool-model";
 import {
-  FONT_FAMILY_OPTIONS,
-  getColorInputValue,
-  isFontFamilySelected,
-} from "../lib/style-controls";
+  getElementToolValue,
+  getFeatureOptions,
+  getTextDecorationCommitValue,
+  isFeatureActive,
+  normalizeFeatureCommitValue,
+} from "../lib/element-tool-values";
 import { cn } from "../lib/utils";
 import { ColorPicker } from "./color-picker";
+import { Button } from "./ui/button";
 import {
   Select,
   SelectContent,
@@ -53,247 +34,20 @@ interface SidebarToolPanelProps {
   attributeValues: AttributeValues;
   onStyleChange: (propertyName: string, nextValue: string) => void;
   onAttributeChange: (attributeName: string, nextValue: string) => void;
-  onDuplicateSelection: () => void;
-  onDeleteSelection: () => void;
+  onAlignToSlide: (action: string) => void;
+  onLayerOrder: (action: string) => void;
+  onModeChange: () => void;
 }
 
 interface AttributeValues {
-  name: string;
   locked: string;
   altText: string;
   ariaLabel: string;
-  clickAction: string;
   linkUrl: string;
-  targetSlide: string;
 }
 
-interface InspectorFieldConfig {
-  propertyName: string;
-  label: string;
-  input: "text" | "number" | "select" | "color" | "segmented" | "slider";
-  placeholder?: string;
-  options?: SelectOption[];
-  unit?: string;
-  min?: number;
-  max?: number;
-  step?: number;
-}
-
-interface SelectOption {
-  label: string;
-  value: string;
-}
-
-interface InspectorSectionConfig {
-  id: string;
-  title: string;
-  icon: ReactNode;
-  fields: InspectorFieldConfig[];
-}
-
-const INSPECTOR_SECTIONS: InspectorSectionConfig[] = [
-  {
-    id: "layout",
-    title: "Layout",
-    icon: <Move className="size-3.5" />,
-    fields: [
-      { propertyName: "width", label: "Width", input: "text", placeholder: "320px or auto" },
-      { propertyName: "height", label: "Height", input: "text", placeholder: "240px or auto" },
-      {
-        propertyName: "opacity",
-        label: "Opacity",
-        input: "slider",
-        placeholder: "0 to 1",
-        min: 0,
-        max: 1,
-        step: 0.01,
-      },
-      {
-        propertyName: "display",
-        label: "Visibility",
-        input: "segmented",
-        options: [
-          { label: "visible", value: "" },
-          { label: "hidden", value: "none" },
-        ],
-      },
-    ],
-  },
-  {
-    id: "typography",
-    title: "Typography",
-    icon: <Type className="size-3.5" />,
-    fields: [
-      {
-        propertyName: "font-family",
-        label: "Font family",
-        input: "select",
-        options: FONT_FAMILY_OPTIONS.map((font) => ({ label: font.label, value: font.value })),
-      },
-      {
-        propertyName: "font-size",
-        label: "Font size",
-        input: "slider",
-        unit: "px",
-        min: 0,
-        max: 160,
-        step: 1,
-      },
-      {
-        propertyName: "font-weight",
-        label: "Font weight",
-        input: "select",
-        options: [
-          { label: "unset", value: "" },
-          { label: "Light", value: "300" },
-          { label: "Regular", value: "400" },
-          { label: "Medium", value: "500" },
-          { label: "Semibold", value: "600" },
-          { label: "Bold", value: "700" },
-          { label: "Heavy", value: "800" },
-        ],
-      },
-      {
-        propertyName: "line-height",
-        label: "Line height",
-        input: "slider",
-        placeholder: "1.4 or 32px",
-        min: 0.8,
-        max: 3,
-        step: 0.05,
-      },
-      {
-        propertyName: "text-align",
-        label: "Text align",
-        input: "segmented",
-        options: [
-          { label: "Left", value: "left" },
-          { label: "Center", value: "center" },
-          { label: "Right", value: "right" },
-        ],
-      },
-      { propertyName: "color", label: "Text color", input: "color" },
-    ],
-  },
-  {
-    id: "fill",
-    title: "Fill",
-    icon: <Palette className="size-3.5" />,
-    fields: [{ propertyName: "background-color", label: "Background color", input: "color" }],
-  },
-  {
-    id: "border",
-    title: "Shape",
-    icon: <Box className="size-3.5" />,
-    fields: [
-      { propertyName: "border", label: "Border", input: "text", placeholder: "1px solid #d1c1ae" },
-      { propertyName: "border-radius", label: "Radius", input: "text", placeholder: "16px" },
-      {
-        propertyName: "box-shadow",
-        label: "Shadow",
-        input: "text",
-        placeholder: "0 12px 30px rgba(...)",
-      },
-    ],
-  },
-];
-
-const DEFAULT_OPEN_SECTIONS = new Set<string>(["layout", "typography", "fill"]);
-const STYLE_CHANGE_DEBOUNCE_MS = 750;
 const EMPTY_SELECT_VALUE = "__empty__";
-const FALLBACK_CUSTOM_PROPERTY_SECTION_ID = "custom";
-
-function toStyleMap(inspectedStyles: CssPropertyRow[]): Map<string, string> {
-  return new Map(inspectedStyles.map((property) => [property.name, property.value]));
-}
-
-function normalizeNumberInput(rawValue: string, unit: string | undefined) {
-  const trimmed = rawValue.trim();
-  if (trimmed.length === 0) {
-    return "";
-  }
-
-  return unit ? `${trimmed}${unit}` : trimmed;
-}
-
-function getInputValue(value: string, field: InspectorFieldConfig) {
-  if (
-    (field.input === "number" || field.input === "slider") &&
-    field.unit &&
-    value.endsWith(field.unit)
-  ) {
-    return value.slice(0, -field.unit.length);
-  }
-
-  if (field.input === "color") {
-    return getColorInputValue(value);
-  }
-
-  return value;
-}
-
-function getSelectValue(value: string, field: InspectorFieldConfig): string {
-  if (field.propertyName === "font-family") {
-    return (
-      field.options?.find((option) => isFontFamilySelected(value, option.value))?.value ?? value
-    );
-  }
-
-  if (field.propertyName === "display") {
-    return value === "none" ? "none" : "";
-  }
-
-  if (field.propertyName === "text-align" && value === "start") {
-    return "left";
-  }
-
-  return value;
-}
-
-function getSelectOptions(value: string, field: InspectorFieldConfig): SelectOption[] {
-  const options = field.options ?? [{ label: "unset", value: "" }];
-  const selectValue = getSelectValue(value, field);
-  const hasMatchingOption = options.some((option) => option.value === selectValue);
-
-  if (hasMatchingOption) {
-    return options;
-  }
-
-  return [{ label: value || "unset", value }, ...options];
-}
-
-function getChangeValue(nextRawValue: string, field: InspectorFieldConfig) {
-  if (field.input === "number" || field.input === "slider") {
-    return normalizeNumberInput(nextRawValue, field.unit);
-  }
-
-  return nextRawValue;
-}
-
-function commitDraftValue(
-  propertyName: string,
-  draftValue: string | undefined,
-  inspectedValue: string,
-  onStyleChange: (propertyName: string, nextValue: string) => void
-) {
-  if (draftValue === undefined) {
-    return;
-  }
-
-  const normalizedDraft = (draftValue ?? "").trim();
-  const normalizedCurrent = inspectedValue.trim();
-
-  if (normalizedDraft === normalizedCurrent) {
-    return;
-  }
-
-  onStyleChange(propertyName, normalizedDraft);
-}
-
-function parseNumericValue(value: string, fallback: number) {
-  const parsed = Number.parseFloat(value);
-  return Number.isFinite(parsed) ? parsed : fallback;
-}
+const DEFAULT_OPEN_GROUPS = new Set(["typography", "appearance", "layout"]);
 
 function SidebarToolPanel({
   inspectedStyles,
@@ -306,121 +60,147 @@ function SidebarToolPanel({
   attributeValues,
   onStyleChange,
   onAttributeChange,
-  onDuplicateSelection,
-  onDeleteSelection,
+  onAlignToSlide,
+  onLayerOrder,
+  onModeChange,
 }: SidebarToolPanelProps) {
   const panelBaseId = useId();
-  const styleMap = useMemo(() => toStyleMap(inspectedStyles), [inspectedStyles]);
-  const [openSectionIds, setOpenSectionIds] = useState<Set<string>>(DEFAULT_OPEN_SECTIONS);
-  const [draftValues, setDraftValues] = useState<Record<string, string>>({});
+  const [openGroupIds, setOpenGroupIds] = useState<Set<string>>(DEFAULT_OPEN_GROUPS);
   const [customPropertyName, setCustomPropertyName] = useState("");
   const [customPropertyValue, setCustomPropertyValue] = useState("");
-  const isStyleEditingDisabled =
-    !canEditStyles || isEditingText || attributeValues.locked === "true";
-  const editingTargetId = selectedElementId ?? "slide-root";
-  const customPropertyNameId = `${panelBaseId}-custom-property-name`;
-  const customPropertyValueId = `${panelBaseId}-custom-property-value`;
-  const hidden =
-    getSelectValue(styleMap.get("display") ?? "", {
-      propertyName: "display",
-      label: "Visibility",
-      input: "segmented",
-    }) === "none";
-  const displayType =
-    selectedElementLabel || getDefaultElementType(selectedElementType, selectedElementId);
+  const isDisabled = !canEditStyles || isEditingText || attributeValues.locked === "true";
+  const displayType = selectedElementLabel || (selectedElementId ? selectedElementType : "slide");
 
-  useEffect(() => {
-    void editingTargetId;
-    setDraftValues({});
-    setCustomPropertyName("");
-    setCustomPropertyValue("");
-  }, [editingTargetId]);
+  function commitFeature(feature: ElementToolFeature, nextValue: string) {
+    if (feature.target === "style" && feature.propertyName) {
+      if (feature.id === "font-underline") {
+        onStyleChange(
+          feature.propertyName,
+          getTextDecorationCommitValue(
+            getElementToolValue({ feature, inspectedStyles, attributeValues }),
+            "underline",
+            nextValue === ""
+          )
+        );
+        return;
+      }
 
-  useEffect(() => {
-    const draftEntries = Object.entries(draftValues);
-    if (draftEntries.length === 0 || isStyleEditingDisabled) {
+      if (feature.id === "font-strikethrough") {
+        onStyleChange(
+          feature.propertyName,
+          getTextDecorationCommitValue(
+            getElementToolValue({ feature, inspectedStyles, attributeValues }),
+            "line-through",
+            nextValue === ""
+          )
+        );
+        return;
+      }
+
+      onStyleChange(feature.propertyName, normalizeFeatureCommitValue(feature, nextValue));
       return;
     }
 
-    const timer = window.setTimeout(() => {
-      for (const [propertyName, draftValue] of draftEntries) {
-        commitDraftValue(propertyName, draftValue, styleMap.get(propertyName) ?? "", onStyleChange);
-      }
+    if (feature.target === "attribute" && feature.attributeName) {
+      onAttributeChange(feature.attributeName, normalizeFeatureCommitValue(feature, nextValue));
+      return;
+    }
 
-      setDraftValues((currentDrafts) => {
-        const nextDrafts = { ...currentDrafts };
-        for (const [propertyName, draftValue] of draftEntries) {
-          if (nextDrafts[propertyName] === draftValue) {
-            delete nextDrafts[propertyName];
-          }
-        }
-        return nextDrafts;
-      });
-    }, STYLE_CHANGE_DEBOUNCE_MS);
+    if (feature.id === "align-to-slide") {
+      onAlignToSlide(nextValue);
+    }
 
-    return () => {
-      window.clearTimeout(timer);
-    };
-  }, [draftValues, isStyleEditingDisabled, onStyleChange, styleMap]);
+    if (feature.id === "layer-order") {
+      onLayerOrder(nextValue);
+    }
+  }
 
-  const commitField = (field: InspectorFieldConfig) => {
-    commitDraftValue(
-      field.propertyName,
-      draftValues[field.propertyName],
-      styleMap.get(field.propertyName) ?? "",
-      onStyleChange
-    );
-  };
+  function renderFeature(feature: ElementToolFeature) {
+    const currentValue = getElementToolValue({
+      feature,
+      inspectedStyles,
+      attributeValues,
+    });
+    const fieldId = `${panelBaseId}-${feature.id}`;
 
-  const renderField = (field: InspectorFieldConfig) => {
-    const currentValue = styleMap.get(field.propertyName) ?? "";
-    const draftValue = draftValues[field.propertyName];
-    const rawInputValue = getInputValue(draftValue ?? currentValue, field);
-    const inputValue =
-      field.input === "slider"
-        ? String(
-            parseNumericValue(
-              rawInputValue,
-              field.propertyName === "opacity" ? 1 : (field.min ?? 0)
-            )
-          )
-        : rawInputValue;
-    const fieldInputId = `${panelBaseId}-${field.propertyName}`;
+    if (feature.controlType === "custom-css") {
+      return (
+        <div key={feature.id} className="grid gap-2">
+          <label className="grid gap-1.5" htmlFor={`${fieldId}-name`}>
+            <span className="text-[10px] font-medium uppercase tracking-wider text-foreground/50">
+              Property name
+            </span>
+            <input
+              id={`${fieldId}-name`}
+              type="text"
+              value={customPropertyName}
+              placeholder="e.g. justify-content"
+              disabled={isDisabled}
+              onChange={(event) => setCustomPropertyName(event.target.value)}
+              className="h-8 rounded-md border border-transparent bg-foreground/[0.03] px-2 text-xs outline-none transition focus:bg-white focus:border-foreground/20 disabled:opacity-50"
+            />
+          </label>
+          <label className="grid gap-1.5" htmlFor={`${fieldId}-value`}>
+            <span className="text-[10px] font-medium uppercase tracking-wider text-foreground/50">
+              Property value
+            </span>
+            <input
+              id={`${fieldId}-value`}
+              type="text"
+              value={customPropertyValue}
+              placeholder="e.g. space-between"
+              disabled={isDisabled}
+              onChange={(event) => setCustomPropertyValue(event.target.value)}
+              onKeyDown={(event) => {
+                if (event.key === "Enter") {
+                  event.preventDefault();
+                  applyCustomProperty();
+                }
+              }}
+              className="h-8 rounded-md border border-transparent bg-foreground/[0.03] px-2 text-xs outline-none transition focus:bg-white focus:border-foreground/20 disabled:opacity-50"
+            />
+          </label>
+          <Button
+            type="button"
+            variant="outline"
+            disabled={isDisabled || customPropertyName.trim().length === 0}
+            onClick={applyCustomProperty}
+          >
+            Apply property
+          </Button>
+        </div>
+      );
+    }
 
-    return (
-      <Row label={field.label} key={field.propertyName}>
-        {field.input === "select" ? (
+    if (feature.controlType === "select") {
+      const options = getFeatureOptions(feature, currentValue);
+      return (
+        <Row key={feature.id} label={feature.label}>
           <Select
-            value={getSelectValue(draftValue ?? currentValue, field) || EMPTY_SELECT_VALUE}
-            disabled={isStyleEditingDisabled}
+            value={currentValue || EMPTY_SELECT_VALUE}
+            disabled={isDisabled}
             onValueChange={(nextValue) => {
-              commitDraftValue(
-                field.propertyName,
-                nextValue === EMPTY_SELECT_VALUE ? "" : nextValue,
-                currentValue,
-                onStyleChange
-              );
+              commitFeature(feature, nextValue === EMPTY_SELECT_VALUE ? "" : nextValue);
             }}
           >
             <SelectTrigger
-              id={fieldInputId}
-              aria-label={field.label}
+              id={fieldId}
+              aria-label={feature.label}
               size="sm"
               className="h-8 flex-1 rounded-md border-transparent bg-foreground/[0.03] px-2 text-xs shadow-none hover:bg-foreground/[0.06]"
-              data-value={getSelectValue(draftValue ?? currentValue, field)}
+              data-value={currentValue}
             >
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
               <SelectGroup>
-                {getSelectOptions(draftValue ?? currentValue, field).map((option) => (
+                {options.map((option) => (
                   <SelectItem
                     key={option.value || EMPTY_SELECT_VALUE}
                     value={option.value || EMPTY_SELECT_VALUE}
-                    data-testid={`${field.propertyName}-option`}
                     data-value={option.value}
                     style={
-                      field.propertyName === "font-family" && option.value
+                      feature.id === "font-family" && option.value
                         ? { fontFamily: option.value }
                         : undefined
                     }
@@ -431,106 +211,113 @@ function SidebarToolPanel({
               </SelectGroup>
             </SelectContent>
           </Select>
-        ) : field.input === "segmented" ? (
-          <Select
-            value={getSelectValue(draftValue ?? currentValue, field) || EMPTY_SELECT_VALUE}
-            disabled={isStyleEditingDisabled}
-            onValueChange={(nextValue) => {
-              commitDraftValue(
-                field.propertyName,
-                nextValue === EMPTY_SELECT_VALUE ? "" : nextValue,
-                currentValue,
-                onStyleChange
-              );
+        </Row>
+      );
+    }
+
+    if (feature.controlType === "color") {
+      return (
+        <Row key={feature.id} label={feature.label}>
+          <ColorControl
+            id={fieldId}
+            label={feature.label}
+            value={currentValue}
+            disabled={isDisabled}
+            onChange={(nextValue) => commitFeature(feature, nextValue)}
+          />
+        </Row>
+      );
+    }
+
+    if (feature.controlType === "slider" || feature.controlType === "number") {
+      return (
+        <Row key={feature.id} label={feature.label}>
+          <input
+            id={fieldId}
+            aria-label={feature.label}
+            type="number"
+            min={feature.min}
+            max={feature.max}
+            step={feature.step}
+            value={currentValue}
+            disabled={isDisabled}
+            onChange={(event) => commitFeature(feature, event.target.value)}
+            className="h-8 min-w-0 flex-1 rounded-md border border-transparent bg-foreground/[0.03] px-2 text-xs font-medium outline-none transition hover:bg-foreground/[0.05] focus:bg-white focus:border-foreground/20 disabled:cursor-not-allowed disabled:opacity-50"
+          />
+          {feature.unit ? (
+            <span className="text-[10px] font-medium text-foreground/40">{feature.unit}</span>
+          ) : null}
+        </Row>
+      );
+    }
+
+    if (feature.controlType === "toggle") {
+      const active = isFeatureActive(feature, currentValue);
+      return (
+        <Row key={feature.id} label={feature.label}>
+          <Button
+            type="button"
+            variant={active ? "secondary" : "outline"}
+            disabled={!canEditStyles || isEditingText}
+            aria-label={feature.label}
+            aria-pressed={active}
+            onClick={() => {
+              commitFeature(feature, active ? "" : "true");
             }}
           >
-            <SelectTrigger
-              id={fieldInputId}
-              aria-label={field.label}
-              size="sm"
-              className="h-8 flex-1 rounded-md border-transparent bg-foreground/[0.03] px-2 text-xs shadow-none hover:bg-foreground/[0.06]"
-              data-value={getSelectValue(draftValue ?? currentValue, field)}
-            >
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectGroup>
-                {(field.options ?? []).map((option) => (
-                  <SelectItem
-                    key={option.value || EMPTY_SELECT_VALUE}
-                    value={option.value || EMPTY_SELECT_VALUE}
-                    data-value={option.value}
-                  >
-                    {option.label}
-                  </SelectItem>
-                ))}
-              </SelectGroup>
-            </SelectContent>
-          </Select>
-        ) : field.input === "color" ? (
-          <ColorSwatch
-            id={fieldInputId}
-            label={field.label}
-            value={inputValue}
-            disabled={isStyleEditingDisabled}
-            onChange={(nextValue) => {
-              commitDraftValue(field.propertyName, nextValue, currentValue, onStyleChange);
-            }}
-          />
-        ) : field.input === "slider" ? (
-          <NumberSlider
-            id={fieldInputId}
-            label={field.label}
-            value={parseNumericValue(
-              inputValue,
-              field.propertyName === "opacity" ? 1 : (field.min ?? 0)
-            )}
-            min={field.min ?? 0}
-            max={field.max ?? 100}
-            step={field.step ?? 1}
-            suffix={field.unit ?? ""}
-            disabled={isStyleEditingDisabled}
-            onChange={(nextValue) => {
-              const nextRawValue = getChangeValue(String(nextValue), field);
-              setDraftValues((current) => ({ ...current, [field.propertyName]: nextRawValue }));
-            }}
-            onCommit={() => commitField(field)}
-          />
-        ) : (
-          <div className="flex flex-1 items-center gap-2">
-            <input
-              id={fieldInputId}
-              aria-label={field.label}
-              className="h-8 min-w-0 flex-1 rounded-md border border-transparent bg-foreground/[0.03] px-2 text-xs font-medium outline-none transition hover:bg-foreground/[0.05] focus:bg-white focus:border-foreground/20 disabled:cursor-not-allowed disabled:opacity-50"
-              type={field.input === "number" ? "number" : "text"}
-              value={inputValue}
-              min={field.min}
-              step={field.step}
-              placeholder={field.placeholder}
-              disabled={isStyleEditingDisabled}
-              onChange={(event) => {
-                const nextValue = getChangeValue(event.target.value, field);
-                setDraftValues((current) => ({ ...current, [field.propertyName]: nextValue }));
-              }}
-              onBlur={() => commitField(field)}
-              onKeyDown={(event) => {
-                if (event.key === "Enter") {
-                  event.preventDefault();
-                  commitField(field);
-                  event.currentTarget.blur();
-                }
-              }}
-            />
-            {field.unit ? (
-              <span className="text-[10px] font-medium text-foreground/40">{field.unit}</span>
-            ) : null}
+            {active ? "On" : "Off"}
+          </Button>
+        </Row>
+      );
+    }
+
+    if (feature.controlType === "action-group") {
+      return (
+        <div key={feature.id} className="grid gap-1.5">
+          <div className="text-[10px] font-medium uppercase tracking-wider text-foreground/50">
+            {feature.label}
           </div>
-        )}
+          <div className="grid grid-cols-2 gap-1.5">
+            {(feature.options ?? []).map((option) => {
+              const Icon = option.icon;
+              const active = currentValue === option.value;
+              return (
+                <Button
+                  key={option.value}
+                  type="button"
+                  variant={active ? "secondary" : "outline"}
+                  disabled={isDisabled}
+                  aria-label={option.label}
+                  title={option.label}
+                  onClick={() => commitFeature(feature, option.value)}
+                >
+                  {Icon ? <Icon /> : null}
+                  <span className="truncate">{option.label}</span>
+                </Button>
+              );
+            })}
+          </div>
+        </div>
+      );
+    }
+
+    return (
+      <Row key={feature.id} label={feature.label}>
+        <input
+          id={fieldId}
+          aria-label={feature.label}
+          className="h-8 min-w-0 flex-1 rounded-md border border-transparent bg-foreground/[0.03] px-2 text-xs font-medium outline-none transition hover:bg-foreground/[0.05] focus:bg-white focus:border-foreground/20 disabled:cursor-not-allowed disabled:opacity-50"
+          type="text"
+          value={currentValue}
+          placeholder={feature.placeholder}
+          disabled={isDisabled}
+          onChange={(event) => commitFeature(feature, event.target.value)}
+        />
       </Row>
     );
-  };
+  }
 
-  const applyCustomProperty = () => {
+  function applyCustomProperty() {
     const propertyName = customPropertyName.trim();
     if (!propertyName) {
       return;
@@ -538,7 +325,7 @@ function SidebarToolPanel({
 
     onStyleChange(propertyName, customPropertyValue.trim());
     setCustomPropertyValue("");
-  };
+  }
 
   return (
     <section
@@ -552,60 +339,23 @@ function SidebarToolPanel({
       <div className="border-b border-foreground/[0.06] px-4 py-3">
         <div className="flex items-center justify-between gap-2">
           <div className="flex min-w-0 flex-1 items-center gap-2">
-            <div className="flex size-7 shrink-0 items-center justify-center rounded-lg border border-foreground/[0.06] bg-foreground/[0.04] text-foreground/75">
-              {selectedElementType === "text" ? (
-                <Type className="size-3.5" />
-              ) : selectedElementType === "image" ? (
-                <ImageIcon className="size-3.5" />
-              ) : (
-                <Square className="size-3.5" />
-              )}
+            <div className="flex size-7 shrink-0 items-center justify-center rounded-md border border-foreground/[0.06] bg-foreground/[0.04] text-foreground/75">
+              <ElementTypeIcon type={selectedElementType} />
             </div>
             <div className="min-w-0 flex-1 truncate rounded bg-transparent px-1.5 py-1 -mx-1.5 text-xs font-semibold capitalize">
               {displayType}
             </div>
           </div>
-          <div className="flex shrink-0 items-center gap-0.5">
-            <IconButton
-              title={attributeValues.locked === "true" ? "Unlock element" : "Lock element"}
-              active={attributeValues.locked === "true"}
-              onClick={() =>
-                onAttributeChange(
-                  "data-editor-locked",
-                  attributeValues.locked === "true" ? "" : "true"
-                )
-              }
-            >
-              {attributeValues.locked === "true" ? (
-                <Lock className="size-3.5" />
-              ) : (
-                <Unlock className="size-3.5" />
-              )}
-            </IconButton>
-            <IconButton
-              title={hidden ? "Show element" : "Hide element"}
-              active={hidden}
-              onClick={() => onStyleChange("display", hidden ? "" : "none")}
-            >
-              {hidden ? <EyeOff className="size-3.5" /> : <Eye className="size-3.5" />}
-            </IconButton>
-            <IconButton
-              title="More"
-              onClick={() => {
-                setOpenSectionIds((current) => {
-                  const next = new Set(current);
-                  if (next.has(FALLBACK_CUSTOM_PROPERTY_SECTION_ID)) {
-                    next.delete(FALLBACK_CUSTOM_PROPERTY_SECTION_ID);
-                  } else {
-                    next.add(FALLBACK_CUSTOM_PROPERTY_SECTION_ID);
-                  }
-                  return next;
-                });
-              }}
-            >
-              <MoreHorizontal className="size-3.5" />
-            </IconButton>
-          </div>
+          <Button
+            type="button"
+            variant="outline"
+            size="icon-sm"
+            aria-label="Use floating toolbar mode"
+            data-testid="tool-mode-floating-button"
+            onClick={onModeChange}
+          >
+            <PanelTopOpen />
+          </Button>
         </div>
       </div>
 
@@ -616,193 +366,42 @@ function SidebarToolPanel({
       ) : null}
 
       <div className="min-h-0 flex-1 overflow-y-auto p-0">
-        {INSPECTOR_SECTIONS.map((section) => (
+        {ELEMENT_TOOL_GROUPS.map((group) => (
           <Section
-            key={section.id}
-            icon={section.icon}
-            title={section.title}
-            open={openSectionIds.has(section.id)}
+            key={group.id}
+            icon={group.icon}
+            title={group.label}
+            open={openGroupIds.has(group.id)}
             onOpenChange={(nextOpen) => {
-              setOpenSectionIds((current) => {
-                const next = new Set(current);
-                if (nextOpen) {
-                  next.add(section.id);
-                } else {
-                  next.delete(section.id);
-                }
-                return next;
-              });
+              setOpenGroupIds((current) => toggleSetValue(current, group.id, nextOpen));
             }}
           >
-            {section.fields.map(renderField)}
+            {group.subgroups.map((subgroup) => (
+              <div
+                key={subgroup.id}
+                className="grid gap-2 rounded-md border border-foreground/[0.06] bg-foreground/[0.015] p-2.5"
+              >
+                <div className="flex items-center gap-1.5 text-[11px] font-semibold text-foreground/65">
+                  <subgroup.icon className="size-3.5 text-foreground/40" />
+                  {subgroup.label}
+                </div>
+                {subgroup.features.map(renderFeature)}
+              </div>
+            ))}
           </Section>
         ))}
-
-        <Section
-          icon={<MousePointerClick className="size-3.5" />}
-          title="Interaction"
-          open={openSectionIds.has("interaction")}
-          onOpenChange={(nextOpen) => {
-            setOpenSectionIds((current) => toggleSetValue(current, "interaction", nextOpen));
-          }}
-        >
-          <AttributeSelect
-            label="Action"
-            value={attributeValues.clickAction || "none"}
-            options={[
-              { label: "None", value: "none" },
-              { label: "Next slide", value: "next" },
-              { label: "Previous slide", value: "prev" },
-              { label: "Go to slide", value: "slide" },
-              { label: "Open link", value: "url" },
-            ]}
-            disabled={isStyleEditingDisabled}
-            onChange={(nextValue) =>
-              onAttributeChange("data-click-action", nextValue === "none" ? "" : nextValue)
-            }
-          />
-          {attributeValues.clickAction === "url" ? (
-            <AttributeInput
-              label="Link"
-              value={attributeValues.linkUrl}
-              placeholder="https://"
-              disabled={isStyleEditingDisabled}
-              onCommit={(nextValue) => onAttributeChange("data-link-url", nextValue)}
-            />
-          ) : null}
-          {attributeValues.clickAction === "slide" ? (
-            <AttributeInput
-              label="Slide"
-              value={attributeValues.targetSlide}
-              placeholder="slide-2"
-              disabled={isStyleEditingDisabled}
-              onCommit={(nextValue) => onAttributeChange("data-target-slide", nextValue)}
-            />
-          ) : null}
-        </Section>
-
-        <Section
-          icon={<Info className="size-3.5" />}
-          title="Accessibility"
-          open={openSectionIds.has("accessibility")}
-          onOpenChange={(nextOpen) => {
-            setOpenSectionIds((current) => toggleSetValue(current, "accessibility", nextOpen));
-          }}
-        >
-          <AttributeInput
-            label="Alt text"
-            value={attributeValues.altText}
-            placeholder="Describe this element"
-            disabled={isStyleEditingDisabled}
-            onCommit={(nextValue) => onAttributeChange("alt", nextValue)}
-          />
-          <AttributeInput
-            label="ARIA"
-            value={attributeValues.ariaLabel}
-            placeholder="aria-label"
-            disabled={isStyleEditingDisabled}
-            onCommit={(nextValue) => onAttributeChange("aria-label", nextValue)}
-          />
-        </Section>
-
-        <Section
-          icon={<Hash className="size-3.5" />}
-          title="Custom CSS"
-          open={openSectionIds.has(FALLBACK_CUSTOM_PROPERTY_SECTION_ID)}
-          onOpenChange={(nextOpen) => {
-            setOpenSectionIds((current) =>
-              toggleSetValue(current, FALLBACK_CUSTOM_PROPERTY_SECTION_ID, nextOpen)
-            );
-          }}
-        >
-          <label className="grid gap-1.5" htmlFor={customPropertyNameId}>
-            <span className="text-[10px] font-medium uppercase tracking-wider text-foreground/50">
-              Property name
-            </span>
-            <input
-              id={customPropertyNameId}
-              type="text"
-              value={customPropertyName}
-              placeholder="e.g. justify-content"
-              disabled={isStyleEditingDisabled}
-              onChange={(event) => setCustomPropertyName(event.target.value)}
-              className="h-8 rounded-md border border-transparent bg-foreground/[0.03] px-2 text-xs outline-none transition focus:bg-white focus:border-foreground/20 disabled:opacity-50"
-            />
-          </label>
-          <label className="grid gap-1.5" htmlFor={customPropertyValueId}>
-            <span className="text-[10px] font-medium uppercase tracking-wider text-foreground/50">
-              Property value
-            </span>
-            <input
-              id={customPropertyValueId}
-              type="text"
-              value={customPropertyValue}
-              placeholder="e.g. space-between"
-              disabled={isStyleEditingDisabled}
-              onChange={(event) => setCustomPropertyValue(event.target.value)}
-              onKeyDown={(event) => {
-                if (event.key === "Enter") {
-                  event.preventDefault();
-                  applyCustomProperty();
-                }
-              }}
-              className="h-8 rounded-md border border-transparent bg-foreground/[0.03] px-2 text-xs outline-none transition focus:bg-white focus:border-foreground/20 disabled:opacity-50"
-            />
-          </label>
-          <button
-            className="h-8 rounded-md border border-foreground/[0.08] bg-foreground/[0.03] text-xs font-medium text-foreground/70 transition-colors hover:bg-foreground/[0.06] hover:text-foreground disabled:pointer-events-none disabled:opacity-50"
-            type="button"
-            disabled={isStyleEditingDisabled || customPropertyName.trim().length === 0}
-            onClick={applyCustomProperty}
-          >
-            Apply property
-          </button>
-        </Section>
-
-        <Section
-          icon={<Wand2 className="size-3.5" />}
-          title="Actions"
-          open={openSectionIds.has("actions")}
-          onOpenChange={(nextOpen) => {
-            setOpenSectionIds((current) => toggleSetValue(current, "actions", nextOpen));
-          }}
-        >
-          <div className="grid grid-cols-2 gap-2">
-            <button
-              className="flex h-8 items-center justify-center gap-1.5 rounded-md border border-foreground/[0.08] bg-foreground/[0.03] text-xs font-medium text-foreground/70 transition-colors hover:bg-foreground/[0.06] hover:text-foreground"
-              type="button"
-              disabled={!selectedElementId}
-              onClick={onDuplicateSelection}
-            >
-              <Copy className="size-3.5" />
-              Copy
-            </button>
-            <button
-              className="flex h-8 items-center justify-center gap-1.5 rounded-md border border-foreground/[0.08] bg-foreground/[0.03] text-xs font-medium text-foreground/60 transition-colors hover:bg-destructive/10 hover:text-destructive"
-              type="button"
-              disabled={!selectedElementId}
-              onClick={onDeleteSelection}
-            >
-              <Trash2 className="size-3.5" />
-              Delete
-            </button>
-          </div>
-        </Section>
         <div className="h-4" />
       </div>
     </section>
   );
 }
 
-function getDefaultElementType(
-  type: SidebarToolPanelProps["selectedElementType"],
-  selectedElementId: string | null
-) {
-  if (!selectedElementId) {
-    return "slide";
+function ElementTypeIcon({ type }: { type: SidebarToolPanelProps["selectedElementType"] }) {
+  if (type === "text") {
+    return <Type className="size-3.5" />;
   }
 
-  return type;
+  return <Square className="size-3.5" />;
 }
 
 function toggleSetValue(current: Set<string>, value: string, enabled: boolean) {
@@ -816,13 +415,13 @@ function toggleSetValue(current: Set<string>, value: string, enabled: boolean) {
 }
 
 function Section({
-  icon,
+  icon: Icon,
   title,
   open,
   onOpenChange,
   children,
 }: {
-  icon: ReactNode;
+  icon: LucideIcon;
   title: string;
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -837,14 +436,18 @@ function Section({
         className="group flex w-full items-center justify-between px-4 py-2.5 text-left transition hover:bg-foreground/[0.02]"
       >
         <div className="flex items-center gap-2">
-          <span className="text-foreground/40 transition group-hover:text-foreground/70">
-            {icon}
-          </span>
+          <Icon className="size-3.5 text-foreground/40 transition group-hover:text-foreground/70" />
           <span className="text-xs font-semibold tracking-wide">{title}</span>
         </div>
-        <ChevronDown
-          className={cn("size-3.5 text-foreground/30 transition-transform", open && "rotate-180")}
-        />
+        <span
+          className={cn(
+            "text-[11px] font-medium text-foreground/30 transition-transform",
+            open && "rotate-180"
+          )}
+          aria-hidden="true"
+        >
+          v
+        </span>
       </button>
       <div className={cn("grid transition-all", open ? "grid-rows-[1fr]" : "grid-rows-[0fr]")}>
         <div className="overflow-hidden">
@@ -858,7 +461,7 @@ function Section({
 function Row({ label, children }: { label: string; children: ReactNode }) {
   return (
     <div className="flex items-center gap-2">
-      <span className="w-16 shrink-0 text-[10px] font-medium uppercase tracking-wider text-foreground/50">
+      <span className="w-20 shrink-0 text-[10px] font-medium uppercase tracking-wider text-foreground/50">
         {label}
       </span>
       {children}
@@ -866,154 +469,7 @@ function Row({ label, children }: { label: string; children: ReactNode }) {
   );
 }
 
-function NumberSlider({
-  id,
-  label,
-  value,
-  min,
-  max,
-  step,
-  suffix = "",
-  disabled,
-  onChange,
-  onCommit,
-}: {
-  id: string;
-  label: string;
-  value: number;
-  min: number;
-  max: number;
-  step: number;
-  suffix?: string;
-  disabled: boolean;
-  onChange: (value: number) => void;
-  onCommit: () => void;
-}) {
-  const trackRef = useRef<HTMLDivElement>(null);
-  const [dragging, setDragging] = useState(false);
-  const pct = Math.max(0, Math.min(1, (value - min) / (max - min || 1)));
-
-  const setFromClientX = useCallback(
-    (clientX: number) => {
-      const el = trackRef.current;
-      if (!el || disabled) {
-        return;
-      }
-
-      const rect = el.getBoundingClientRect();
-      const p = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
-      let nextValue = min + p * (max - min);
-      nextValue = Math.round(nextValue / step) * step;
-      nextValue = Math.max(min, Math.min(max, nextValue));
-      onChange(Number(nextValue.toFixed(4)));
-    },
-    [disabled, max, min, onChange, step]
-  );
-
-  useEffect(() => {
-    if (!dragging) {
-      return;
-    }
-
-    const onMove = (event: MouseEvent) => setFromClientX(event.clientX);
-    const onUp = () => {
-      setDragging(false);
-      onCommit();
-    };
-
-    window.addEventListener("mousemove", onMove);
-    window.addEventListener("mouseup", onUp);
-    return () => {
-      window.removeEventListener("mousemove", onMove);
-      window.removeEventListener("mouseup", onUp);
-    };
-  }, [dragging, onCommit, setFromClientX]);
-
-  const display = `${Math.round(value * 100) / 100}${suffix}`;
-
-  return (
-    <div className="flex flex-1 items-center gap-1.5">
-      <div
-        ref={trackRef}
-        onMouseDown={(event) => {
-          if (disabled) {
-            return;
-          }
-          setDragging(true);
-          setFromClientX(event.clientX);
-        }}
-        className={cn(
-          "relative h-7 flex-1 cursor-ew-resize select-none overflow-hidden rounded-md border border-transparent bg-foreground/[0.04] transition hover:bg-foreground/[0.06]",
-          dragging && "border-foreground/10 bg-foreground/[0.08]",
-          disabled && "cursor-not-allowed opacity-50"
-        )}
-      >
-        <div
-          className="pointer-events-none absolute inset-y-0 left-0 bg-foreground/[0.12]"
-          style={{ width: `${pct * 100}%` }}
-        />
-        <div
-          className="pointer-events-none absolute inset-y-1 w-px bg-foreground/60 transition-[left]"
-          style={{ left: `calc(${pct * 100}% - 0.5px)` }}
-        />
-        <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
-          <span className="text-[10px] font-medium tabular-nums text-foreground/70">{display}</span>
-        </div>
-      </div>
-      <div className="flex h-7 w-16 items-center rounded-md border border-transparent bg-foreground/[0.03] transition hover:bg-foreground/[0.05] focus-within:bg-white focus-within:border-foreground/20">
-        <button
-          type="button"
-          className="flex h-full w-5 items-center justify-center text-foreground/40 hover:text-foreground disabled:opacity-40"
-          disabled={disabled}
-          onClick={() => {
-            onChange(Math.max(min, Number((value - step).toFixed(4))));
-            window.setTimeout(onCommit, 0);
-          }}
-        >
-          <Minus className="size-3" />
-        </button>
-        <input
-          id={id}
-          aria-label={label}
-          type="number"
-          value={Math.round(value * 100) / 100}
-          step={step}
-          min={min}
-          max={max}
-          disabled={disabled}
-          onChange={(event) => {
-            const nextValue = Number(event.target.value);
-            if (!Number.isNaN(nextValue)) {
-              onChange(Math.max(min, Math.min(max, nextValue)));
-            }
-          }}
-          onBlur={onCommit}
-          onKeyDown={(event) => {
-            if (event.key === "Enter") {
-              event.preventDefault();
-              onCommit();
-              event.currentTarget.blur();
-            }
-          }}
-          className="w-full bg-transparent text-center text-[11px] font-medium tabular-nums outline-none [appearance:textfield] disabled:opacity-50 [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
-        />
-        <button
-          type="button"
-          className="flex h-full w-5 items-center justify-center text-foreground/40 hover:text-foreground disabled:opacity-40"
-          disabled={disabled}
-          onClick={() => {
-            onChange(Math.min(max, Number((value + step).toFixed(4))));
-            window.setTimeout(onCommit, 0);
-          }}
-        >
-          <Plus className="size-3" />
-        </button>
-      </div>
-    </div>
-  );
-}
-
-function ColorSwatch({
+function ColorControl({
   id,
   label,
   value,
@@ -1041,19 +497,23 @@ function ColorSwatch({
           className="min-w-0 flex-1 bg-transparent font-mono text-[11px] font-medium text-foreground/70 outline-none disabled:cursor-not-allowed disabled:opacity-50"
           disabled={disabled}
           spellCheck={false}
-          value={value.startsWith("linear") ? "Gradient" : value.toUpperCase()}
+          value={value.toUpperCase()}
           onChange={(event) => onChange(event.target.value)}
           onFocus={() => setOpen(false)}
         />
-        <button
+        <Button
           type="button"
+          variant="ghost"
+          size="icon-xs"
           disabled={disabled}
-          aria-label={`Open ${label} picker`}
+          aria-label="Open color picker"
           onClick={() => setOpen((current) => !current)}
-          className="size-5 shrink-0 rounded text-foreground/45 transition-colors hover:bg-foreground/[0.06] hover:text-foreground disabled:cursor-not-allowed disabled:opacity-50"
         >
-          <Palette className="m-auto size-3" />
-        </button>
+          <span
+            className="size-3 rounded-sm border border-foreground/15"
+            style={{ background: value }}
+          />
+        </Button>
       </div>
       {open ? (
         <>
@@ -1063,133 +523,12 @@ function ColorSwatch({
             className="fixed inset-0 z-40 cursor-default bg-transparent"
             onClick={() => setOpen(false)}
           />
-          <div className="absolute right-0 top-full z-50 mt-1.5 w-72 rounded-xl border border-foreground/[0.08] bg-white p-1.5 shadow-[0_4px_20px_rgba(0,0,0,0.06),0_12px_40px_rgba(0,0,0,0.08)]">
+          <div className="absolute right-0 top-full z-50 mt-1.5 w-72 rounded-md border border-foreground/[0.08] bg-white p-1.5 shadow-[0_4px_20px_rgba(0,0,0,0.06),0_12px_40px_rgba(0,0,0,0.08)]">
             <ColorPicker value={value} onChange={onChange} />
           </div>
         </>
       ) : null}
     </div>
-  );
-}
-
-function AttributeInput({
-  label,
-  value,
-  placeholder,
-  disabled,
-  onCommit,
-}: {
-  label: string;
-  value: string;
-  placeholder: string;
-  disabled: boolean;
-  onCommit: (value: string) => void;
-}) {
-  const id = useId();
-  const [draft, setDraft] = useState(value);
-
-  useEffect(() => {
-    setDraft(value);
-  }, [value]);
-
-  const commit = () => {
-    if (draft.trim() !== value.trim()) {
-      onCommit(draft);
-    }
-  };
-
-  return (
-    <Row label={label}>
-      <input
-        id={id}
-        aria-label={label}
-        value={draft}
-        placeholder={placeholder}
-        disabled={disabled}
-        onChange={(event) => setDraft(event.target.value)}
-        onBlur={commit}
-        onKeyDown={(event) => {
-          if (event.key === "Enter") {
-            event.preventDefault();
-            commit();
-            event.currentTarget.blur();
-          }
-        }}
-        className="h-8 min-w-0 flex-1 rounded-md border border-transparent bg-foreground/[0.03] px-2 text-xs outline-none transition focus:bg-white focus:border-foreground/20 disabled:opacity-50"
-      />
-    </Row>
-  );
-}
-
-function AttributeSelect({
-  label,
-  value,
-  options,
-  disabled,
-  onChange,
-}: {
-  label: string;
-  value: string;
-  options: SelectOption[];
-  disabled: boolean;
-  onChange: (value: string) => void;
-}) {
-  return (
-    <Row label={label}>
-      <Select value={value || EMPTY_SELECT_VALUE} disabled={disabled} onValueChange={onChange}>
-        <SelectTrigger
-          aria-label={label}
-          size="sm"
-          className="h-8 flex-1 rounded-md border-transparent bg-foreground/[0.03] px-2 text-xs shadow-none hover:bg-foreground/[0.06]"
-          data-value={value}
-        >
-          <SelectValue />
-        </SelectTrigger>
-        <SelectContent>
-          <SelectGroup>
-            {options.map((option) => (
-              <SelectItem
-                key={option.value || EMPTY_SELECT_VALUE}
-                value={option.value || EMPTY_SELECT_VALUE}
-                data-value={option.value}
-              >
-                {option.label}
-              </SelectItem>
-            ))}
-          </SelectGroup>
-        </SelectContent>
-      </Select>
-    </Row>
-  );
-}
-
-function IconButton({
-  title,
-  active,
-  onClick,
-  children,
-}: {
-  title: string;
-  active?: boolean;
-  onClick: () => void;
-  children: ReactNode;
-}) {
-  return (
-    <button
-      type="button"
-      title={title}
-      aria-label={title}
-      aria-pressed={active}
-      onClick={onClick}
-      className={cn(
-        "flex size-7 shrink-0 items-center justify-center rounded-md transition",
-        active
-          ? "bg-foreground text-background"
-          : "text-foreground/50 hover:bg-foreground/[0.05] hover:text-foreground"
-      )}
-    >
-      {children}
-    </button>
   );
 }
 

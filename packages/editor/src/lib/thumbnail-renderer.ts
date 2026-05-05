@@ -1,5 +1,5 @@
-import type { SlideModel } from "@starry-slides/core";
 import { toPng } from "html-to-image";
+import type { SlideModel } from "./core";
 
 const THUMBNAIL_DISPLAY_WIDTH = 224;
 const THUMBNAIL_PIXEL_RATIO = 2;

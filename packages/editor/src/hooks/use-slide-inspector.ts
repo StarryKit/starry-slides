@@ -1,13 +1,13 @@
+import type { RefObject } from "react";
+import { useEffect, useState } from "react";
+import { type CssPropertyRow, collectCssProperties } from "../lib/collect-css-properties";
 import {
   type EditableElement,
   type SlideModel,
   type StageRect,
   elementRectToStageRect,
   querySlideElement,
-} from "@starry-slides/core";
-import type { RefObject } from "react";
-import { useEffect, useState } from "react";
-import { type CssPropertyRow, collectCssProperties } from "../lib/collect-css-properties";
+} from "../lib/core";
 
 interface UseSlideInspectorOptions {
   iframeRef: RefObject<HTMLIFrameElement | null>;

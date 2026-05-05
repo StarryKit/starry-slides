@@ -1,10 +1,10 @@
+import { useEffect, useMemo, useReducer, useState } from "react";
 import {
   type SlideModel,
   type SlideOperation,
   createHistoryState,
   reduceHistory,
-} from "@starry-slides/core";
-import { useEffect, useMemo, useReducer, useState } from "react";
+} from "../lib/core";
 
 interface SlideHistoryResult {
   slides: SlideModel[];

@@ -1,4 +1,5 @@
-import { PanelRightClose, PanelRightOpen } from "lucide-react";
+import { PanelRightClose, PanelRightOpen, PanelTopOpen } from "lucide-react";
+import type { ElementToolMode } from "../lib/element-tool-model";
 import { Button } from "./ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "./ui/tooltip";
 
@@ -7,7 +8,10 @@ interface EditorHeaderProps {
   sourceLabel: string;
   isSaving: boolean;
   isInspectorOpen: boolean;
+  elementToolMode: ElementToolMode;
+  canSwitchElementToolMode: boolean;
   onToggleInspector: () => void;
+  onElementToolModeChange: (mode: ElementToolMode) => void;
 }
 
 function EditorHeader({
@@ -15,7 +19,10 @@ function EditorHeader({
   sourceLabel,
   isSaving,
   isInspectorOpen,
+  elementToolMode,
+  canSwitchElementToolMode,
   onToggleInspector,
+  onElementToolModeChange,
 }: EditorHeaderProps) {
   const InspectorIcon = isInspectorOpen ? PanelRightClose : PanelRightOpen;
 
@@ -41,6 +48,32 @@ function EditorHeader({
       </div>
 
       <div className="flex items-center gap-1 max-[1200px]:w-full max-[1200px]:justify-end">
+        {canSwitchElementToolMode ? (
+          <div className="flex items-center rounded-md border border-foreground/[0.08] bg-white p-0.5">
+            <Button
+              variant={elementToolMode === "floating" ? "secondary" : "ghost"}
+              size="icon-sm"
+              type="button"
+              aria-label="Use floating toolbar mode"
+              aria-pressed={elementToolMode === "floating"}
+              data-testid="tool-mode-floating-header-button"
+              onClick={() => onElementToolModeChange("floating")}
+            >
+              <PanelTopOpen />
+            </Button>
+            <Button
+              variant={elementToolMode === "panel" ? "secondary" : "ghost"}
+              size="icon-sm"
+              type="button"
+              aria-label="Use tool panel mode"
+              aria-pressed={elementToolMode === "panel"}
+              data-testid="tool-mode-panel-header-button"
+              onClick={() => onElementToolModeChange("panel")}
+            >
+              <PanelRightOpen />
+            </Button>
+          </div>
+        ) : null}
         <Tooltip>
           <TooltipTrigger asChild>
             <Button

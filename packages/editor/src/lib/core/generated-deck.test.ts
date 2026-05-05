@@ -14,7 +14,7 @@ import {
 
 const regressionDeckConfig = JSON.parse(
   fs.readFileSync(
-    path.resolve(import.meta.dirname, "../../../testing/regression-deck/config.json"),
+    path.resolve(import.meta.dirname, "../../../../../testing/regression-deck/config.json"),
     "utf8"
   )
 ) as {
@@ -89,7 +89,7 @@ describe("generated deck import", () => {
   });
 
   test("parseSlide returns editor-compatible metadata for generated slides", () => {
-    const workspaceRoot = path.resolve(import.meta.dirname, "../../..");
+    const workspaceRoot = path.resolve(import.meta.dirname, "../../../../../");
     const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), "hse-generated-"));
     const outputRoot = path.join(tempRoot, "generated");
     const appOutputRoot = path.join(tempRoot, "synced");

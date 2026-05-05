@@ -21,10 +21,10 @@
     "dev:css": "tailwindcss -i src/styles/index.css -o dist/index.css --watch",
     "build": "pnpm run build:js && pnpm run build:css",
     "build:js": "tsup src/index.tsx --format esm --dts",
-    "build:css": "tailwindcss -i src/styles/index.css -o dist/index.css --minify"
+    "build:css": "tailwindcss -i src/styles/index.css -o dist/index.css --minify",
+    "test": "vitest run"
   },
   "dependencies": {
-    "@starry-slides/core": "workspace:*",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "html-to-image": "^1.11.11",

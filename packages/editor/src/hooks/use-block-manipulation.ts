@@ -1,5 +1,8 @@
+import type { RefObject } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import {
   type AtomicSlideOperation,
+  ELEMENT_LAYOUT_STYLE_KEYS,
   type EditableElement,
   type ElementLayoutStyleSnapshot,
   type ElementLayoutUpdateOperation,
@@ -12,9 +15,7 @@ import {
   elementRectToStageRect,
   parseTransformParts,
   querySlideElement,
-} from "@starry-slides/core";
-import type { RefObject } from "react";
-import { useCallback, useEffect, useRef, useState } from "react";
+} from "../lib/core";
 
 type ManipulationMode = "move" | "resize" | "rotate";
 type ResizeHandleCorner = "top-left" | "top-right" | "bottom-right" | "bottom-left";
@@ -177,7 +178,7 @@ function useBlockManipulation({
       ? baseStageRect
       : null;
 
-  const manipulationOverlay = overlayBounds
+  const manipulationOverlay: BlockManipulationOverlay | null = overlayBounds
     ? {
         selectionBounds: overlayBounds,
         snapGuides: isManipulating ? snapGuides : [],
@@ -355,13 +356,13 @@ function useBlockManipulation({
       }
 
       const applySnapshot = (snapshot: ElementLayoutStyleSnapshot) => {
-        for (const [key, value] of Object.entries(snapshot)) {
-          targetNode.style[key as keyof CSSStyleDeclaration] = value ?? "";
+        for (const key of ELEMENT_LAYOUT_STYLE_KEYS) {
+          targetNode.style[key] = snapshot[key] ?? "";
         }
       };
       const applySnapshotToNode = (node: HTMLElement, snapshot: ElementLayoutStyleSnapshot) => {
-        for (const [key, value] of Object.entries(snapshot)) {
-          node.style[key as keyof CSSStyleDeclaration] = value ?? "";
+        for (const key of ELEMENT_LAYOUT_STYLE_KEYS) {
+          node.style[key] = snapshot[key] ?? "";
         }
       };
 

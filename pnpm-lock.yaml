@@ -23,9 +23,6 @@ importers:
 
   apps/web:
     dependencies:
-      '@starry-slides/core':
-        specifier: workspace:*
-        version: link:../../packages/core
       '@starry-slides/editor':
         specifier: workspace:*
         version: link:../../packages/editor
@@ -52,23 +49,8 @@ importers:
         specifier: ^6.3.5
         version: 6.4.2(jiti@2.6.1)(lightningcss@1.32.0)
 
-  packages/core:
-    devDependencies:
-      tsup:
-        specifier: ^8.5.1
-        version: 8.5.1(jiti@2.6.1)(postcss@8.5.13)(typescript@5.9.3)
-      typescript:
-        specifier: ^5.8.3
-        version: 5.9.3
-      vitest:
-        specifier: ^3.2.4
-        version: 3.2.4(jiti@2.6.1)(jsdom@26.1.0)(lightningcss@1.32.0)
-
   packages/editor:
     dependencies:
-      '@starry-slides/core':
-        specifier: workspace:*
-        version: link:../core
       class-variance-authority:
         specifier: ^0.7.1
         version: 0.7.1

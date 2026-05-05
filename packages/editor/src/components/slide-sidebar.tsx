@@ -1,5 +1,5 @@
-import type { SlideModel } from "@starry-slides/core";
 import { useCallback } from "react";
+import type { SlideModel } from "../lib/core";
 import { cn } from "../lib/utils";
 import { ScrollArea } from "./ui/scroll-area";
 

@@ -1,128 +1,74 @@
-import { type StageRect, composeTransform, parseTransformParts } from "@starry-slides/core";
-import {
-  AlignCenter,
-  AlignCenterHorizontal,
-  AlignCenterVertical,
-  AlignEndHorizontal,
-  AlignEndVertical,
-  AlignLeft,
-  AlignRight,
-  AlignStartHorizontal,
-  AlignStartVertical,
-  ArrowDownToLine,
-  ArrowUpToLine,
-  Bold,
-  ChevronDown,
-  ChevronUp,
-  Italic,
-  Layers,
-  type LucideIcon,
-  Minus,
-  Plus,
-  Strikethrough,
-  Trash2,
-  Type,
-  Underline,
-} from "lucide-react";
-import {
-  type MouseEvent as ReactMouseEvent,
-  type ReactNode,
-  useEffect,
-  useLayoutEffect,
-  useRef,
-  useState,
-} from "react";
+import { PanelRightOpen } from "lucide-react";
+import type { LucideIcon } from "lucide-react";
+import { useId } from "react";
+import type { MouseEvent as ReactMouseEvent, ReactNode } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import type { CssPropertyRow } from "../lib/collect-css-properties";
+import {
+  ELEMENT_TOOL_GROUPS,
+  type ElementToolFeature,
+  type ElementToolSubgroup,
+} from "../lib/element-tool-model";
+import {
+  getElementToolValue,
+  getFeatureOptions,
+  getTextDecorationCommitValue,
+  isFeatureActive,
+  normalizeFeatureCommitValue,
+} from "../lib/element-tool-values";
 import {
   EDITOR_MOTION_MS,
   editorMotionClassName,
   editorPanelEnterClassName,
   editorPanelExitClassName,
 } from "../lib/motion";
-import {
-  FONT_FAMILY_OPTIONS,
-  FONT_SIZE_OPTIONS,
-  type TextAlign,
-  getColorInputValue,
-  getFontFamilyLabel,
-  getStyleValue,
-  isBoldFontWeight,
-  isFontFamilySelected,
-  parsePixelValue,
-  parseTextDecorationLines,
-} from "../lib/style-controls";
 import { cn } from "../lib/utils";
 import { ColorPicker } from "./color-picker";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "./ui/select";
 import { Separator } from "./ui/separator";
-
-type MenuId = "font" | "size" | "color" | "align" | "arrange" | "layer";
 
 interface FloatingToolbarProps {
   inspectedStyles: CssPropertyRow[];
-  inlineStyleValues: Record<string, string>;
-  selectionOverlay: StageRect;
-  scale: number;
-  offsetX: number;
-  offsetY: number;
-  slideWidth: number;
-  slideHeight: number;
+  attributeValues: AttributeValues;
   onStyleChange: (propertyName: string, nextValue: string) => void;
-  onDelete: () => void;
+  onAttributeChange: (attributeName: string, nextValue: string) => void;
+  onAlignToSlide: (action: string) => void;
+  onLayerOrder: (action: string) => void;
+  onModeChange: () => void;
 }
 
-const ALIGN_OPTIONS: Array<{ value: TextAlign; icon: LucideIcon; label: string }> = [
-  { value: "left", icon: AlignLeft, label: "Left" },
-  { value: "center", icon: AlignCenter, label: "Center" },
-  { value: "right", icon: AlignRight, label: "Right" },
-];
-const ARRANGE_OPTIONS: Array<{ value: string; icon: LucideIcon; label: string }> = [
-  { value: "left", icon: AlignStartHorizontal, label: "Align left" },
-  { value: "hcenter", icon: AlignCenterHorizontal, label: "Align horizontal center" },
-  { value: "right", icon: AlignEndHorizontal, label: "Align right" },
-  { value: "top", icon: AlignStartVertical, label: "Align top" },
-  { value: "vcenter", icon: AlignCenterVertical, label: "Align vertical center" },
-  { value: "bottom", icon: AlignEndVertical, label: "Align bottom" },
-];
-const LAYER_OPTIONS: Array<{ value: string; icon: LucideIcon; label: string }> = [
-  { value: "front", icon: ArrowUpToLine, label: "Bring to front" },
-  { value: "forward", icon: ChevronUp, label: "Bring forward" },
-  { value: "backward", icon: ChevronDown, label: "Send backward" },
-  { value: "back", icon: ArrowDownToLine, label: "Send to back" },
-];
+interface AttributeValues {
+  locked: string;
+  altText: string;
+  ariaLabel: string;
+  linkUrl: string;
+}
+
+const EMPTY_SELECT_VALUE = "__empty__";
+
 function FloatingToolbar({
   inspectedStyles,
-  inlineStyleValues,
-  selectionOverlay,
-  scale,
-  offsetX,
-  offsetY,
-  slideWidth,
-  slideHeight,
+  attributeValues,
   onStyleChange,
-  onDelete,
+  onAttributeChange,
+  onAlignToSlide,
+  onLayerOrder,
+  onModeChange,
 }: FloatingToolbarProps) {
   const toolbarRef = useRef<HTMLDivElement>(null);
-  const sizeInputRef = useRef<HTMLInputElement>(null);
-  const [activeMenu, setActiveMenu] = useState<MenuId | null>(null);
+  const [activeSubgroupId, setActiveSubgroupId] = useState<string | null>(null);
   const [panelLeft, setPanelLeft] = useState(0);
   const [toolbarOffsetX, setToolbarOffsetX] = useState(0);
   const toolbarOffsetXRef = useRef(0);
-  const fontFamily = getStyleValue(inspectedStyles, "font-family");
-  const fontSize = Math.round(parsePixelValue(getStyleValue(inspectedStyles, "font-size"), 24));
-  const textColor = getColorInputValue(getStyleValue(inspectedStyles, "color"));
-  const textDecorationLines = parseTextDecorationLines(
-    getStyleValue(inspectedStyles, "text-decoration-line")
-  );
-  const textAlign = normalizeTextAlign(getStyleValue(inspectedStyles, "text-align"));
-  const transform = inlineStyleValues.transform || getStyleValue(inspectedStyles, "transform");
-  const zIndex = inlineStyleValues.zIndex || getStyleValue(inspectedStyles, "z-index");
-  const isBold = isBoldFontWeight(getStyleValue(inspectedStyles, "font-weight"));
-  const isItalic = getStyleValue(inspectedStyles, "font-style").trim().toLowerCase() === "italic";
-  const isUnderlined = textDecorationLines.has("underline");
-  const isStruck = textDecorationLines.has("line-through");
-  const fontFamilyLabel = getFontFamilyLabel(fontFamily);
 
   useEffect(() => {
     const node = toolbarRef.current;
@@ -197,7 +143,7 @@ function FloatingToolbar({
         return;
       }
 
-      setActiveMenu(null);
+      setActiveSubgroupId(null);
     }
 
     document.addEventListener("mousedown", closeOnOutsidePointer);
@@ -206,98 +152,47 @@ function FloatingToolbar({
     };
   }, []);
 
-  useEffect(() => {
-    if (activeMenu !== "size") {
-      return;
-    }
-
-    const frame = requestAnimationFrame(() => {
-      sizeInputRef.current?.focus();
-      sizeInputRef.current?.select();
-    });
-
-    return () => {
-      cancelAnimationFrame(frame);
-    };
-  }, [activeMenu]);
-
-  function toggleMenu(menu: MenuId, event: ReactMouseEvent<HTMLButtonElement>) {
+  function toggleSubgroup(subgroupId: string, event: ReactMouseEvent<HTMLButtonElement>) {
     setPanelLeft(event.currentTarget.offsetLeft);
-    setActiveMenu((current) => (current === menu ? null : menu));
+    setActiveSubgroupId((current) => (current === subgroupId ? null : subgroupId));
   }
 
-  function commitTextDecoration(line: "underline" | "line-through", isActive: boolean) {
-    const nextLines = new Set(textDecorationLines);
-    if (isActive) {
-      nextLines.delete(line);
-    } else {
-      nextLines.add(line);
-    }
+  function commitFeature(feature: ElementToolFeature, nextValue: string) {
+    if (feature.target === "style" && feature.propertyName) {
+      const currentValue = getElementToolValue({ feature, inspectedStyles, attributeValues });
 
-    onStyleChange(
-      "text-decoration-line",
-      nextLines.size > 0 ? Array.from(nextLines).join(" ") : "none"
-    );
-  }
+      if (feature.id === "font-underline") {
+        onStyleChange(
+          feature.propertyName,
+          getTextDecorationCommitValue(currentValue, "underline", nextValue === "")
+        );
+        return;
+      }
 
-  function commitFontSize(nextSize: number) {
-    onStyleChange("font-size", `${Math.min(200, Math.max(8, nextSize))}px`);
-  }
+      if (feature.id === "font-strikethrough") {
+        onStyleChange(
+          feature.propertyName,
+          getTextDecorationCommitValue(currentValue, "line-through", nextValue === "")
+        );
+        return;
+      }
 
-  function commitLayerAction(action: string) {
-    const numericZIndex = Number.parseInt(zIndex, 10);
-    const currentZIndex = Number.isFinite(numericZIndex) ? numericZIndex : 0;
-
-    if (action === "front") {
-      onStyleChange("z-index", "999");
+      onStyleChange(feature.propertyName, normalizeFeatureCommitValue(feature, nextValue));
       return;
     }
 
-    if (action === "back") {
-      onStyleChange("z-index", "0");
+    if (feature.target === "attribute" && feature.attributeName) {
+      onAttributeChange(feature.attributeName, normalizeFeatureCommitValue(feature, nextValue));
       return;
     }
 
-    onStyleChange("z-index", String(Math.max(0, currentZIndex + (action === "forward" ? 1 : -1))));
-  }
-
-  function commitArrangeAction(action: string) {
-    const slideRect = {
-      x: (selectionOverlay.x - offsetX) / scale,
-      y: (selectionOverlay.y - offsetY) / scale,
-      width: selectionOverlay.width / scale,
-      height: selectionOverlay.height / scale,
-    };
-    let deltaX = 0;
-    let deltaY = 0;
-
-    if (action === "left") {
-      deltaX = -slideRect.x;
-    } else if (action === "hcenter") {
-      deltaX = slideWidth / 2 - (slideRect.x + slideRect.width / 2);
-    } else if (action === "right") {
-      deltaX = slideWidth - (slideRect.x + slideRect.width);
-    } else if (action === "top") {
-      deltaY = -slideRect.y;
-    } else if (action === "vcenter") {
-      deltaY = slideHeight / 2 - (slideRect.y + slideRect.height / 2);
-    } else if (action === "bottom") {
-      deltaY = slideHeight - (slideRect.y + slideRect.height);
+    if (feature.id === "align-to-slide") {
+      onAlignToSlide(nextValue);
     }
 
-    if (Math.abs(deltaX) < 0.01 && Math.abs(deltaY) < 0.01) {
-      return;
+    if (feature.id === "layer-order") {
+      onLayerOrder(nextValue);
     }
-
-    const transformParts = parseTransformParts(transform);
-    onStyleChange(
-      "transform",
-      composeTransform(
-        transformParts.translateX + deltaX,
-        transformParts.translateY + deltaY,
-        transformParts.rotate
-      ) ?? ""
-    );
   }
 
   return (
@@ -311,287 +206,254 @@ function FloatingToolbar({
       style={{ marginLeft: toolbarOffsetX }}
     >
       <div
-        className="flex w-max items-center gap-0.5 overflow-x-auto overflow-y-hidden rounded-xl border border-foreground/[0.08] bg-white px-1.5 py-1.5 shadow-[0_2px_12px_rgba(0,0,0,0.04),0_8px_32px_rgba(0,0,0,0.06)] max-[1200px]:min-w-[760px]"
+        className="flex w-max items-center gap-0.5 overflow-x-auto overflow-y-hidden rounded-md border border-foreground/[0.08] bg-white px-1.5 py-1.5 shadow-[0_2px_12px_rgba(0,0,0,0.04),0_8px_32px_rgba(0,0,0,0.06)] max-[1200px]:min-w-[760px]"
         aria-label="Formatting toolbar"
       >
-        <ToolbarTrigger
-          active={activeMenu === "font"}
-          label="Font family"
-          className="w-[118px] justify-start"
-          onClick={(event) => {
-            toggleMenu("font", event);
-          }}
-        >
-          <span className="flex min-w-0 items-center gap-2">
-            <ToolbarIcon icon={Type} />
-            <span className="truncate">{fontFamilyLabel}</span>
-          </span>
-        </ToolbarTrigger>
+        {ELEMENT_TOOL_GROUPS.map((group, groupIndex) => (
+          <div key={group.id} className="contents">
+            {groupIndex > 0 ? <Divider /> : null}
+            <div className="flex items-center gap-0.5 rounded-md bg-foreground/[0.02] px-0.5">
+              {group.subgroups.map((subgroup) => {
+                const singleFeature = subgroup.features.length === 1 ? subgroup.features[0] : null;
+                if (singleFeature?.controlType === "toggle") {
+                  return renderDirectToggle(subgroup, singleFeature);
+                }
 
-        <div className="flex items-center gap-0 rounded-md bg-foreground/[0.03]">
-          <IconButton
-            label="Decrease font size"
-            variant="ghost"
-            onClick={() => {
-              commitFontSize(fontSize - 2);
-            }}
-          >
-            <ToolbarIcon icon={Minus} />
-          </IconButton>
-          <ToolbarTrigger
-            active={activeMenu === "size"}
-            label="Font size"
-            className="min-w-[30px] px-1"
-            onClick={(event) => {
-              toggleMenu("size", event);
-            }}
-          >
-            <span className="inline-block w-6 text-center tabular-nums">{fontSize}</span>
-          </ToolbarTrigger>
-          <IconButton
-            label="Increase font size"
-            variant="ghost"
-            onClick={() => {
-              commitFontSize(fontSize + 2);
-            }}
-          >
-            <ToolbarIcon icon={Plus} />
-          </IconButton>
-        </div>
-
+                return (
+                  <ToolbarTrigger
+                    key={subgroup.id}
+                    active={activeSubgroupId === subgroup.id}
+                    label={subgroup.label}
+                    onClick={(event) => toggleSubgroup(subgroup.id, event)}
+                  >
+                    <ToolbarIcon icon={subgroup.icon} />
+                  </ToolbarTrigger>
+                );
+              })}
+            </div>
+          </div>
+        ))}
         <Divider />
-
-        <IconButton
-          label="Bold"
-          active={isBold}
-          onClick={() => {
-            onStyleChange("font-weight", isBold ? "400" : "700");
-          }}
-        >
-          <ToolbarIcon icon={Bold} />
-        </IconButton>
-        <IconButton
-          label="Italic"
-          active={isItalic}
-          onClick={() => {
-            onStyleChange("font-style", isItalic ? "normal" : "italic");
-          }}
-        >
-          <ToolbarIcon icon={Italic} />
-        </IconButton>
-        <IconButton
-          label="Underline"
-          active={isUnderlined}
-          onClick={() => {
-            commitTextDecoration("underline", isUnderlined);
-          }}
-        >
-          <ToolbarIcon icon={Underline} />
-        </IconButton>
-        <IconButton
-          label="Strikethrough"
-          active={isStruck}
-          onClick={() => {
-            commitTextDecoration("line-through", isStruck);
-          }}
-        >
-          <ToolbarIcon icon={Strikethrough} />
-        </IconButton>
-
-        <Divider />
-
-        <ToolbarTrigger
-          active={activeMenu === "color"}
-          label="Text color"
-          onClick={(event) => {
-            toggleMenu("color", event);
-          }}
-        >
-          <span
-            className="inline-block size-5 rounded-md border border-foreground/10 shadow-[0_1px_4px_rgba(0,0,0,0.08)]"
-            style={{ background: textColor }}
-            aria-hidden="true"
-          />
-        </ToolbarTrigger>
-
-        <ToolbarTrigger
-          active={activeMenu === "align"}
-          label="Text align"
-          onClick={(event) => {
-            toggleMenu("align", event);
-          }}
-        >
-          <ToolbarIcon icon={getAlignIcon(textAlign)} />
-        </ToolbarTrigger>
-
-        <Divider />
-
-        <ToolbarTrigger
-          active={activeMenu === "arrange"}
-          label="Arrange"
-          onClick={(event) => {
-            toggleMenu("arrange", event);
-          }}
-        >
-          <ToolbarIcon icon={AlignCenterHorizontal} />
-        </ToolbarTrigger>
-
-        <ToolbarTrigger
-          active={activeMenu === "layer"}
-          label="Layer"
-          onClick={(event) => {
-            toggleMenu("layer", event);
-          }}
-        >
-          <ToolbarIcon icon={Layers} />
-        </ToolbarTrigger>
-
-        <Divider />
-
-        <IconButton label="Delete" variant="danger" onClick={onDelete}>
-          <ToolbarIcon icon={Trash2} />
+        <IconButton label="Use tool panel mode" onClick={onModeChange}>
+          <ToolbarIcon icon={PanelRightOpen} />
         </IconButton>
       </div>
 
-      {activeMenu === "font" ? (
-        <ToolbarPanel left={panelLeft}>
-          <PanelTitle>Font</PanelTitle>
-          <div className="grid gap-0.5">
-            {FONT_FAMILY_OPTIONS.map((font) => (
-              <ToolbarOption
-                key={font.value}
-                active={isFontFamilySelected(fontFamily, font.value)}
-                style={{ fontFamily: font.value }}
-                onClick={() => {
-                  onStyleChange("font-family", font.value);
-                  setActiveMenu(null);
-                }}
-              >
-                <span>{font.label}</span>
-              </ToolbarOption>
-            ))}
-          </div>
-        </ToolbarPanel>
-      ) : null}
+      {ELEMENT_TOOL_GROUPS.flatMap((group) => group.subgroups).map((subgroup) =>
+        activeSubgroupId === subgroup.id ? (
+          <ToolbarPanel key={subgroup.id} left={panelLeft} width={getPanelWidth(subgroup)}>
+            <PanelTitle>{subgroup.label}</PanelTitle>
+            <div className="grid gap-2">{subgroup.features.map(renderFeature)}</div>
+          </ToolbarPanel>
+        ) : null
+      )}
+    </div>
+  );
 
-      {activeMenu === "size" ? (
-        <ToolbarPanel left={panelLeft} width="narrow">
-          <PanelTitle>Font Size</PanelTitle>
-          <Input
-            className="h-8 rounded-md bg-foreground/[0.03] px-2 text-[13px] tabular-nums"
-            ref={sizeInputRef}
-            type="number"
-            min={8}
-            max={200}
-            value={fontSize}
-            onChange={(event) => {
-              const nextSize = Number.parseInt(event.target.value, 10);
+  function renderDirectToggle(subgroup: ElementToolSubgroup, feature: ElementToolFeature) {
+    const currentValue = getElementToolValue({ feature, inspectedStyles, attributeValues });
+    const active = isFeatureActive(feature, currentValue);
+    return (
+      <IconButton
+        key={subgroup.id}
+        label={feature.label}
+        active={active}
+        onClick={() => commitFeature(feature, active ? "" : "true")}
+      >
+        <ToolbarIcon icon={subgroup.icon} />
+      </IconButton>
+    );
+  }
 
-              if (Number.isNaN(nextSize)) {
-                return;
-              }
+  function renderFeature(feature: ElementToolFeature) {
+    const currentValue = getElementToolValue({ feature, inspectedStyles, attributeValues });
+    const fieldId = `floating-${feature.id}`;
 
-              commitFontSize(nextSize);
-            }}
-            onKeyDown={(event) => {
-              if (event.key === "Enter" || event.key === "Escape") {
-                setActiveMenu(null);
-              }
-            }}
-          />
-          <div className="grid gap-0.5">
-            {FONT_SIZE_OPTIONS.map((size) => (
-              <ToolbarOption
-                key={size}
-                active={fontSize === size}
-                className="tabular-nums"
-                onClick={() => {
-                  commitFontSize(size);
-                  setActiveMenu(null);
-                }}
-              >
-                {size}
-              </ToolbarOption>
-            ))}
-          </div>
-        </ToolbarPanel>
-      ) : null}
+    if (feature.controlType === "select") {
+      return (
+        <div key={feature.id} className="grid gap-1">
+          <FieldLabel htmlFor={fieldId}>{feature.label}</FieldLabel>
+          <Select
+            value={currentValue || EMPTY_SELECT_VALUE}
+            onValueChange={(nextValue) =>
+              commitFeature(feature, nextValue === EMPTY_SELECT_VALUE ? "" : nextValue)
+            }
+          >
+            <SelectTrigger
+              id={fieldId}
+              aria-label={feature.label}
+              size="sm"
+              className="h-8 rounded-md border-transparent bg-foreground/[0.03] px-2 text-xs shadow-none hover:bg-foreground/[0.06]"
+              data-value={currentValue}
+            >
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectGroup>
+                {getFeatureOptions(feature, currentValue).map((option) => (
+                  <SelectItem
+                    key={option.value || EMPTY_SELECT_VALUE}
+                    value={option.value || EMPTY_SELECT_VALUE}
+                    data-value={option.value}
+                    style={
+                      feature.id === "font-family" && option.value
+                        ? { fontFamily: option.value }
+                        : undefined
+                    }
+                  >
+                    {option.label}
+                  </SelectItem>
+                ))}
+              </SelectGroup>
+            </SelectContent>
+          </Select>
+        </div>
+      );
+    }
 
-      {activeMenu === "color" ? (
-        <ToolbarPanel left={panelLeft} width="wide">
-          <PanelTitle>Color</PanelTitle>
+    if (feature.controlType === "color") {
+      return (
+        <div key={feature.id} className="grid gap-1">
+          <FieldLabel>{feature.label}</FieldLabel>
           <ColorPicker
-            value={textColor}
-            includeGradients={false}
-            onChange={(nextColor) => {
-              onStyleChange("color", nextColor);
-            }}
+            value={currentValue}
+            includeGradients={feature.id === "background-color"}
+            onChange={(nextValue) => commitFeature(feature, nextValue)}
           />
-        </ToolbarPanel>
-      ) : null}
+        </div>
+      );
+    }
 
-      {activeMenu === "align" ? (
-        <ToolbarPanel left={panelLeft} width="medium">
-          <PanelTitle>Text Align</PanelTitle>
-          <div className="grid gap-0.5">
-            {ALIGN_OPTIONS.map((option) => (
-              <ToolbarOption
-                key={option.value}
-                active={textAlign === option.value}
-                title={option.label}
-                onClick={() => {
-                  onStyleChange("text-align", option.value);
-                  setActiveMenu(null);
-                }}
-              >
-                <ToolbarIcon icon={option.icon} />
-                <span>{option.label}</span>
-              </ToolbarOption>
-            ))}
-          </div>
-        </ToolbarPanel>
-      ) : null}
+    if (feature.controlType === "toggle") {
+      const active = isFeatureActive(feature, currentValue);
+      return (
+        <Button
+          key={feature.id}
+          type="button"
+          variant={active ? "secondary" : "outline"}
+          aria-pressed={active}
+          onClick={() => commitFeature(feature, active ? "" : "true")}
+        >
+          {feature.label}
+        </Button>
+      );
+    }
 
-      {activeMenu === "arrange" ? (
-        <ToolbarPanel left={panelLeft} width="medium">
-          <PanelTitle>Align</PanelTitle>
-          <div className="grid grid-cols-1 gap-1.5">
-            {ARRANGE_OPTIONS.map((option) => (
-              <ToolbarOption
-                key={option.value}
-                title={option.label}
-                onClick={() => {
-                  commitArrangeAction(option.value);
-                  setActiveMenu(null);
-                }}
-              >
-                <ToolbarIcon icon={option.icon} />
-                <span>{option.label}</span>
-              </ToolbarOption>
-            ))}
-          </div>
-        </ToolbarPanel>
-      ) : null}
+    if (feature.controlType === "slider" || feature.controlType === "number") {
+      return (
+        <div key={feature.id} className="grid gap-1">
+          <FieldLabel htmlFor={fieldId}>{feature.label}</FieldLabel>
+          <Input
+            id={fieldId}
+            type="number"
+            min={feature.min}
+            max={feature.max}
+            step={feature.step}
+            value={currentValue}
+            onChange={(event) => commitFeature(feature, event.target.value)}
+            className="h-8 rounded-md bg-foreground/[0.03] px-2 text-[13px] tabular-nums"
+          />
+        </div>
+      );
+    }
 
-      {activeMenu === "layer" ? (
-        <ToolbarPanel left={panelLeft} width="medium">
-          <PanelTitle>Layer</PanelTitle>
-          <div className="grid gap-0.5">
-            {LAYER_OPTIONS.map((option) => (
-              <ToolbarOption
-                key={option.value}
-                onClick={() => {
-                  commitLayerAction(option.value);
-                  setActiveMenu(null);
-                }}
-              >
-                <ToolbarIcon icon={option.icon} />
-                <span>{option.label}</span>
-              </ToolbarOption>
-            ))}
+    if (feature.controlType === "action-group") {
+      return (
+        <div key={feature.id} className="grid gap-1">
+          <FieldLabel>{feature.label}</FieldLabel>
+          <div className="grid gap-1">
+            {(feature.options ?? []).map((option) => {
+              const Icon = option.icon;
+              return (
+                <ToolbarOption
+                  key={option.value}
+                  title={option.label}
+                  onClick={() => {
+                    commitFeature(feature, option.value);
+                    setActiveSubgroupId(null);
+                  }}
+                >
+                  {Icon ? <ToolbarIcon icon={Icon} /> : null}
+                  <span>{option.label}</span>
+                </ToolbarOption>
+              );
+            })}
           </div>
-        </ToolbarPanel>
-      ) : null}
+        </div>
+      );
+    }
+
+    if (feature.controlType === "custom-css") {
+      return <CustomCssControl key={feature.id} onCommit={onStyleChange} />;
+    }
+
+    return (
+      <div key={feature.id} className="grid gap-1">
+        <FieldLabel htmlFor={fieldId}>{feature.label}</FieldLabel>
+        <Input
+          id={fieldId}
+          type="text"
+          value={currentValue}
+          placeholder={feature.placeholder}
+          onChange={(event) => commitFeature(feature, event.target.value)}
+          className="h-8 rounded-md bg-foreground/[0.03] px-2 text-[13px]"
+        />
+      </div>
+    );
+  }
+}
+
+function CustomCssControl({
+  onCommit,
+}: {
+  onCommit: (propertyName: string, nextValue: string) => void;
+}) {
+  const propertyNameId = useId();
+  const propertyValueId = useId();
+  const [propertyName, setPropertyName] = useState("");
+  const [propertyValue, setPropertyValue] = useState("");
+
+  function apply() {
+    const normalizedPropertyName = propertyName.trim();
+    if (!normalizedPropertyName) {
+      return;
+    }
+
+    onCommit(normalizedPropertyName, propertyValue.trim());
+    setPropertyValue("");
+  }
+
+  return (
+    <div className="grid gap-2">
+      <div className="grid gap-1">
+        <FieldLabel htmlFor={propertyNameId}>Property name</FieldLabel>
+        <Input
+          id={propertyNameId}
+          type="text"
+          value={propertyName}
+          placeholder="e.g. justify-content"
+          onChange={(event) => setPropertyName(event.target.value)}
+        />
+      </div>
+      <div className="grid gap-1">
+        <FieldLabel htmlFor={propertyValueId}>Property value</FieldLabel>
+        <Input
+          id={propertyValueId}
+          type="text"
+          value={propertyValue}
+          placeholder="e.g. space-between"
+          onChange={(event) => setPropertyValue(event.target.value)}
+          onKeyDown={(event) => {
+            if (event.key === "Enter") {
+              event.preventDefault();
+              apply();
+            }
+          }}
+        />
+      </div>
+      <Button type="button" variant="outline" disabled={!propertyName.trim()} onClick={apply}>
+        Apply property
+      </Button>
     </div>
   );
 }
@@ -599,27 +461,25 @@ function FloatingToolbar({
 function ToolbarTrigger({
   children,
   active = false,
-  className,
   label,
   onClick,
 }: {
   children: ReactNode;
   active?: boolean;
-  className?: string;
-  label?: string;
+  label: string;
   onClick: (event: ReactMouseEvent<HTMLButtonElement>) => void;
 }) {
   return (
     <Button
       variant={active ? "secondary" : "ghost"}
-      size="sm"
+      size="icon-sm"
       className={cn(
-        "h-8 min-w-8 rounded-md px-2 text-[13px] font-normal text-foreground/70 hover:text-foreground",
-        active && "bg-foreground/[0.06] text-foreground",
-        className
+        "h-8 w-8 rounded-md text-foreground/60 hover:text-foreground",
+        active && "bg-foreground/[0.06] text-foreground"
       )}
       type="button"
       aria-label={label}
+      title={label}
       onClick={onClick}
     >
       {children}
@@ -632,25 +492,23 @@ function IconButton({
   active = false,
   label,
   onClick,
-  variant = "default",
 }: {
   children: ReactNode;
   active?: boolean;
   label: string;
   onClick?: () => void;
-  variant?: "default" | "ghost" | "danger";
 }) {
   return (
     <Button
-      variant={active ? "default" : "ghost"}
+      variant={active ? "secondary" : "ghost"}
       size="icon-sm"
       className={cn(
         "h-8 w-8 rounded-md text-foreground/60 hover:text-foreground",
-        active && "bg-foreground/[0.06] text-foreground",
-        variant === "danger" && "hover:bg-destructive/10 hover:text-destructive"
+        active && "bg-foreground/[0.06] text-foreground"
       )}
       type="button"
       aria-label={label}
+      title={label}
       onClick={onClick}
     >
       {children}
@@ -665,14 +523,13 @@ function ToolbarPanel({
 }: {
   children: ReactNode;
   left: number;
-  width?: "auto" | "default" | "medium" | "narrow" | "wide";
+  width?: "default" | "medium" | "wide";
 }) {
   const panelRef = useRef<HTMLDivElement>(null);
   const [offset, setOffset] = useState({ x: 0, y: 0 });
 
   useLayoutEffect(() => {
     const panel = panelRef.current;
-
     if (!panel) {
       return;
     }
@@ -695,15 +552,12 @@ function ToolbarPanel({
     if (baseRect.right > window.innerWidth - viewportPadding) {
       nextX = window.innerWidth - viewportPadding - baseRect.right;
     }
-
     if (baseRect.left + nextX < viewportPadding) {
       nextX += viewportPadding - (baseRect.left + nextX);
     }
-
     if (baseRect.bottom > window.innerHeight - viewportPadding) {
       nextY = window.innerHeight - viewportPadding - baseRect.bottom;
     }
-
     if (baseRect.top + nextY < viewportPadding) {
       nextY += viewportPadding - (baseRect.top + nextY);
     }
@@ -714,20 +568,16 @@ function ToolbarPanel({
   }, [left, offset.x, offset.y]);
 
   const widthClassName =
-    width === "narrow"
-      ? "w-32"
+    width === "wide"
+      ? "w-80 max-w-[min(320px,calc(100vw-40px))] max-h-[calc(100vh-36px)] overflow-y-auto"
       : width === "medium"
         ? "w-[272px]"
-        : width === "wide"
-          ? "w-80 max-w-[min(320px,calc(100vw-40px))] max-h-[calc(100vh-36px)] overflow-y-auto"
-          : width === "auto"
-            ? "w-auto"
-            : "w-64";
+        : "w-64";
 
   return (
     <div
       className={cn(
-        "absolute z-50 grid gap-1.5 rounded-xl border border-foreground/[0.08] bg-white p-1.5 text-popover-foreground shadow-[0_4px_20px_rgba(0,0,0,0.06),0_12px_40px_rgba(0,0,0,0.08)] max-[1200px]:max-w-[calc(100vw-40px)]",
+        "absolute z-50 grid gap-1.5 rounded-md border border-foreground/[0.08] bg-white p-1.5 text-popover-foreground shadow-[0_4px_20px_rgba(0,0,0,0.06),0_12px_40px_rgba(0,0,0,0.08)] max-[1200px]:max-w-[calc(100vw-40px)]",
         editorMotionClassName,
         editorPanelEnterClassName,
         widthClassName
@@ -739,6 +589,16 @@ function ToolbarPanel({
       {children}
     </div>
   );
+}
+
+function getPanelWidth(subgroup: ElementToolSubgroup): "default" | "medium" | "wide" {
+  if (subgroup.features.some((feature) => feature.controlType === "color")) {
+    return "wide";
+  }
+  if (subgroup.features.some((feature) => feature.controlType === "action-group")) {
+    return "medium";
+  }
+  return "default";
 }
 
 function shouldUpdateOffset(current: number, next: number) {
@@ -757,56 +617,36 @@ function PanelTitle({ children }: { children: ReactNode }) {
   );
 }
 
-function getAlignIcon(align: TextAlign): LucideIcon {
-  if (align === "center") {
-    return AlignCenter;
-  }
-
-  if (align === "right") {
-    return AlignRight;
-  }
-
-  return AlignLeft;
+function FieldLabel({ children, htmlFor }: { children: ReactNode; htmlFor?: string }) {
+  return (
+    <label
+      htmlFor={htmlFor}
+      className="text-[10px] font-medium uppercase tracking-wider text-foreground/50"
+    >
+      {children}
+    </label>
+  );
 }
 
-function normalizeTextAlign(value: string): TextAlign {
-  if (value === "center" || value === "right") {
-    return value;
-  }
-
-  return "left";
-}
-
-function ToolbarIcon({ icon: Icon }: { icon: LucideIcon; muted?: boolean }) {
+function ToolbarIcon({ icon: Icon }: { icon: LucideIcon }) {
   return <Icon className="size-3.5" />;
 }
 
 function ToolbarOption({
-  active = false,
   children,
-  className,
   onClick,
-  style,
   title,
 }: {
-  active?: boolean;
   children: ReactNode;
-  className?: string;
   onClick: () => void;
-  style?: React.CSSProperties;
   title?: string;
 }) {
   return (
     <Button
       variant="ghost"
-      className={cn(
-        "min-h-8 w-full justify-start gap-2 rounded-md px-2 py-1.5 text-left text-[13px] font-normal text-foreground/70 hover:text-foreground",
-        active && "bg-foreground/[0.06] text-foreground",
-        className
-      )}
+      className="min-h-8 w-full justify-start gap-2 rounded-md px-2 py-1.5 text-left text-[13px] font-normal text-foreground/70 hover:text-foreground"
       type="button"
       title={title}
-      style={style}
       onClick={onClick}
     >
       {children}

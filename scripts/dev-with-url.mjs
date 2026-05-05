@@ -5,16 +5,7 @@ let devUrl = "http://localhost:5173/";
 
 const child = spawn(
   "pnpm",
-  [
-    "--parallel",
-    "--filter",
-    "@starry-slides/core",
-    "--filter",
-    "@starry-slides/editor",
-    "--filter",
-    "web",
-    "dev",
-  ],
+  ["--parallel", "--filter", "@starry-slides/editor", "--filter", "web", "dev"],
   {
     stdio: ["inherit", "pipe", "pipe"],
     shell: process.platform === "win32",

@@ -1,18 +1,3 @@
-import {
-  type AttributeUpdateOperation,
-  DEFAULT_SLIDE_HEIGHT,
-  DEFAULT_SLIDE_WIDTH,
-  type ElementInsertOperation,
-  type ElementRemoveOperation,
-  SELECTOR_ATTR,
-  type SlideModel,
-  type StyleUpdateOperation,
-  createElementPlacement,
-  createUniqueElementId,
-  getSlideElementHtml,
-  getSlideInlineStyleValue,
-  updateSlideElementHtmlIds,
-} from "@starry-slides/core";
 import { useRef, useState } from "react";
 import { EditorHeader } from "./components/editor-header";
 import { SidebarToolPanel } from "./components/sidebar-tool-panel";
@@ -26,6 +11,18 @@ import { useSlideHistory } from "./hooks/use-slide-history";
 import { useSlideInspector } from "./hooks/use-slide-inspector";
 import { useSlideThumbnails } from "./hooks/use-slide-thumbnails";
 import { useStageViewport } from "./hooks/use-stage-viewport";
+import {
+  type AttributeUpdateOperation,
+  DEFAULT_SLIDE_HEIGHT,
+  DEFAULT_SLIDE_WIDTH,
+  SELECTOR_ATTR,
+  type SlideModel,
+  type StyleUpdateOperation,
+  composeTransform,
+  getSlideInlineStyleValue,
+  parseTransformParts,
+} from "./lib/core";
+import type { ElementToolMode } from "./lib/element-tool-model";
 
 export interface SlidesEditorProps {
   slides: SlideModel[];
@@ -43,6 +40,7 @@ function SlidesEditor({
   onSlidesChange,
 }: SlidesEditorProps) {
   const [isInspectorOpen, setIsInspectorOpen] = useState(true);
+  const [elementToolMode, setElementToolMode] = useState<ElementToolMode>("floating");
   const {
     slides,
     activeSlide,
@@ -96,13 +94,6 @@ function SlidesEditor({
       slideWidth,
       slideHeight,
     });
-  const selectedInlineStyleValues: Record<string, string> =
-    activeSlide && selectedElementId
-      ? {
-          transform: getInlineStyleValue(activeSlide, selectedElementId, "transform"),
-          zIndex: getInlineStyleValue(activeSlide, selectedElementId, "z-index"),
-        }
-      : {};
   const {
     manipulationOverlay,
     isManipulating,
@@ -132,6 +123,7 @@ function SlidesEditor({
     ? selectedElement?.type || selectionLabel
     : selectionLabel;
   const isSelectionOverlayInteractive = Boolean(manipulationOverlay);
+  const hasEditableSelection = Boolean(selectedElementId);
 
   function commitStyleChange(propertyName: string, nextValue: string) {
     if (!activeSlide) {
@@ -185,107 +177,73 @@ function SlidesEditor({
     commitOperation(operation);
   }
 
-  function createRemoveOperation(elementId: string): ElementRemoveOperation | null {
-    if (!activeSlide) {
-      return null;
+  function commitLayerAction(action: string) {
+    if (!activeSlide || !selectedElementId) {
+      return;
     }
 
-    const html = getSlideElementHtml(activeSlide.htmlSource, elementId);
-    const placement = createElementPlacement(activeSlide.htmlSource, elementId);
+    const currentValue = getInlineStyleValue(activeSlide, selectedElementId, "z-index");
+    const numericZIndex = Number.parseInt(currentValue, 10);
+    const currentZIndex = Number.isFinite(numericZIndex) ? numericZIndex : 0;
 
-    if (!html || !placement) {
-      return null;
+    if (action === "front") {
+      commitStyleChange("z-index", "999");
+      return;
     }
 
-    return {
-      type: "element.remove",
-      slideId: activeSlide.id,
-      elementId,
-      ...placement,
-      html,
-      timestamp: Date.now(),
+    if (action === "back") {
+      commitStyleChange("z-index", "0");
+      return;
+    }
+
+    commitStyleChange(
+      "z-index",
+      String(Math.max(0, currentZIndex + (action === "forward" ? 1 : -1)))
+    );
+  }
+
+  function commitArrangeAction(action: string) {
+    if (!activeSlide || !selectedElementId || !unifiedSelectionOverlay) {
+      return;
+    }
+
+    const transform = getInlineStyleValue(activeSlide, selectedElementId, "transform");
+    const slideRect = {
+      x: (unifiedSelectionOverlay.x - offsetX) / scale,
+      y: (unifiedSelectionOverlay.y - offsetY) / scale,
+      width: unifiedSelectionOverlay.width / scale,
+      height: unifiedSelectionOverlay.height / scale,
     };
-  }
+    let deltaX = 0;
+    let deltaY = 0;
 
-  function deleteSelectedElement() {
-    if (!activeSlide || !selectedElementIds.length) {
+    if (action === "left") {
+      deltaX = -slideRect.x;
+    } else if (action === "hcenter") {
+      deltaX = slideWidth / 2 - (slideRect.x + slideRect.width / 2);
+    } else if (action === "right") {
+      deltaX = slideWidth - (slideRect.x + slideRect.width);
+    } else if (action === "top") {
+      deltaY = -slideRect.y;
+    } else if (action === "vcenter") {
+      deltaY = slideHeight / 2 - (slideRect.y + slideRect.height / 2);
+    } else if (action === "bottom") {
+      deltaY = slideHeight - (slideRect.y + slideRect.height);
+    }
+
+    if (Math.abs(deltaX) < 0.01 && Math.abs(deltaY) < 0.01) {
       return;
     }
 
-    const operations = selectedElementIds
-      .map((elementId) => createRemoveOperation(elementId))
-      .filter((operation): operation is ElementRemoveOperation => Boolean(operation));
-
-    if (!operations.length) {
-      return;
-    }
-
-    commitOperation(
-      operations.length === 1
-        ? operations[0]
-        : {
-            type: "operation.batch",
-            slideId: activeSlide.id,
-            operations,
-            timestamp: Date.now(),
-          }
+    const transformParts = parseTransformParts(transform);
+    commitStyleChange(
+      "transform",
+      composeTransform(
+        transformParts.translateX + deltaX,
+        transformParts.translateY + deltaY,
+        transformParts.rotate
+      ) ?? ""
     );
-    setSelectedElementIds([]);
-  }
-
-  function duplicateSelectedElement() {
-    if (!activeSlide || !selectedElementIds.length) {
-      return;
-    }
-
-    let htmlSource = activeSlide.htmlSource;
-    const nextElementIds: string[] = [];
-    const operations = selectedElementIds
-      .map((elementId) => {
-        const html = getSlideElementHtml(htmlSource, elementId);
-        const placement = createElementPlacement(htmlSource, elementId);
-        if (!html || !placement) {
-          return null;
-        }
-
-        const nextElementId = createUniqueElementId(htmlSource, `${elementId}-copy`);
-        const copiedHtml = updateSlideElementHtmlIds(
-          html,
-          createIdMapForCopiedElement(html, elementId, nextElementId)
-        );
-
-        htmlSource = `${htmlSource}\n<!-- ${nextElementId} reserved -->`;
-        nextElementIds.push(nextElementId);
-
-        const operation: ElementInsertOperation = {
-          type: "element.insert" as const,
-          slideId: activeSlide.id,
-          elementId: nextElementId,
-          parentElementId: placement.parentElementId,
-          previousSiblingElementId: elementId,
-          nextSiblingElementId: placement.nextSiblingElementId,
-          html: copiedHtml,
-          timestamp: Date.now(),
-        };
-        return operation;
-      })
-      .filter((operation): operation is ElementInsertOperation => Boolean(operation));
-
-    if (!operations.length) {
-      return;
-    }
-
-    commitOperation(
-      operations.length === 1
-        ? operations[0]
-        : {
-            type: "operation.batch",
-            slideId: activeSlide.id,
-            operations,
-            timestamp: Date.now(),
-          }
-    );
-    setSelectedElementIds(nextElementIds);
   }
 
   useEditorKeyboardShortcuts({
@@ -315,6 +273,9 @@ function SlidesEditor({
           sourceLabel={sourceLabel}
           isSaving={isSaving}
           isInspectorOpen={isInspectorOpen}
+          elementToolMode={elementToolMode}
+          canSwitchElementToolMode={hasEditableSelection && !isEditingText && !isManipulating}
+          onElementToolModeChange={setElementToolMode}
           onToggleInspector={() => {
             setIsInspectorOpen((currentValue) => !currentValue);
           }}
@@ -346,10 +307,10 @@ function SlidesEditor({
                   : null
               }
               inspectedStyles={inspectedStyles}
-              inlineStyleValues={selectedInlineStyleValues}
               isSelectionOverlayInteractive={isSelectionOverlayInteractive}
               isEditingText={isEditingText}
               manipulationOverlay={manipulationOverlay}
+              elementToolMode={elementToolMode}
               iframeRef={iframeRef}
               stageViewportRef={stageViewportRef}
               selectionOverlayRef={selectionOverlayRef}
@@ -405,21 +366,11 @@ function SlidesEditor({
                 }
               }}
               onStyleChange={commitStyleChange}
-              onDeleteSelection={deleteSelectedElement}
-            />
-            <SidebarToolPanel
-              inspectedStyles={inspectedStyles}
-              isEditingText={isEditingText}
-              isOpen={isInspectorOpen}
-              canEditStyles={Boolean(activeSlide)}
-              selectedElementType={selectedElement?.type ?? "block"}
-              selectedElementLabel={selectedElementId ? unifiedSelectionLabel : "slide"}
+              onAttributeChange={commitAttributeChange}
+              onAlignToSlide={commitArrangeAction}
+              onLayerOrder={commitLayerAction}
+              onModeChange={() => setElementToolMode("panel")}
               attributeValues={{
-                name: getHtmlAttributeValue(
-                  activeSlide,
-                  selectedElementId ?? "slide-root",
-                  "data-editor-name"
-                ),
                 locked: getHtmlAttributeValue(
                   activeSlide,
                   selectedElementId ?? "slide-root",
@@ -435,28 +386,51 @@ function SlidesEditor({
                   selectedElementId ?? "slide-root",
                   "aria-label"
                 ),
-                clickAction: getHtmlAttributeValue(
-                  activeSlide,
-                  selectedElementId ?? "slide-root",
-                  "data-click-action"
-                ),
                 linkUrl: getHtmlAttributeValue(
                   activeSlide,
                   selectedElementId ?? "slide-root",
                   "data-link-url"
                 ),
-                targetSlide: getHtmlAttributeValue(
-                  activeSlide,
-                  selectedElementId ?? "slide-root",
-                  "data-target-slide"
-                ),
               }}
-              selectedElementId={selectedElementId}
-              onStyleChange={commitStyleChange}
-              onAttributeChange={commitAttributeChange}
-              onDuplicateSelection={duplicateSelectedElement}
-              onDeleteSelection={deleteSelectedElement}
             />
+            {elementToolMode === "panel" && hasEditableSelection ? (
+              <SidebarToolPanel
+                inspectedStyles={inspectedStyles}
+                isEditingText={isEditingText}
+                isOpen={isInspectorOpen}
+                canEditStyles={Boolean(activeSlide)}
+                selectedElementType={selectedElement?.type ?? "block"}
+                selectedElementLabel={selectedElementId ? unifiedSelectionLabel : "slide"}
+                attributeValues={{
+                  locked: getHtmlAttributeValue(
+                    activeSlide,
+                    selectedElementId ?? "slide-root",
+                    "data-editor-locked"
+                  ),
+                  altText: getHtmlAttributeValue(
+                    activeSlide,
+                    selectedElementId ?? "slide-root",
+                    "alt"
+                  ),
+                  ariaLabel: getHtmlAttributeValue(
+                    activeSlide,
+                    selectedElementId ?? "slide-root",
+                    "aria-label"
+                  ),
+                  linkUrl: getHtmlAttributeValue(
+                    activeSlide,
+                    selectedElementId ?? "slide-root",
+                    "data-link-url"
+                  ),
+                }}
+                selectedElementId={selectedElementId}
+                onStyleChange={commitStyleChange}
+                onAttributeChange={commitAttributeChange}
+                onAlignToSlide={commitArrangeAction}
+                onLayerOrder={commitLayerAction}
+                onModeChange={() => setElementToolMode("floating")}
+              />
+            ) : null}
           </main>
         </div>
       </div>
@@ -478,29 +452,5 @@ function getHtmlAttributeValue(slide: SlideModel, elementId: string, attributeNa
   return node?.getAttribute(attributeName)?.trim() ?? "";
 }
 
-function createIdMapForCopiedElement(html: string, sourceElementId: string, nextElementId: string) {
-  const idMap: Record<string, string> = {
-    [sourceElementId]: nextElementId,
-  };
-
-  if (typeof DOMParser === "undefined") {
-    return idMap;
-  }
-
-  const doc = new DOMParser().parseFromString(`<template>${html}</template>`, "text/html");
-  const root = doc.querySelector("template")?.content.firstElementChild;
-  if (!(root instanceof HTMLElement)) {
-    return idMap;
-  }
-
-  for (const node of root.querySelectorAll<HTMLElement>(`[${SELECTOR_ATTR}]`)) {
-    const currentId = node.getAttribute(SELECTOR_ATTR);
-    if (currentId) {
-      idMap[currentId] = `${nextElementId}-${currentId}`;
-    }
-  }
-
-  return idMap;
-}
-
 export { SlidesEditor };
+export * from "./lib/core";

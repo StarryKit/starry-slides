@@ -1,6 +1,7 @@
-import type { StageRect } from "@starry-slides/core";
 import type { CSSProperties, MouseEvent as ReactMouseEvent, RefObject } from "react";
 import type { CssPropertyRow } from "../lib/collect-css-properties";
+import type { StageRect } from "../lib/core";
+import type { ElementToolMode } from "../lib/element-tool-model";
 import { cn } from "../lib/utils";
 import { BlockManipulationOverlay } from "./block-manipulation-overlay";
 import { FloatingToolbar } from "./floating-toolbar";
@@ -16,7 +17,6 @@ interface StageCanvasProps {
   selectionOverlay: StageRect | null;
   toolbarKey: string | null;
   inspectedStyles: CssPropertyRow[];
-  inlineStyleValues: Record<string, string>;
   isSelectionOverlayInteractive: boolean;
   isEditingText: boolean;
   manipulationOverlay: {
@@ -34,6 +34,13 @@ interface StageCanvasProps {
     }>;
     rotationHandle: { x: number; y: number };
   } | null;
+  elementToolMode: ElementToolMode;
+  attributeValues: {
+    locked: string;
+    altText: string;
+    ariaLabel: string;
+    linkUrl: string;
+  };
   iframeRef: RefObject<HTMLIFrameElement | null>;
   stageViewportRef: RefObject<HTMLDivElement | null>;
   selectionOverlayRef: RefObject<HTMLDivElement | null>;
@@ -47,7 +54,10 @@ interface StageCanvasProps {
   onSelectionOverlayDoubleClick: () => void;
   onBackgroundClick: () => void;
   onStyleChange: (propertyName: string, nextValue: string) => void;
-  onDeleteSelection: () => void;
+  onAttributeChange: (attributeName: string, nextValue: string) => void;
+  onAlignToSlide: (action: string) => void;
+  onLayerOrder: (action: string) => void;
+  onModeChange: () => void;
 }
 
 function StageCanvas({
@@ -59,10 +69,11 @@ function StageCanvas({
   selectionOverlay,
   toolbarKey,
   inspectedStyles,
-  inlineStyleValues,
   isSelectionOverlayInteractive,
   isEditingText,
   manipulationOverlay,
+  elementToolMode,
+  attributeValues,
   iframeRef,
   stageViewportRef,
   selectionOverlayRef,
@@ -73,7 +84,10 @@ function StageCanvas({
   onSelectionOverlayDoubleClick,
   onBackgroundClick,
   onStyleChange,
-  onDeleteSelection,
+  onAttributeChange,
+  onAlignToSlide,
+  onLayerOrder,
+  onModeChange,
 }: StageCanvasProps) {
   const clearSelectionIfBackground = (
     target: EventTarget | null,
@@ -101,7 +115,7 @@ function StageCanvas({
         }
       }}
     >
-      {selectionOverlay && !isManipulating && !isEditingText ? (
+      {selectionOverlay && !isManipulating && !isEditingText && elementToolMode === "floating" ? (
         <div
           className="pointer-events-none absolute z-40 w-max max-[1200px]:static max-[1200px]:mb-4 max-[1200px]:pointer-events-auto"
           style={toolbarStyle}
@@ -110,17 +124,20 @@ function StageCanvas({
           <FloatingToolbar
             key={toolbarKey}
             inspectedStyles={inspectedStyles}
-            inlineStyleValues={inlineStyleValues}
-            selectionOverlay={selectionOverlay}
-            scale={scale}
-            offsetX={offsetX}
-            offsetY={offsetY}
-            slideWidth={slideWidth}
-            slideHeight={slideHeight}
+            attributeValues={attributeValues}
             onStyleChange={onStyleChange}
-            onDelete={onDeleteSelection}
+            onAttributeChange={onAttributeChange}
+            onAlignToSlide={onAlignToSlide}
+            onLayerOrder={onLayerOrder}
+            onModeChange={onModeChange}
           />
         </div>
+      ) : null}
+
+      {isEditingText ? (
+        <p className="absolute left-10 top-4 z-40 rounded-md border border-foreground/[0.06] bg-white px-3 py-2 text-[12px] leading-normal text-foreground/65 shadow-sm">
+          Editing text. Press Enter to save or Escape to cancel.
+        </p>
       ) : null}
 
       <div

@@ -1,12 +1,12 @@
+import type { Dispatch, RefObject, SetStateAction } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import {
   SELECTOR_ATTR,
   type SlideModel,
   type TextUpdateOperation,
   getSlideElementSelector,
   querySlideElement,
-} from "@starry-slides/core";
-import type { Dispatch, RefObject, SetStateAction } from "react";
-import { useCallback, useEffect, useRef, useState } from "react";
+} from "../lib/core";
 
 interface TextEditingState {
   slideId: string;
@@ -295,7 +295,9 @@ function useIframeTextEditing({
 
         event.preventDefault();
         event.stopPropagation();
-        beginTextEditing(elementId);
+        if (elementId) {
+          beginTextEditing(elementId);
+        }
       };
     }
   }, [activeSlide, beginTextEditing, iframeRef, toggleSelectedElementId]);

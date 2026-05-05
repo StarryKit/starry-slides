@@ -1,4 +1,4 @@
-// ADR-0004: Keep core as focused internal modules behind one stable barrel.
+// ADR-0005: Editor owns core document modules as an internal library.
 export * from "./slide-contract";
 export * from "./slide-document";
 export * from "./layout";

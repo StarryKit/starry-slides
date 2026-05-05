@@ -1,5 +1,8 @@
+import type { RefObject } from "react";
+import { useEffect, useRef } from "react";
 import {
   type AtomicSlideOperation,
+  type EditableElement,
   type ElementInsertOperation,
   type ElementLayoutUpdateOperation,
   type ElementRemoveOperation,
@@ -10,12 +13,11 @@ import {
   createElementPlacement,
   createUniqueElementId,
   getSlideElementHtml,
+  normalizeElementLayoutStyleSnapshot,
   parseTransformParts,
   querySlideElement,
   updateSlideElementHtmlIds,
-} from "@starry-slides/core";
-import type { RefObject } from "react";
-import { useEffect, useRef } from "react";
+} from "../lib/core";
 
 interface ClipboardPayload {
   elements: Array<{
@@ -315,7 +317,7 @@ function useEditorKeyboardShortcuts({
 
           const previousStyle = captureElementLayoutStyleSnapshot(node);
           const transformParts = parseTransformParts(previousStyle.transform);
-          const nextStyle = {
+          const nextStyle = normalizeElementLayoutStyleSnapshot({
             ...previousStyle,
             transform: composeTransform(
               transformParts.translateX + delta.x * step,
@@ -323,7 +325,7 @@ function useEditorKeyboardShortcuts({
               transformParts.rotate
             ),
             transformOrigin: previousStyle.transformOrigin || "center center",
-          };
+          });
 
           return {
             type: "element.layout.update" as const,
@@ -364,10 +366,10 @@ function useEditorKeyboardShortcuts({
               : direction === "back"
                 ? 0
                 : Math.max(0, currentZIndex + (direction === "forward" ? 1 : -1));
-          const nextStyle = {
+          const nextStyle = normalizeElementLayoutStyleSnapshot({
             ...previousStyle,
             zIndex: String(nextZIndex),
-          };
+          });
 
           if (nextStyle.zIndex === previousStyle.zIndex) {
             return null;

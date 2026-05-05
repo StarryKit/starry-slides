@@ -2,7 +2,7 @@ import {
   type SlideDeckManifest,
   type SlideModel,
   loadSlidesFromManifest,
-} from "@starry-slides/core";
+} from "@starry-slides/editor";
 import { useEffect, useRef, useState } from "react";
 
 interface SlidesDataResult {
@@ -60,7 +60,7 @@ export function useSlidesData(): SlidesDataResult {
         setSourceLabel(
           importedDeck.manifest.topic
             ? `Generated deck: ${importedDeck.manifest.topic}`
-            : "Generated deck from skills/html-slides-generator"
+            : "Generated deck from Starry Slides Editor e2e generator"
         );
         setErrorMessage(null);
         setIsLoading(false);
