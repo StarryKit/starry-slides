@@ -175,7 +175,41 @@ HTML-native slide 编辑器中，组合的主流实现方式：
 
 ---
 
-## 6. CLI `verify` 增加 Overflow 检测
+## 6. 选中框紧贴视觉内容（Keynote 风格）
+
+**需求：** 选中元素时，选中框应紧贴元素的实际视觉内容边界，而不是元素的 CSS 布局空间。
+
+**现状：** 当前使用 `getBoundingClientRect()` 获取选中框，这返回的是元素的 CSS box model 尺寸（包含 padding、分配的 width/height 等），类似 Google Slides 的行为。例如一个文本元素设了 `width: 600px`，即使文字只占 200px，选中框仍然是 600px 宽。
+
+**目标效果（Keynote 风格）：**
+- 文本元素：选中框紧贴文字的实际渲染边界（最后一行文字的右边缘、最后一行的底部）
+- 图片元素：紧贴图片本身（如果图片小于容器）
+- Block 元素：紧贴实际渲染内容，而非 CSS 分配的空间
+
+**方案：**
+
+### 文本元素
+- 用 `Range.getBoundingClientRect()` 测量文本内容的实际像素边界
+- 创建一个 Range 包裹文本节点，取其 bounding rect
+- 与元素的 `getBoundingClientRect()` 取交集，得到紧贴内容的矩形
+
+### 图片 / Block 元素
+- 检查 `scrollWidth` vs `clientWidth`、`scrollHeight` vs `clientHeight`
+- 如果内容小于容器，用内容实际尺寸作为选中框
+- 如果内容溢出，用容器尺寸（溢出部分不应影响选中框）
+
+### 通用兜底
+- 对于无法精确测量的元素，回退到 `getBoundingClientRect()` + 内缩 padding
+- 选中框增加少量 padding（如 2-4px），避免选中框和内容完全重叠不美观
+
+**涉及文件：**
+- `src/editor/lib/selection-overlay.ts` — 选中框计算逻辑
+- 新建 `src/editor/lib/content-bounds.ts` — 视觉内容边界测量
+- `src/editor/hooks/use-slide-inspector.ts` — 选中状态计算
+
+---
+
+## 7. CLI `verify` 增加 Overflow 检测
 
 **需求：** 当前 `verify` 只做 HTML 结构检查（data-slide-root、data-editable 等）。需要增加检测 slide 内元素是否溢出（超出 slide 可视区域）的功能。
 
@@ -211,6 +245,7 @@ HTML-native slide 编辑器中，组合的主流实现方式：
 | P0 | 2. 删除侧边栏 | 简化 UI，为后续功能腾出空间 |
 | P0 | 3. Context Menu | 基础交互，其他功能依赖它作为入口 |
 | P1 | 1. CLI view | 独立功能，不影响编辑器 |
-| P1 | 6. verify overflow | 质量保障，静态检测零成本 |
+| P1 | 6. 选中框紧贴内容 | Keynote 体验，视觉精细度 |
+| P1 | 7. verify overflow | 质量保障，静态检测零成本 |
 | P1 | 5. Snap 完善 | 体验提升，增量改进 |
 | P2 | 4. 组合/解耦 | 最复杂，需要改动数据模型 |
