@@ -112,6 +112,29 @@ HTML-native slide 编辑器中，组合的主流实现方式：
 - 新建 `src/editor/hooks/use-group-operations.ts` — group / ungroup 逻辑
 - `src/editor/components/context-menu.tsx` — 添加 group / ungroup 菜单项
 
+### 4b. 拖拽选中框缩放时，内部元素等比缩放
+
+**需求：** 选中多个元素（或一个组）后，拖拽选中框的 resize handle 改变大小时，内部元素按比例自动缩放，类似 Keynote 的效果。
+
+**方案：**
+- 选中多个元素 / 组时，显示整体 bounding box + 8 个 resize handle
+- 拖拽 handle 时，计算缩放比例 `scaleX = newWidth / oldWidth`、`scaleY = newHeight / oldHeight`
+- 对内部每个元素的 `left`、`top`、`width`、`height` 乘以对应比例
+- 保持元素间的相对位置和比例关系
+- **按住 Shift 锁定宽高比**：只用一个 scale 因子 `scale = max(scaleX, scaleY)`
+- 缩放完成后，将新尺寸写回每个元素的 inline style
+
+**关键细节：**
+- 缩放基准点取决于拖拽的 handle 方向（左上角 handle → 右下角固定不动）
+- 元素的 `transform-origin` 需要跟随 handle 方向调整
+- 组内嵌套的组需要递归缩放
+- 缩放过程中实时预览（拖拽时同步更新 DOM），松手后提交到历史
+
+**涉及文件：**
+- `src/editor/hooks/use-block-manipulation.ts` — 多选 / 组的 resize 逻辑
+- `src/editor/hooks/block-manipulation-geometry.ts` — 缩放计算
+- `src/editor/components/block-manipulation-overlay.tsx` — 多选 bounding box + resize handles
+
 ---
 
 ## 5. 完善 Snap 系统，交互接近 Keynote
