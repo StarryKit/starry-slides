@@ -1,7 +1,8 @@
 # ADR-0005: Adopt two-subject architecture for Starry Slides Skill and Editor
 
-- Status: accepted
+- Status: superseded
 - Date: 2026-05-05
+- Superseded by: [ADR-0008](./0008-adopt-starrykit-slides-single-package.md)
 
 ## Context
 

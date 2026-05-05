@@ -99,7 +99,7 @@ Expected direction:
 - The interaction layer owns user-facing triggers such as selection, editing
   entry points, toolbar actions, and drag interactions.
 - The editor state layer owns transient state maintained inside
-  `packages/editor`, such as active selection, in-progress editing state, and
+  `src/editor`, such as active selection, in-progress editing state, and
   UI coordination state.
 - The history layer owns shared operations, undo/redo behavior, and HTML
   write-back semantics through `packages/core`.
@@ -110,7 +110,7 @@ Design rule:
 
 - New editor features should follow the direction
   `interaction -> editor state -> history -> version management`.
-- `packages/editor` should own transient UI and interaction concerns.
+- `src/editor` should own transient UI and interaction concerns.
 - `packages/core` should own reusable operations, history transitions, and
   persistence-facing write-back behavior.
 - Any feature that breaks this layering should trigger an ADR review.

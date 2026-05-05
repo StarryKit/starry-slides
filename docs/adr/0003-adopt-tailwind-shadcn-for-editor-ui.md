@@ -6,7 +6,7 @@
 ## Context
 
 The editor UI is currently implemented with package-local React components and
-handwritten CSS under `packages/editor/src/styles/`. Most visible editor chrome
+handwritten CSS under `src/editor/styles/`. Most visible editor chrome
 uses `hse-*` class names and custom CSS files:
 
 - shell and header styles in `shell.css`
@@ -22,13 +22,13 @@ shadcn/ui, and shadcn/ui expects a Tailwind-based component and theme setup.
 
 Current repository facts:
 
-- `apps/web` is a Vite + React app.
-- `packages/editor` is the reusable React editor package.
-- `packages/editor` owns the interactive editor UI per ADR-0002.
+- `src/editor/app` is a Vite + React app.
+- `src/editor` is the reusable React editor package.
+- `src/editor` owns the interactive editor UI per ADR-0002.
 - There is no `components.json`, Tailwind config, Tailwind CSS entrypoint, or
   shadcn/ui component directory today.
-- `packages/editor` currently exports `./styles.css`, and `apps/web` imports
-  `@starry-slides/editor/styles.css`.
+- `src/editor` currently exports `./styles.css`, and `src/editor/app` imports
+  `@starrykit/slides/styles.css`.
 
 The new decision must avoid a half-migrated state where some editor surfaces are
 custom CSS while others are shadcn/Tailwind. That mixed model would make later
@@ -38,11 +38,11 @@ split across incompatible styling systems.
 ## Decision
 
 Adopt Tailwind CSS and shadcn/ui as the single UI implementation strategy for
-all `packages/editor` user-interface chrome.
+all `src/editor` user-interface chrome.
 
 The target state is:
 
-1. `packages/editor` owns its shadcn/ui component source, Tailwind theme entry,
+1. `src/editor` owns its shadcn/ui component source, Tailwind theme entry,
    and editor-specific composition components.
 2. All editor chrome is implemented with Tailwind utility classes and shadcn/ui
    primitives/composition patterns.
@@ -50,12 +50,12 @@ The target state is:
    foundation is in place.
 4. Existing handwritten `hse-*` CSS is removed from editor UI as migration work
    completes.
-5. `apps/web` continues to compose and load the editor, but does not own editor
+5. `src/editor/app` continues to compose and load the editor, but does not own editor
    UI components or editor design-system implementation.
 
 ### Scope
 
-This decision applies to user-visible editor chrome in `packages/editor`,
+This decision applies to user-visible editor chrome in `src/editor`,
 including:
 
 - app shell and header
@@ -97,12 +97,12 @@ After migration, editor UI code must follow these rules:
 ### Package ownership
 
 The editor package should own the editor design system rather than importing UI
-components from `apps/web`.
+components from `src/editor/app`.
 
 Planned package-local layout:
 
 ```text
-packages/editor/
+src/editor/
   components.json
   src/
     components/
@@ -115,29 +115,29 @@ packages/editor/
       index.css             # Tailwind v4 entrypoint and shadcn theme tokens
 ```
 
-`apps/web` should keep importing the editor as a package. It may import the
+`src/editor/app` should keep importing the editor as a package. It may import the
 editor CSS artifact as it does today, but it should not contain editor-specific
 shadcn components.
 
 ### Build direction
 
-`packages/editor` must produce a compiled CSS artifact that includes the
+`src/editor` must produce a compiled CSS artifact that includes the
 Tailwind utilities used by editor package source files and any package-local
 shadcn/AI Elements components.
 
 The implementation plan should evaluate the exact build mechanism before code
 migration, but the intended result is:
 
-- `packages/editor` build emits `dist/index.js`, `dist/index.d.ts`, and
+- `src/editor` build emits `dist/index.js`, `dist/index.d.ts`, and
   `dist/index.css`.
-- `apps/web` can continue importing
-  `@starry-slides/editor/styles.css`.
-- Tailwind scanning includes `packages/editor/src/**/*.{ts,tsx}`.
-- The editor package does not rely on `apps/web` to scan editor source classes
+- `src/editor/app` can continue importing
+  `@starrykit/slides/styles.css`.
+- Tailwind scanning includes `src/editor/**/*.{ts,tsx}`.
+- The editor package does not rely on `src/editor/app` to scan editor source classes
   for production CSS.
 
 This likely means adding Tailwind v4 and a CSS build/watch step to
-`packages/editor`, rather than relying only on the Vite app plugin.
+`src/editor`, rather than relying only on the Vite app plugin.
 
 ## Consequences
 
@@ -150,11 +150,11 @@ Benefits:
   Tailwind classes instead of chasing global CSS selectors.
 - Design tokens become explicit and reusable through the shadcn/Tailwind theme.
 - The package boundary from ADR-0002 remains intact: editor UI stays in
-  `packages/editor`, while `apps/web` remains app composition.
+  `src/editor`, while `src/editor/app` remains app composition.
 
 Costs:
 
-- This is a large UI migration touching most files under `packages/editor/src`.
+- This is a large UI migration touching most files under `src/editor`.
 - The editor package build pipeline becomes more complex because it must compile
   Tailwind CSS as part of library output.
 - Existing E2E tests that target `hse-*` classes may need to move to stable
@@ -168,7 +168,7 @@ Risks:
 - A partial migration could leave two design systems in place. The migration
   plan must keep transitional scope explicit and remove legacy CSS by phase.
 - Tailwind class scanning can miss package-local source files if the build
-  pipeline is configured only for `apps/web`.
+  pipeline is configured only for `src/editor/app`.
 - shadcn components generated into the wrong workspace would create import
   direction problems. Components must live with the editor UI they serve.
 
@@ -180,17 +180,17 @@ Rejected. This keeps short-term changes small, but it means AI Elements cannot
 be used as intended. It also leaves the project with custom implementations of
 components that shadcn/AI Elements already provide.
 
-### Add shadcn/ui only to `apps/web`
+### Add shadcn/ui only to `src/editor/app`
 
-Rejected. `packages/editor` owns editor UI under ADR-0002. If shadcn components
-live only in `apps/web`, the reusable editor package either cannot use them or
+Rejected. `src/editor` owns editor UI under ADR-0002. If shadcn components
+live only in `src/editor/app`, the reusable editor package either cannot use them or
 must depend on the app, which reverses the package boundary.
 
 ### Create a new shared `packages/ui`
 
 Deferred. A shared UI package may make sense if multiple apps or packages need
 the same non-editor components. Today, the requirement is specifically to unify
-`packages/editor` UI, and a new package would add indirection before there is a
+`src/editor` UI, and a new package would add indirection before there is a
 second consumer. This can be revisited if another app needs the same primitives.
 
 ### Use Tailwind utilities without shadcn/ui
@@ -215,15 +215,15 @@ This ADR does not:
 Implementation must happen in explicit phases. Do not rewrite the whole editor
 in one unreviewable patch.
 
-### Phase 1: Bootstrap Tailwind and shadcn for `packages/editor`
+### Phase 1: Bootstrap Tailwind and shadcn for `src/editor`
 
 - Add Tailwind v4 dependencies and a package-local Tailwind CSS entrypoint.
 - Add shadcn/ui configuration for the editor package.
-- Add `cn()` in `packages/editor/src/lib/utils.ts`.
+- Add `cn()` in `src/editor/lib/utils.ts`.
 - Generate only the shadcn primitives required by the first migration slice.
 - Configure the editor package build so `dist/index.css` contains compiled
   Tailwind output for editor source files.
-- Preserve `@starry-slides/editor/styles.css` as the CSS import path unless
+- Preserve `@starrykit/slides/styles.css` as the CSS import path unless
   a later ADR changes package exports.
 
 Expected first shadcn components:
@@ -259,7 +259,7 @@ Expected first shadcn components:
 
 ### Phase 4: Migrate chat to AI Elements
 
-- Add AI Elements registry components into `packages/editor/src/components/ai-elements`.
+- Add AI Elements registry components into `src/editor/components/ai-elements`.
 - Replace the temporary local chat panel with AI Elements primitives.
 - Keep functionality scoped to UI interaction until the agent protocol is
   decided separately.
@@ -294,12 +294,12 @@ Expected AI Elements components:
 
 ## Verification
 
-- [ ] `packages/editor` contains a `components.json` or equivalent shadcn config
+- [ ] `src/editor` contains a `components.json` or equivalent shadcn config
       scoped to the editor package.
-- [ ] `packages/editor` builds a compiled `dist/index.css` that includes
+- [ ] `src/editor` builds a compiled `dist/index.css` that includes
       Tailwind output for editor source files.
-- [ ] `apps/web` can render the editor by importing
-      `@starry-slides/editor` and `@starry-slides/editor/styles.css`.
+- [ ] `src/editor/app` can render the editor by importing
+      `@starrykit/slides` and `@starrykit/slides/styles.css`.
 - [ ] New editor UI code uses Tailwind classes and shadcn/ui primitives instead
       of new handwritten component CSS.
 - [ ] No new `hse-*` selectors are introduced after Phase 1.
@@ -316,7 +316,7 @@ Expected AI Elements components:
 ## References
 
 - shadcn/ui Vite installation documents Tailwind setup, `components.json`, and
-  monorepo workspace targeting with `-c apps/web`:
+  monorepo workspace targeting with `-c src/editor/app`:
   <https://ui.shadcn.com/docs/installation/vite>
 - AI Elements describes itself as a shadcn/ui-based registry for AI-native
   applications and documents chat components such as Conversation, Message,

@@ -1,14 +1,13 @@
 # Starry Slides
 
-Starry Slides is a headless, agent-native slide workflow: bring any prompt,
-reference material, design direction, theme, or slide skill; generate
-Contract-compatible HTML slides; then edit and present them without leaving the
-source format.
+Starry Slides is a local-first, agent-native slide workflow: generate
+Contract-compatible HTML slide decks, validate them, then open the same source
+files in a browser editor for manual revision.
 
 The product rule is simple: **HTML stays the source of truth**. Starry Slides
 does not provide preset templates or a proprietary slide model. It defines the
-generated slide format and provides the tools around that format: editing,
-presentation, validation, saving, and future extensions.
+generated deck format and provides the tools around that format: validation,
+editing, presentation, saving, and future extensions.
 
 ## Why This Exists
 
@@ -28,87 +27,50 @@ path:
 That makes the deck inspectable, versionable, testable, and still easy to edit
 after generation.
 
-## Core Ideas
-
-### Manual Editing
-
-Prompt-only editing is not enough for many slide workflows. People still need to
-click into a deck and directly adjust wording, layout, visual details, and
-presentation structure. Starry Slides keeps generated slides editable by marking
-the intended text, image, and block elements in HTML.
-
-### Headless Generation
-
-Starry Slides is headless by design. It does not prescribe a visual system,
-template catalog, or fixed content model. A user can combine their own context,
-design notes, brand language, themes, existing slide skills, and generated assets
-as long as the output satisfies the Starry Slides Contract.
-
 ## Product Shape
 
-Starry Slides currently has two main pieces.
+This repo now builds one product package:
 
 ```text
-starry-slides-skill
-  + user prompt, files, references, style constraints
-  -> generated deck package
-
-Starry Slides Editor
+@starrykit/slides
   + generated deck package
-  -> browser editing, saving, validation, regression coverage
+  -> validation, local editor runtime, browser editing, saving
 ```
 
-### Starry Slides Skill
+The package exposes the local CLI binary:
 
-`skills/starry-slides-skill` is the agent-facing entry point. Use it when an
-agent needs to create, validate, normalize, install, or open a deck for editing.
+```bash
+sslides [deck]
+sslides open [deck]
+sslides verify [deck]
+sslides add-skill
+```
 
-The skill owns:
+`sslides [deck]` defaults to `sslides open [deck]`. `open` validates first and
+only starts the browser editor when validation passes.
 
-- the generated deck workflow
-- the editable HTML Contract references
-- validation, annotation, manifest, install, open, and feedback scripts
-- the rule that agents use bundled protocol tools instead of inventing ad hoc
-  deck formats
-
-### Starry Slides Editor
-
-`packages/editor` contains the React editor package, exported as
-`@starry-slides/editor`.
-
-The editor owns:
-
-- manifest-driven deck loading
-- slide parsing and Contract helpers
-- history-backed slide operations
-- iframe-based slide rendering
-- element selection and overlays
-- double-click text editing
-- CSS-backed toolbar and sidebar controls
-- block movement, resizing, and snap guides
-- thumbnails and Playwright regression fixtures
-
-`apps/web` is the local Vite host that composes the editor and loads the current
-generated deck.
+The agent-facing skill remains in `skills/starry-slides-skill/`. It owns the
+deck-generation workflow and protocol references, but it should use `sslides`
+for validation and opening instead of owning a separate editor runtime.
 
 ## What Works Today
 
 The current repo is a local-first product build. It can:
 
-- generate the regression/sample deck used by the app
+- generate the regression/sample deck used by local development
 - validate and annotate Contract-compatible HTML slides
 - build a `manifest.json` for a slide directory
-- open the browser editor against `apps/web/public/sample-slides/`
+- open the browser editor against `sample-slides/` or a deck path
 - edit marked text directly in the slide iframe
 - select editable text, image, and block elements
 - update supported CSS properties through the floating toolbar or side panel
 - move and resize supported block/text elements with snapping
 - undo and redo committed editor operations
 - save edited generated slides back to disk in the local dev server
-- run unit, build, lint, and browser regression checks through `pnpm verify`
+- run unit, build, lint, and browser regression checks
 
-This is not yet a hosted collaboration product. The app expects an installed or
-generated deck; it does not maintain a fallback deck.
+This is not yet a hosted collaboration product. The local runtime expects a
+Contract-compatible deck package.
 
 ## Quick Start
 
@@ -118,32 +80,31 @@ Install dependencies:
 pnpm install
 ```
 
-Generate the default editable deck:
+Validate the built-in sample deck:
 
 ```bash
-pnpm editor:e2e:generate-deck
+pnpm sslides verify sample-slides
 ```
 
-Start the local editor:
+Open the built-in sample deck:
+
+```bash
+pnpm sslides open sample-slides
+```
+
+For day-to-day editor development with Vite hot reload:
 
 ```bash
 pnpm dev
 ```
 
-`pnpm dev` starts the web app and serves the deck from:
+`pnpm dev` starts the root Vite app and serves the deck from:
 
 ```text
-apps/web/public/sample-slides/
+sample-slides/
 ```
 
-The app loads:
-
-```text
-apps/web/public/sample-slides/manifest.json
-```
-
-Local edits are saved back into that generated deck while the dev server is
-running.
+Local edits are saved back into that deck while the dev server is running.
 
 ## Common Commands
 
@@ -156,6 +117,8 @@ pnpm format
 pnpm test
 pnpm test:e2e
 pnpm verify
+pnpm sslides verify sample-slides
+pnpm sslides open sample-slides
 ```
 
 `pnpm verify` is the full local gate:
@@ -165,8 +128,8 @@ pnpm lint && pnpm test && pnpm build && pnpm test:e2e
 ```
 
 The browser regression suite uses a temporary ignored deck in
-`.e2e-test-slides/`. Normal development uses the long-lived app deck in
-`apps/web/public/sample-slides/`.
+`.e2e-test-slides/`. Normal development uses the long-lived sample deck in
+`sample-slides/`.
 
 ## Generate Or Install A Deck
 
@@ -186,13 +149,13 @@ my-deck/
 Useful protocol commands:
 
 ```bash
-pnpm starry:contract:validate -- --input path/to/deck
+pnpm sslides verify path/to/deck
 pnpm starry:contract:annotate -- --input path/to/deck
 pnpm starry:contract:manifest -- --input-dir path/to/deck/slides --deck-title "My Deck"
-pnpm starry:open
+pnpm sslides open path/to/deck
 ```
 
-To refresh the app's default deck from the editor regression generator:
+To refresh the built-in sample deck from the editor regression generator:
 
 ```bash
 pnpm editor:e2e:generate-deck
@@ -241,25 +204,22 @@ The full v1 Contract lives in
 ## Repository Guide
 
 ```text
-apps/
-  web/                         React + Vite editor host
-    public/sample-slides/      App default generated deck
-    src/use-slides-data.ts     Manifest loading and local save integration
+src/
+  cli/                         sslides command parsing and process behavior
+  runtime/                     local deck path resolution, ports, browser opening
+  editor/
+    app/                       root Vite browser app integration
+    components/                editor shell, toolbar, side panel, canvas, UI
+    hooks/                     selection, editing, keyboard, block manipulation
+    lib/                       editor-only helpers and interaction models
+    styles/                    Tailwind/shadcn theme entry
+  core/                        Contract, parser, history, operations, import helpers
 
-docs/
-  adr/                         Architecture decision records
-  roadmap/                     Milestone plans linked from ROADMAP.md
-
-packages/
-  editor/                      Editor package, core slide helpers, regression suite
-    e2e/                       Playwright tests, fixtures, and deck generator
-    src/components/            Editor shell, toolbar, side panel, canvas, UI
-    src/hooks/                 Selection, editing, keyboard, block manipulation
-    src/lib/core/              Contract, parser, history, operations, import helpers
+e2e/                           Playwright tests, fixtures, and deck generator
+sample-slides/                 built-in sample deck for local dev and CLI default
 
 skills/
-  starry-slides-skill/         Agent-facing deck workflow and protocol tools
-  slides-style-pack-starter/   Starter visual-layer package
+  starry-slides-skill/         agent-facing deck workflow and protocol tools
 ```
 
 ## For Agents
@@ -267,9 +227,12 @@ skills/
 Start here before making changes:
 
 1. Read `CONTEXT-MAP.md`.
-2. Read the relevant package context:
-   - `packages/editor/CONTEXT.md` for editor UI and interactions.
-   - `apps/web/CONTEXT.md` for app loading and save behavior.
+2. Read the relevant context docs:
+   - `src/core/CONTEXT.md` for slide parsing, operations, history, and
+     validation.
+   - `src/editor/CONTEXT.md` for editor UI and interactions.
+   - `src/runtime/CONTEXT.md` for local deck loading, save/reset behavior, and
+     CLI runtime integration.
 3. Read `docs/adr/README.md` and relevant ADRs before changing architecture,
    persistence, collaboration, package boundaries, history, or editor pipeline
    semantics.
@@ -281,12 +244,11 @@ Start here before making changes:
 Agent rules that matter in this repo:
 
 - do not introduce a proprietary slide document model
-- do not bypass `@starry-slides/editor` core operations for committed edits
-- do not invent alternate deck install locations
-- do not add extra persistent deck copies beyond the app default deck and the
+- do not bypass `src/core` operations for committed edits
+- do not invent alternate built-in deck locations
+- do not add extra persistent deck copies beyond `sample-slides/` and the
   ignored e2e working deck
-- keep generated slides Contract-compatible and validate them with the bundled
-  tools
+- keep generated slides Contract-compatible and validate them with `sslides`
 
 ## Architecture Decisions
 
@@ -294,9 +256,9 @@ Important current decisions:
 
 - ADR-0001: editing pipeline and versioning strategy
 - ADR-0003: Tailwind and shadcn/ui for editor UI
-- ADR-0005: two-subject architecture for Starry Slides Skill and Editor
 - ADR-0006: shared toolbar model for element tooling
-- ADR-0007: only two generated deck copies
+- ADR-0007: generated deck copy policy
+- ADR-0008: `@starrykit/slides` single-package architecture
 
 The ADR index is `docs/adr/README.md`.
 

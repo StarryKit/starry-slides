@@ -33,6 +33,7 @@ Update this directory whenever a change affects:
 | [0002](./0002-package-boundaries-for-core-editor-and-app.md)      | Package boundaries for core, editor, and app                             | superseded |
 | [0003](./0003-adopt-tailwind-shadcn-for-editor-ui.md)             | Adopt Tailwind and shadcn/ui for editor UI                               | accepted   |
 | [0004](./0004-deepen-core-document-modules.md)                    | Deepen core by splitting document, history, geometry, and import modules | superseded |
-| [0005](./0005-adopt-two-subject-skill-and-editor-architecture.md) | Adopt two-subject architecture for Starry Slides Skill and Editor        | accepted   |
+| [0005](./0005-adopt-two-subject-skill-and-editor-architecture.md) | Adopt two-subject architecture for Starry Slides Skill and Editor        | superseded |
 | [0006](./0006-unify-element-tooling-into-shared-toolbar-model.md) | Unify element tooling into a shared toolbar model                        | accepted   |
 | [0007](./0007-limit-generated-deck-copies.md)                     | Limit generated deck copies                                              | accepted   |
+| [0008](./0008-adopt-starrykit-slides-single-package.md)           | Adopt @starrykit/slides as the single product package                    | accepted   |

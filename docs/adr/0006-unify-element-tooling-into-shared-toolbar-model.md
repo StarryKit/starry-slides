@@ -7,8 +7,8 @@
 
 The editor currently has two separate element-editing surfaces:
 
-- `FloatingToolbar` in `packages/editor/src/components/floating-toolbar.tsx`
-- `SidebarToolPanel` in `packages/editor/src/components/sidebar-tool-panel.tsx`
+- `FloatingToolbar` in `src/editor/components/floating-toolbar.tsx`
+- `SidebarToolPanel` in `src/editor/components/sidebar-tool-panel.tsx`
 
 These surfaces edit the same selected element, but their feature sets and
 organization have drifted apart:
@@ -135,7 +135,7 @@ same feature definitions and action handlers. The model should describe:
 - commit behavior
 
 Style and attribute writes continue to go through the existing editor commit
-pipeline in `packages/editor/src/index.tsx`, preserving ADR-0001's history and
+pipeline in `src/editor/index.tsx`, preserving ADR-0001's history and
 write-back strategy.
 
 ## Consequences
@@ -211,12 +211,12 @@ patch.
 
 Affected paths:
 
-- `packages/editor/src/lib/style-controls.ts`
-- new module under `packages/editor/src/lib/` or
-  `packages/editor/src/components/`, such as `element-tool-model.ts`
-- `packages/editor/src/index.tsx`
-- `packages/editor/src/components/floating-toolbar.tsx`
-- `packages/editor/src/components/sidebar-tool-panel.tsx`
+- `src/editor/lib/style-controls.ts`
+- new module under `src/editor/lib/` or
+  `src/editor/components/`, such as `element-tool-model.ts`
+- `src/editor/index.tsx`
+- `src/editor/components/floating-toolbar.tsx`
+- `src/editor/components/sidebar-tool-panel.tsx`
 
 Tasks:
 
@@ -229,15 +229,15 @@ Tasks:
 - Keep feature definitions concrete. Avoid a generic form engine that hides
   editor behavior behind unclear abstractions.
 - Keep `commitStyleChange` and `commitAttributeChange` in
-  `packages/editor/src/index.tsx` as the write boundary.
+  `src/editor/index.tsx` as the write boundary.
 
 ### Phase 2: Add editor tool mode state
 
 Affected paths:
 
-- `packages/editor/src/index.tsx`
-- `packages/editor/src/components/stage-canvas.tsx`
-- `packages/editor/src/components/editor-header.tsx` if the mode switch needs a
+- `src/editor/index.tsx`
+- `src/editor/components/stage-canvas.tsx`
+- `src/editor/components/editor-header.tsx` if the mode switch needs a
   header-level fallback
 
 Tasks:
@@ -259,7 +259,7 @@ Tasks:
 
 Affected paths:
 
-- `packages/editor/src/components/floating-toolbar.tsx`
+- `src/editor/components/floating-toolbar.tsx`
 - shared subcomponents extracted from the current file if needed
 
 Tasks:
@@ -280,7 +280,7 @@ Tasks:
 
 Affected paths:
 
-- `packages/editor/src/components/sidebar-tool-panel.tsx`
+- `src/editor/components/sidebar-tool-panel.tsx`
 - shared field/control components extracted from the current file if needed
 
 Tasks:
@@ -299,7 +299,7 @@ Tasks:
 
 Affected paths:
 
-- `packages/editor/e2e/tests/text-editing.spec.ts`
+- `e2e/tests/text-editing.spec.ts`
 - `DESIGN.md` if component inventories need to mention the new model
 - `ROADMAP.md` if old chat/tooling roadmap references become misleading
 
@@ -314,9 +314,7 @@ Tasks:
 ## Verification
 
 - `pnpm lint` passes.
-- `pnpm --filter @starry-slides/core build` passes when editor build needs core
-  declarations.
-- `pnpm --filter @starry-slides/editor build` passes.
+- `pnpm build` passes.
 - E2E coverage confirms:
   - selecting an editable element exposes a mode switch
   - Floating Toolbar mode shows the floating toolbar and hides the tool panel

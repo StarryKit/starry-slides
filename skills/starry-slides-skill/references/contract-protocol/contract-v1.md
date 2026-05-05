@@ -7,7 +7,7 @@ This document defines the single protocol layer for editable HTML slides in this
 The protocol exists to make slide HTML:
 
 - loadable through `packages/core`
-- selectable and editable through `packages/editor`
+- selectable and editable through `src/editor`
 - stable enough for style packs, fixtures, and generated decks to share the same document contract
 
 The protocol is visual-style agnostic.

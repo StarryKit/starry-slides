@@ -35,7 +35,7 @@ function main() {
 
   const workspaceRoot = path.resolve(import.meta.dirname, "..", "..", "..");
   const sourceDir = path.resolve(process.cwd(), deckDir);
-  const targetDir = path.join(workspaceRoot, "apps/web/public/sample-slides");
+  const targetDir = path.join(workspaceRoot, "sample-slides");
   const manifestPath = path.join(sourceDir, "manifest.json");
 
   if (!fs.existsSync(manifestPath)) {

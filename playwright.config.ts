@@ -3,7 +3,7 @@ import { defineConfig, devices } from "@playwright/test";
 const e2ePort = Number(process.env.PLAYWRIGHT_PORT ?? 4173);
 
 export default defineConfig({
-  testDir: "./packages/editor/e2e/tests",
+  testDir: "./e2e/tests",
   fullyParallel: false,
   workers: 1,
   reporter: "list",
@@ -12,7 +12,7 @@ export default defineConfig({
     trace: "on-first-retry",
   },
   webServer: {
-    command: `pnpm test:e2e:prepare && pnpm build && STARRY_SLIDES_DECK_SOURCE=e2e pnpm --filter web exec vite preview --host 127.0.0.1 --port ${e2ePort} --strictPort`,
+    command: `pnpm test:e2e:prepare && pnpm build && STARRY_SLIDES_DECK_SOURCE=e2e pnpm exec vite preview --host 127.0.0.1 --port ${e2ePort} --strictPort`,
     port: e2ePort,
     reuseExistingServer: false,
     timeout: 120_000,

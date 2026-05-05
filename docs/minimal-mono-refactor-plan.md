@@ -4,7 +4,7 @@ This plan compares the current editor chrome with `DESIGN.md` and defines the
 refactor needed to make the project follow the Minimal Mono design system.
 
 This is not a new architecture decision. ADR-0003 already decides that
-`packages/editor` owns Tailwind, shadcn/ui, and editor UI chrome. This document
+`src/editor` owns Tailwind, shadcn/ui, and editor UI chrome. This document
 is the visual and module-level implementation plan inside that decision.
 
 ## Goal
@@ -26,11 +26,11 @@ keep its own colors, images, typography, and layout.
 
 The codebase already matches the technical direction:
 
-- `packages/editor` owns editor chrome.
-- Tailwind v4 is compiled from `packages/editor/src/styles/index.css`.
-- shadcn/ui primitives live in `packages/editor/src/components/ui`.
-- editor modules use `cn()` from `packages/editor/src/lib/utils.ts`.
-- AI Elements wrappers exist under `packages/editor/src/components/ai-elements`.
+- `src/editor` owns editor chrome.
+- Tailwind v4 is compiled from `src/editor/styles/index.css`.
+- shadcn/ui primitives live in `src/editor/components/ui`.
+- editor modules use `cn()` from `src/editor/lib/utils.ts`.
+- AI Elements wrappers exist under `src/editor/components/ai-elements`.
 
 The visual system does not yet match `DESIGN.md`. Current chrome still reads as
 warm, orange-accented, and more expressive than Minimal Mono.
@@ -39,18 +39,18 @@ warm, orange-accented, and more expressive than Minimal Mono.
 
 | Area | Current implementation | Minimal Mono target | Files |
 | --- | --- | --- | --- |
-| Theme palette | Warm ivory background, orange `primary`, warm `accent`, brown-tinted shadows. | Neutral page background, white surfaces, hierarchy from `foreground` alpha. | `packages/editor/src/styles/index.css` |
-| Primary actions | `Button` default uses orange `primary`; active toolbar states use `bg-primary` or `bg-primary/10`. | Toolbar/chrome active states use `bg-foreground/[0.06]` to `[0.08]`; no brand color in chrome. | `packages/editor/src/components/ui/button.tsx`, `packages/editor/src/components/floating-toolbar.tsx` |
-| Header | Large 72px header, warm card background, outline icon button plus orange Present button. | Quiet utility header with smaller controls; primary color avoided unless the action truly leaves editor chrome. | `packages/editor/src/components/editor-header.tsx` |
-| App shell | 18px gaps, warm page background inherited from theme. | Denser editor layout with neutral canvas/page background. | `packages/editor/src/index.tsx`, `packages/editor/src/styles/index.css` |
-| Slide sidebar | Active slide has orange border, rounded 14px thumbnails, gradient placeholder, hover expansion. | Neutral border/foreground alpha active state; gradients only for user content, not chrome placeholders. | `packages/editor/src/components/slide-sidebar.tsx` |
-| Stage frame | Rounded 20px card with warm brown shadow. Selection outline and label use orange primary. | Stage surface can remain framed, but border/shadow should be neutral and subtle; selection chrome should not use brand orange. | `packages/editor/src/components/stage-canvas.tsx` |
-| Floating toolbar | Rounded 16px container, brown-tinted elevation, 36px controls, active buttons in orange, bold active text. | `rounded-xl`, 32px controls, neutral alpha hover/active, 14px icons, lighter shadow. | `packages/editor/src/components/floating-toolbar.tsx` |
-| Toolbar popovers | Rounded 16px, p-3, warm shadow, zoom/slide animation. | `rounded-xl`, `p-1.5`, neutral double shadow, fade-only entrance. | `packages/editor/src/components/floating-toolbar.tsx`, `packages/editor/src/lib/motion.ts` |
-| Inspector panel | Accordion cards with rounded 18px, descriptions under each section, warm card surfaces. | More compact tool panel; labels are small uppercase; cards only where needed, no card-inside-card feel. | `packages/editor/src/components/sidebar-tool-panel.tsx` |
-| Color picker | Useful control shape, but presets use hover scale, strong primary ring, gradients available. | Swatches should stay visual because they represent user content; chrome around them should be neutral, no hover scale. | `packages/editor/src/components/color-picker.tsx` |
-| Block manipulation overlay | Orange handles and snap guides, hover scale. | Neutral manipulation chrome unless a strong selection color is intentionally retained as an editor affordance. If retained, document it as the one exception. | `packages/editor/src/components/block-manipulation-overlay.tsx` |
-| Motion | `zoom-in-95`, slide-in classes, hover scale on swatches/handles. | Fade and color transitions only; no scale/zoom/large translate motion. | `packages/editor/src/lib/motion.ts`, toolbar, color picker, manipulation overlay |
+| Theme palette | Warm ivory background, orange `primary`, warm `accent`, brown-tinted shadows. | Neutral page background, white surfaces, hierarchy from `foreground` alpha. | `src/editor/styles/index.css` |
+| Primary actions | `Button` default uses orange `primary`; active toolbar states use `bg-primary` or `bg-primary/10`. | Toolbar/chrome active states use `bg-foreground/[0.06]` to `[0.08]`; no brand color in chrome. | `src/editor/components/ui/button.tsx`, `src/editor/components/floating-toolbar.tsx` |
+| Header | Large 72px header, warm card background, outline icon button plus orange Present button. | Quiet utility header with smaller controls; primary color avoided unless the action truly leaves editor chrome. | `src/editor/components/editor-header.tsx` |
+| App shell | 18px gaps, warm page background inherited from theme. | Denser editor layout with neutral canvas/page background. | `src/editor/index.tsx`, `src/editor/styles/index.css` |
+| Slide sidebar | Active slide has orange border, rounded 14px thumbnails, gradient placeholder, hover expansion. | Neutral border/foreground alpha active state; gradients only for user content, not chrome placeholders. | `src/editor/components/slide-sidebar.tsx` |
+| Stage frame | Rounded 20px card with warm brown shadow. Selection outline and label use orange primary. | Stage surface can remain framed, but border/shadow should be neutral and subtle; selection chrome should not use brand orange. | `src/editor/components/stage-canvas.tsx` |
+| Floating toolbar | Rounded 16px container, brown-tinted elevation, 36px controls, active buttons in orange, bold active text. | `rounded-xl`, 32px controls, neutral alpha hover/active, 14px icons, lighter shadow. | `src/editor/components/floating-toolbar.tsx` |
+| Toolbar popovers | Rounded 16px, p-3, warm shadow, zoom/slide animation. | `rounded-xl`, `p-1.5`, neutral double shadow, fade-only entrance. | `src/editor/components/floating-toolbar.tsx`, `src/editor/lib/motion.ts` |
+| Inspector panel | Accordion cards with rounded 18px, descriptions under each section, warm card surfaces. | More compact tool panel; labels are small uppercase; cards only where needed, no card-inside-card feel. | `src/editor/components/sidebar-tool-panel.tsx` |
+| Color picker | Useful control shape, but presets use hover scale, strong primary ring, gradients available. | Swatches should stay visual because they represent user content; chrome around them should be neutral, no hover scale. | `src/editor/components/color-picker.tsx` |
+| Block manipulation overlay | Orange handles and snap guides, hover scale. | Neutral manipulation chrome unless a strong selection color is intentionally retained as an editor affordance. If retained, document it as the one exception. | `src/editor/components/block-manipulation-overlay.tsx` |
+| Motion | `zoom-in-95`, slide-in classes, hover scale on swatches/handles. | Fade and color transitions only; no scale/zoom/large translate motion. | `src/editor/lib/motion.ts`, toolbar, color picker, manipulation overlay |
 | Typography | Some labels use uppercase, but many panel headings are larger/bolder and section descriptions add visual weight. | 13px control text, 10-11px uppercase labels, `tabular-nums` for numeric values, restrained weights. | toolbar, inspector, header, sidebar |
 
 ## Refactor Modules
@@ -59,7 +59,7 @@ warm, orange-accented, and more expressive than Minimal Mono.
 
 Files:
 
-- `packages/editor/src/styles/index.css`
+- `src/editor/styles/index.css`
 
 Problem:
 
@@ -86,13 +86,13 @@ surface-by-surface override churn.
 
 Files:
 
-- `packages/editor/src/components/ui/button.tsx`
-- `packages/editor/src/components/ui/input.tsx`
-- `packages/editor/src/components/ui/select.tsx`
-- `packages/editor/src/components/ui/tabs.tsx`
-- `packages/editor/src/components/ui/popover.tsx`
-- `packages/editor/src/components/ui/toggle.tsx`
-- `packages/editor/src/components/ui/toggle-group.tsx`
+- `src/editor/components/ui/button.tsx`
+- `src/editor/components/ui/input.tsx`
+- `src/editor/components/ui/select.tsx`
+- `src/editor/components/ui/tabs.tsx`
+- `src/editor/components/ui/popover.tsx`
+- `src/editor/components/ui/toggle.tsx`
+- `src/editor/components/ui/toggle-group.tsx`
 
 Problem:
 
@@ -120,7 +120,7 @@ control rules through one interface.
 
 Files:
 
-- `packages/editor/src/components/floating-toolbar.tsx`
+- `src/editor/components/floating-toolbar.tsx`
 
 Problem:
 
@@ -147,7 +147,7 @@ toolbar, dropdown, label, divider, and active-state patterns.
 
 Files:
 
-- `packages/editor/src/components/sidebar-tool-panel.tsx`
+- `src/editor/components/sidebar-tool-panel.tsx`
 
 Problem:
 
@@ -173,10 +173,10 @@ and future CSS/layout controls.
 
 Files:
 
-- `packages/editor/src/index.tsx`
-- `packages/editor/src/components/editor-header.tsx`
-- `packages/editor/src/components/slide-sidebar.tsx`
-- `packages/editor/src/components/stage-canvas.tsx`
+- `src/editor/index.tsx`
+- `src/editor/components/editor-header.tsx`
+- `src/editor/components/slide-sidebar.tsx`
+- `src/editor/components/stage-canvas.tsx`
 
 Problem:
 
@@ -204,8 +204,8 @@ so later module work does not fight the shell.
 
 Files:
 
-- `packages/editor/src/components/color-picker.tsx`
-- `packages/editor/src/components/block-manipulation-overlay.tsx`
+- `src/editor/components/color-picker.tsx`
+- `src/editor/components/block-manipulation-overlay.tsx`
 
 Problem:
 
@@ -231,7 +231,7 @@ color in editor chrome is not.
 
 Files:
 
-- `packages/editor/src/lib/motion.ts`
+- `src/editor/lib/motion.ts`
 - modules that append slide/zoom/scale classes
 
 Problem:

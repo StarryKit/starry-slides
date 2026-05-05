@@ -8,7 +8,7 @@
 The editor app and e2e suite both need generated slide decks, but the repository
 had accumulated overlapping copies:
 
-- `apps/web/public/sample-slides/`
+- `sample-slides/`
 - `.e2e-test-slides/`
 - `generated/starry-slides-project-overview/`
 - `.tmp/generated-deck-baseline/`
@@ -27,7 +27,7 @@ Keep only two generated deck copies:
      `STARRY_SLIDES_DECK_SOURCE=e2e`
    - reset between e2e tests from an in-memory startup snapshot
 
-2. `apps/web/public/sample-slides/`
+2. `sample-slides/`
    - the App's long-lived default deck
    - loaded by normal `pnpm dev`
    - updated by `pnpm editor:e2e:generate-deck` when the e2e fixture should
@@ -40,7 +40,7 @@ Do not create additional generated deck mirrors such as
 
 Benefits:
 
-- `pnpm dev` has a single clear source: `apps/web/public/sample-slides/`
+- `pnpm dev` has a single clear source: `sample-slides/`
 - e2e runs can mutate and reset their own ignored working copy without touching
   the App default deck
 - updating the App default deck is explicit through one command
@@ -84,12 +84,12 @@ This decision does not:
 
 Affected paths:
 
-- `apps/web/vite.config.ts`
-- `packages/editor/e2e/tools/prepare-regression-deck.mjs`
+- `vite.config.ts`
+- `e2e/tools/prepare-regression-deck.mjs`
 - `package.json`
 - `.gitignore`
 - `README.md`
-- `apps/web/CONTEXT.md`
+- `src/runtime/CONTEXT.md`
 
 Steps:
 
@@ -100,18 +100,18 @@ Steps:
    default.
 4. Make `test:e2e:serve` run Vite with `STARRY_SLIDES_DECK_SOURCE=e2e`.
 5. Make `editor:e2e:generate-deck` generate `.e2e-test-slides/` and
-   sync the result to `apps/web/public/sample-slides/`.
+   sync the result to `sample-slides/`.
 6. Keep `.e2e-test-slides/` ignored while allowing
-   `apps/web/public/sample-slides/` to be tracked.
+   `sample-slides/` to be tracked.
 7. Update README and app context docs to describe the two-copy policy.
 
 ## Verification
 
 - [ ] `pnpm editor:e2e:generate-deck` writes `.e2e-test-slides/` and
-      `apps/web/public/sample-slides/`.
+      `sample-slides/`.
 - [ ] `pnpm prepare:regression-deck` writes `.e2e-test-slides/` only by
       default.
-- [ ] `pnpm dev` serves `apps/web/public/sample-slides/`.
+- [ ] `pnpm dev` serves `sample-slides/`.
 - [ ] `pnpm test:e2e` serves `.e2e-test-slides/` and passes.
 - [ ] No code or docs reference `.tmp/generated-deck-baseline/` or
       `generated/starry-slides-project-overview/`.
