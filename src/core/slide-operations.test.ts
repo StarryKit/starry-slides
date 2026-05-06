@@ -2,6 +2,8 @@ import { describe, expect, test } from "vitest";
 import {
   applySlideOperation,
   createElementPlacement,
+  createGroupCreateOperation,
+  createGroupUngroupOperation,
   createUniqueElementId,
   duplicateSlideElement,
   ensureEditableSelectors,
@@ -214,5 +216,61 @@ describe("HTML write-back", () => {
     expect(createUniqueElementId(html, "block-1-copy")).toBe("block-1-copy-2");
     expect(copiedHtml).toContain('data-editor-id="block-1-copy-2"');
     expect(copiedHtml).toContain('data-editor-id="block-1-copy-2-text-2"');
+  });
+
+  test("group create flattens selected groups and generates a new group container", () => {
+    const html = ensureEditableSelectors(`<!DOCTYPE html>
+<html lang="en">
+  <body>
+    <div class="slide-container" data-slide-root="true">
+      <div data-editable="block" data-group="true" data-editor-id="group-1" style="left: 10px; top: 20px; width: 300px; height: 200px;">
+        <p data-editable="text" data-editor-id="text-1" style="left: 15px; top: 10px; width: 120px; height: 40px;">Alpha</p>
+      </div>
+      <div data-editable="block" data-editor-id="block-2" style="left: 400px; top: 60px; width: 160px; height: 120px;">Beta</div>
+    </div>
+  </body>
+</html>`);
+
+    const operation = createGroupCreateOperation({
+      html,
+      slideId: "slide-1",
+      groupElementId: "group-new",
+      elementIds: ["group-1", "block-2"],
+      timestamp: 1,
+    });
+
+    expect(operation?.type).toBe("group.create");
+    expect(operation?.elementIds).toEqual(["text-1", "block-2"]);
+    expect(operation?.previousHtmlSource).toBe(html);
+    expect(operation?.nextHtmlSource).toContain('data-editor-id="group-new"');
+    expect(operation?.nextHtmlSource).toContain('data-group="true"');
+  });
+
+  test("group ungroup restores children to parent order and coordinate space", () => {
+    const html = ensureEditableSelectors(`<!DOCTYPE html>
+<html lang="en">
+  <body>
+    <div class="slide-container" data-slide-root="true">
+      <div data-editable="block" data-group="true" data-editor-id="group-1" style="left: 100px; top: 80px; width: 300px; height: 200px;">
+        <p data-editable="text" data-editor-id="text-1" style="left: 10px; top: 12px; width: 120px; height: 40px;">Alpha</p>
+        <p data-editable="text" data-editor-id="text-2" style="left: 150px; top: 50px; width: 90px; height: 40px;">Beta</p>
+      </div>
+      <div data-editable="block" data-editor-id="block-2" style="left: 520px; top: 80px; width: 160px; height: 120px;">Gamma</div>
+    </div>
+  </body>
+</html>`);
+
+    const operation = createGroupUngroupOperation({
+      html,
+      slideId: "slide-1",
+      groupElementId: "group-1",
+      timestamp: 2,
+    });
+
+    expect(operation?.type).toBe("group.ungroup");
+    expect(operation?.childElementIds).toEqual(["text-1", "text-2"]);
+    expect(operation?.nextHtmlSource).not.toContain('data-group="true"');
+    expect(operation?.nextHtmlSource).toContain("left: 110px");
+    expect(operation?.nextHtmlSource).toContain("left: 250px");
   });
 });

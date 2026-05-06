@@ -60,13 +60,35 @@ export interface ElementRemoveOperation {
   timestamp: number;
 }
 
+export interface GroupCreateOperation {
+  type: "group.create";
+  slideId: string;
+  groupElementId: string;
+  elementIds: string[];
+  previousHtmlSource: string;
+  nextHtmlSource: string;
+  timestamp: number;
+}
+
+export interface GroupUngroupOperation {
+  type: "group.ungroup";
+  slideId: string;
+  groupElementId: string;
+  childElementIds: string[];
+  previousHtmlSource: string;
+  nextHtmlSource: string;
+  timestamp: number;
+}
+
 export type AtomicSlideOperation =
   | TextUpdateOperation
   | StyleUpdateOperation
   | AttributeUpdateOperation
   | ElementLayoutUpdateOperation
   | ElementInsertOperation
-  | ElementRemoveOperation;
+  | ElementRemoveOperation
+  | GroupCreateOperation
+  | GroupUngroupOperation;
 
 export interface SlideBatchOperation {
   type: "operation.batch";

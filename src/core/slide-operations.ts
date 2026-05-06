@@ -4,9 +4,14 @@ import {
   composeTransform,
   parseTransformParts,
 } from "./layout";
-import { SELECTOR_ATTR, SLIDE_ROOT_ATTR } from "./slide-contract";
+import {
+  DEFAULT_SLIDE_HEIGHT,
+  DEFAULT_SLIDE_WIDTH,
+  SELECTOR_ATTR,
+  SLIDE_ROOT_ATTR,
+} from "./slide-contract";
 import { querySlideElement } from "./slide-document";
-import { parseHtmlDocument, updateHtmlSource } from "./slide-html-document";
+import { parseHtmlDocument, serializeHtmlDocument, updateHtmlSource } from "./slide-html-document";
 
 export type {
   AtomicSlideOperation,
@@ -14,12 +19,113 @@ export type {
   ElementInsertOperation,
   ElementLayoutUpdateOperation,
   ElementRemoveOperation,
+  GroupCreateOperation,
+  GroupUngroupOperation,
   SlideBatchOperation,
   SlideOperation,
   StyleUpdateOperation,
   TextUpdateOperation,
 } from "./slide-operation-types";
-import type { ElementInsertOperation, SlideOperation } from "./slide-operation-types";
+import type {
+  ElementInsertOperation,
+  GroupCreateOperation,
+  GroupUngroupOperation,
+  SlideOperation,
+} from "./slide-operation-types";
+
+function numericStyleValue(value: string | null | undefined): number {
+  const parsed = Number.parseFloat(value || "");
+  return Number.isFinite(parsed) ? parsed : 0;
+}
+
+function getNodeRect(node: HTMLElement): { x: number; y: number; width: number; height: number } {
+  const transform = parseTransformParts(node.style.transform);
+  return {
+    x: numericStyleValue(node.style.left) + transform.translateX,
+    y: numericStyleValue(node.style.top) + transform.translateY,
+    width: numericStyleValue(node.style.width) || DEFAULT_SLIDE_WIDTH,
+    height: numericStyleValue(node.style.height) || DEFAULT_SLIDE_HEIGHT,
+  };
+}
+
+function getAbsoluteNodeRect(node: HTMLElement): {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+} {
+  let current: HTMLElement | null = node;
+  let x = 0;
+  let y = 0;
+  let width = 0;
+  let height = 0;
+
+  while (current) {
+    const rect = getNodeRect(current);
+    x += rect.x;
+    y += rect.y;
+    width = rect.width;
+    height = rect.height;
+
+    const parent: HTMLElement | null = current.parentElement;
+    if (!parent || !parent.hasAttribute("data-editable")) {
+      break;
+    }
+
+    current = parent;
+  }
+
+  return { x, y, width, height };
+}
+
+function getEditableAncestorRect(node: HTMLElement): { x: number; y: number } {
+  const parent = node.parentElement;
+  if (!parent || !parent.hasAttribute("data-editable")) {
+    return { x: 0, y: 0 };
+  }
+
+  const rect = getAbsoluteNodeRect(parent);
+  return { x: rect.x, y: rect.y };
+}
+
+function setNodeRect(
+  node: HTMLElement,
+  rect: { x: number; y: number; width: number; height: number }
+) {
+  node.style.position = node.style.position || "absolute";
+  node.style.left = `${Math.round(rect.x * 100) / 100}px`;
+  node.style.top = `${Math.round(rect.y * 100) / 100}px`;
+  node.style.width = `${Math.round(rect.width * 100) / 100}px`;
+  node.style.height = `${Math.round(rect.height * 100) / 100}px`;
+
+  const transform = parseTransformParts(node.style.transform);
+  const nextTransform = composeTransform(0, 0, transform.rotate);
+  if (nextTransform) {
+    node.style.transform = nextTransform;
+  } else {
+    node.style.removeProperty("transform");
+  }
+}
+
+function getDirectEditableOwner(node: HTMLElement): HTMLElement | null {
+  const parent = node.parentElement;
+  if (!parent) {
+    return null;
+  }
+
+  if (parent.hasAttribute(SLIDE_ROOT_ATTR) || parent.hasAttribute("data-editable")) {
+    return parent;
+  }
+
+  return null;
+}
+
+function childEditableElements(node: HTMLElement): HTMLElement[] {
+  return Array.from(node.children).filter(
+    (child): child is HTMLElement =>
+      child instanceof HTMLElement && child.hasAttribute("data-editable")
+  );
+}
 
 export function updateSlideText(html: string, elementId: string, value: string): string {
   return updateHtmlSource(html, (doc) => {
@@ -296,6 +402,181 @@ export function updateSlideElementTransform(
       node.style.position = "relative";
     }
   });
+}
+
+export function createGroupCreateOperation({
+  html,
+  slideId,
+  groupElementId,
+  elementIds,
+  timestamp = Date.now(),
+}: {
+  html: string;
+  slideId: string;
+  groupElementId: string;
+  elementIds: string[];
+  timestamp?: number;
+}): GroupCreateOperation | null {
+  const doc = parseHtmlDocument(html);
+  if (!doc || !elementIds.length) {
+    return null;
+  }
+
+  const selectedNodes = elementIds
+    .map((elementId) => querySlideElement<HTMLElement>(doc, elementId))
+    .filter((node): node is HTMLElement => Boolean(node));
+  if (selectedNodes.length !== elementIds.length) {
+    return null;
+  }
+
+  const flattenedNodes = selectedNodes.flatMap((node) =>
+    node.getAttribute("data-group") === "true" ? childEditableElements(node) : [node]
+  );
+  const uniqueNodes = flattenedNodes.filter(
+    (node, index, nodes) => nodes.findIndex((candidate) => candidate === node) === index
+  );
+  if (uniqueNodes.length < 2) {
+    return null;
+  }
+
+  const parent = getDirectEditableOwner(selectedNodes[0]);
+  if (!parent || selectedNodes.some((node) => getDirectEditableOwner(node) !== parent)) {
+    return null;
+  }
+
+  if (querySlideElement<HTMLElement>(doc, groupElementId)) {
+    return null;
+  }
+
+  const selectedGroups = selectedNodes.filter((node) => node.getAttribute("data-group") === "true");
+  const rects = uniqueNodes.map(getAbsoluteNodeRect);
+  const left = Math.min(...rects.map((rect) => rect.x));
+  const top = Math.min(...rects.map((rect) => rect.y));
+  const right = Math.max(...rects.map((rect) => rect.x + rect.width));
+  const bottom = Math.max(...rects.map((rect) => rect.y + rect.height));
+  const parentRect = getEditableAncestorRect(selectedNodes[0]);
+  const groupNode = doc.createElement("div");
+  groupNode.setAttribute("data-editable", "block");
+  groupNode.setAttribute("data-group", "true");
+  groupNode.setAttribute(SELECTOR_ATTR, groupElementId);
+  setNodeRect(groupNode, {
+    x: left - parentRect.x,
+    y: top - parentRect.y,
+    width: right - left,
+    height: bottom - top,
+  });
+
+  const orderedNodes = Array.from(parent.children).flatMap((child) => {
+    if (!(child instanceof HTMLElement)) {
+      return [];
+    }
+    if (selectedGroups.includes(child)) {
+      return childEditableElements(child).filter((node) => uniqueNodes.includes(node));
+    }
+    return uniqueNodes.includes(child) ? [child] : [];
+  });
+  const insertionAnchor =
+    selectedNodes.find((node) => getDirectEditableOwner(node) === parent) ?? null;
+
+  if (insertionAnchor?.parentElement === parent) {
+    parent.insertBefore(groupNode, insertionAnchor);
+  } else {
+    parent.appendChild(groupNode);
+  }
+
+  for (const node of orderedNodes) {
+    const rect = getAbsoluteNodeRect(node);
+    setNodeRect(node, {
+      x: rect.x - left,
+      y: rect.y - top,
+      width: rect.width,
+      height: rect.height,
+    });
+    groupNode.appendChild(node);
+  }
+
+  for (const group of selectedGroups) {
+    if (!group.children.length) {
+      group.remove();
+    }
+  }
+
+  const nextHtmlSource = serializeHtmlDocument(doc);
+  if (nextHtmlSource === html) {
+    return null;
+  }
+
+  return {
+    type: "group.create",
+    slideId,
+    groupElementId,
+    elementIds: orderedNodes
+      .map((node) => node.getAttribute(SELECTOR_ATTR))
+      .filter((elementId): elementId is string => Boolean(elementId)),
+    previousHtmlSource: html,
+    nextHtmlSource,
+    timestamp,
+  };
+}
+
+export function createGroupUngroupOperation({
+  html,
+  slideId,
+  groupElementId,
+  timestamp = Date.now(),
+}: {
+  html: string;
+  slideId: string;
+  groupElementId: string;
+  timestamp?: number;
+}): GroupUngroupOperation | null {
+  const doc = parseHtmlDocument(html);
+  if (!doc) {
+    return null;
+  }
+
+  const groupNode = querySlideElement<HTMLElement>(doc, groupElementId);
+  if (!groupNode || groupNode.getAttribute("data-group") !== "true" || !groupNode.parentElement) {
+    return null;
+  }
+
+  const parent = groupNode.parentElement;
+  const parentRect = getEditableAncestorRect(groupNode);
+  const children = childEditableElements(groupNode);
+  if (!children.length) {
+    return null;
+  }
+
+  const childElementIds = children
+    .map((child) => child.getAttribute(SELECTOR_ATTR))
+    .filter((elementId): elementId is string => Boolean(elementId));
+
+  for (const child of children) {
+    const rect = getAbsoluteNodeRect(child);
+    setNodeRect(child, {
+      x: rect.x - parentRect.x,
+      y: rect.y - parentRect.y,
+      width: rect.width,
+      height: rect.height,
+    });
+    parent.insertBefore(child, groupNode);
+  }
+  groupNode.remove();
+
+  const nextHtmlSource = serializeHtmlDocument(doc);
+  if (nextHtmlSource === html) {
+    return null;
+  }
+
+  return {
+    type: "group.ungroup",
+    slideId,
+    groupElementId,
+    childElementIds,
+    previousHtmlSource: html,
+    nextHtmlSource,
+    timestamp,
+  };
 }
 
 export { applySlideOperation, invertSlideOperation } from "./slide-operation-reducer";

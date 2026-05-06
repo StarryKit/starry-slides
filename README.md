@@ -40,18 +40,25 @@ This repo now builds one product package:
 The package exposes the local CLI binary:
 
 ```bash
-sslides [deck]
-sslides open [deck]
-sslides verify [deck]
-sslides add-skill
+starry-slides [deck]
+starry-slides open [deck]
+starry-slides verify [deck]
+starry-slides verify [deck] --static
+starry-slides view [deck] --slide <manifest-file>
+starry-slides view [deck] --all
+starry-slides add-skill
 ```
 
-`sslides [deck]` defaults to `sslides open [deck]`. `open` validates first and
-only starts the browser editor when validation passes.
+`starry-slides [deck]` defaults to `starry-slides open [deck]`. `open` runs
+Complete Verify first and only starts the browser editor when validation passes.
+`verify` writes a JSON Verify Result to stdout. `view` runs Static Verify, writes
+PNG previews under `<deck>/.starry-slides/view/`, and writes a JSON Preview
+Manifest to stdout.
 
 The agent-facing skill remains in `skills/starry-slides-skill/`. It owns the
-deck-generation workflow and protocol references, but it should use `sslides`
-for validation and opening instead of owning a separate editor runtime.
+deck-generation workflow and protocol references, but it should use
+`starry-slides` for validation, previewing, and opening instead of owning a
+separate editor runtime.
 
 ## What Works Today
 
@@ -63,7 +70,8 @@ The current repo is a local-first product build. It can:
 - open the browser editor against `sample-slides/` or a deck path
 - edit marked text directly in the slide iframe
 - select editable text, image, and block elements
-- update supported CSS properties through the floating toolbar or side panel
+- update supported CSS properties through the floating toolbar
+- group and ungroup selected elements through explicit core operations
 - move and resize supported block/text elements with snapping
 - undo and redo committed editor operations
 - save edited generated slides back to disk in the local dev server
@@ -83,13 +91,13 @@ pnpm install
 Validate the built-in sample deck:
 
 ```bash
-pnpm sslides verify sample-slides
+pnpm starry-slides verify sample-slides
 ```
 
 Open the built-in sample deck:
 
 ```bash
-pnpm sslides open sample-slides
+pnpm starry-slides open sample-slides
 ```
 
 For day-to-day editor development with Vite hot reload:
@@ -117,8 +125,10 @@ pnpm format
 pnpm test
 pnpm test:e2e
 pnpm verify
-pnpm sslides verify sample-slides
-pnpm sslides open sample-slides
+pnpm starry-slides verify sample-slides
+pnpm starry-slides verify sample-slides --static
+pnpm starry-slides view sample-slides --slide 01-hero.html
+pnpm starry-slides open sample-slides
 ```
 
 `pnpm verify` is the full local gate:
@@ -149,10 +159,11 @@ my-deck/
 Useful protocol commands:
 
 ```bash
-pnpm sslides verify path/to/deck
+pnpm starry-slides verify path/to/deck
 pnpm starry:contract:annotate -- --input path/to/deck
 pnpm starry:contract:manifest -- --input-dir path/to/deck/slides --deck-title "My Deck"
-pnpm sslides open path/to/deck
+pnpm starry-slides view path/to/deck --all
+pnpm starry-slides open path/to/deck
 ```
 
 To refresh the built-in sample deck from the editor regression generator:
@@ -205,11 +216,11 @@ The full v1 Contract lives in
 
 ```text
 src/
-  cli/                         sslides command parsing and process behavior
+  cli/                         starry-slides command parsing and process behavior
   runtime/                     local deck path resolution, ports, browser opening
   editor/
     app/                       root Vite browser app integration
-    components/                editor shell, toolbar, side panel, canvas, UI
+    components/                editor shell, floating toolbar, canvas, UI
     hooks/                     selection, editing, keyboard, block manipulation
     lib/                       editor-only helpers and interaction models
     styles/                    Tailwind/shadcn theme entry
@@ -248,7 +259,7 @@ Agent rules that matter in this repo:
 - do not invent alternate built-in deck locations
 - do not add extra persistent deck copies beyond `sample-slides/` and the
   ignored e2e working deck
-- keep generated slides Contract-compatible and validate them with `sslides`
+- keep generated slides Contract-compatible and validate them with `starry-slides`
 
 ## Architecture Decisions
 

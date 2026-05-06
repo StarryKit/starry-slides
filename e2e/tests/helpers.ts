@@ -41,10 +41,8 @@ export function getHistoryControls(page: Page) {
 
 export function getHeaderControls(page: Page) {
   return {
-    toggleInspectorButton: page.getByTestId("toggle-inspector-button"),
     slideCount: page.getByTestId("slide-count"),
     floatingToolbarAnchor: page.getByTestId("floating-toolbar-anchor"),
-    inspector: page.getByTestId("sidebar-tool-panel"),
     savingBadge: page.getByText("saving..."),
   };
 }
@@ -62,49 +60,15 @@ export async function selectAllAndFill(
 }
 
 export async function ensureToolPanelSectionOpen(page: Page, sectionName: string) {
-  await switchToToolPanelMode(page);
-  const sectionToggle = page
-    .getByTestId("sidebar-tool-panel")
-    .getByRole("button", { name: new RegExp(sectionName, "i") })
-    .first();
-  if ((await sectionToggle.getAttribute("aria-expanded")) !== "true") {
-    await sectionToggle.click();
-  }
+  await clickFloatingToolbarButton(page, sectionName);
 }
 
 export async function switchToToolPanelMode(page: Page) {
-  const panel = page.getByTestId("sidebar-tool-panel");
-  if (await panel.isVisible()) {
-    return;
-  }
-
-  const toolbar = page.getByTestId("floating-toolbar-anchor");
-  await expect(toolbar).toBeVisible();
-  const panelButton = toolbar.getByRole("button", {
-    name: "Use tool panel mode",
-    exact: true,
-  });
-  await expect(panelButton).toBeVisible();
-  await panelButton.click();
-  await expect(panel).toBeVisible();
-  await expect(page.getByTestId("floating-toolbar-anchor")).toBeHidden();
+  await expect(page.getByTestId("floating-toolbar-anchor")).toBeVisible();
 }
 
 export async function switchToFloatingToolbarMode(page: Page) {
-  const panel = page.getByTestId("sidebar-tool-panel");
-  if (await page.getByTestId("floating-toolbar-anchor").isVisible()) {
-    return;
-  }
-
-  await expect(panel).toBeVisible();
-  const floatingButton = panel.getByRole("button", {
-    name: "Use floating toolbar mode",
-    exact: true,
-  });
-  await expect(floatingButton).toBeVisible();
-  await floatingButton.click();
   await expect(page.getByTestId("floating-toolbar-anchor")).toBeVisible();
-  await expect(page.getByTestId("sidebar-tool-panel")).toBeHidden();
 }
 
 export async function getInlineStyle(locator: Locator, propertyName: string) {
@@ -237,8 +201,10 @@ export async function getSlideElementRect(locator: Locator) {
 }
 
 export async function fillToolPanelField(page: Page, label: string, value: string) {
-  await switchToToolPanelMode(page);
-  const field = page.getByTestId("sidebar-tool-panel").getByLabel(label, { exact: true }).first();
+  const field = page
+    .getByTestId("floating-toolbar-anchor")
+    .getByLabel(label, { exact: true })
+    .first();
   await expect(field).toBeEnabled();
   await field.fill(value);
 }
@@ -256,8 +222,10 @@ export async function fillToolPanelFieldAndExpectInlineStyle(
 }
 
 export async function selectToolPanelOption(page: Page, label: string, value: string) {
-  await switchToToolPanelMode(page);
-  const field = page.getByTestId("sidebar-tool-panel").getByLabel(label, { exact: true }).first();
+  const field = page
+    .getByTestId("floating-toolbar-anchor")
+    .getByLabel(label, { exact: true })
+    .first();
   await expect(field).toBeEnabled();
   await field.click();
   await page.getByRole("option").evaluateAll((options, optionValue) => {
@@ -298,7 +266,7 @@ export async function selectChangedToolPanelOptionAndExpectInlineStyle(
   propertyName: string
 ) {
   const currentValue = await page
-    .getByTestId("sidebar-tool-panel")
+    .getByTestId("floating-toolbar-anchor")
     .getByLabel(label, { exact: true })
     .first()
     .getAttribute("data-value");
@@ -322,7 +290,7 @@ export async function applyCustomCssProperty(
   propertyName: string,
   propertyValue: string
 ) {
-  await ensureToolPanelSectionOpen(page, "Others");
+  await clickFloatingToolbarButton(page, "CSS");
   await page.getByLabel("Property name").first().fill(propertyName);
   await page.getByLabel("Property value").first().fill(propertyValue);
   await page.getByRole("button", { name: "Apply property" }).click();

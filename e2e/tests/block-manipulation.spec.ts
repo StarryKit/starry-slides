@@ -202,7 +202,7 @@ test("floating toolbar hides while dragging a selected element", async ({ page }
   await expect(selectionOverlay).toBeVisible();
   await expect(floatingToolbarAnchor).toBeVisible();
   await expect(
-    floatingToolbarAnchor.getByRole("button", { name: "Use tool panel mode", exact: true })
+    floatingToolbarAnchor.getByRole("button", { name: "Group", exact: true })
   ).toBeVisible();
 
   const overlayBefore = await selectionOverlay.boundingBox();

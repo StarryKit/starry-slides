@@ -3,7 +3,7 @@ import path from "node:path";
 
 function main() {
   const workspaceRoot = path.resolve(import.meta.dirname, "..", "..", "..");
-  const child = spawn("pnpm", ["sslides", "open"], {
+  const child = spawn("pnpm", ["starry-slides", "open"], {
     cwd: workspaceRoot,
     stdio: "inherit",
     shell: process.platform === "win32",

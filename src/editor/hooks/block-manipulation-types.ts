@@ -34,6 +34,9 @@ export interface ManipulationSession {
   centerPoint: { x: number; y: number };
   previousStyle: ElementLayoutStyleSnapshot;
   previousStyles: Record<string, ElementLayoutStyleSnapshot>;
+  startElementStageRects: Record<string, StageRect>;
+  resizeParentElementIds: Record<string, string | null>;
+  startParentStageRects: Record<string, StageRect>;
   targetNodes: Record<string, HTMLElement>;
   snapTargets: {
     vertical: SnapTarget[];

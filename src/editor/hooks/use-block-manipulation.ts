@@ -1,6 +1,9 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import type { StageRect } from "../../core";
 import {
+  SELECTOR_ATTR,
+  type SlideModel,
+  type StageGeometry,
+  type StageRect,
   captureElementLayoutStyleSnapshot,
   composeTransform,
   elementRectToStageRect,
@@ -122,13 +125,13 @@ function useBlockManipulation({
       if (!rootNode || !targetNode) {
         return;
       }
-      const movableElementIds =
-        mode === "move"
-          ? selectedElementIds.filter((elementId) => {
-              const element = activeSlide.elements.find((candidate) => candidate.id === elementId);
-              return isLayoutEditable(element);
-            })
-          : [selectedElementId];
+      const movableElementIds = getManipulationElementIds({
+        activeSlide,
+        doc,
+        mode,
+        selectedElementId,
+        selectedElementIds,
+      });
       const targetNodes = Object.fromEntries(
         movableElementIds
           .map((elementId) => [elementId, querySlideElement<HTMLElement>(doc, elementId)] as const)
@@ -143,6 +146,12 @@ function useBlockManipulation({
         Object.entries(targetNodes).map(([elementId, node]) => [
           elementId,
           captureElementLayoutStyleSnapshot(node),
+        ])
+      );
+      const resizeParentElementIds = Object.fromEntries(
+        Object.entries(targetNodes).map(([elementId, node]) => [
+          elementId,
+          getResizeParentElementId(node, targetNodes),
         ])
       );
       const iframeElement = iframeRef.current;
@@ -177,6 +186,21 @@ function useBlockManipulation({
       const freshStageRects = Object.values(targetNodes).map((node) =>
         elementRectToStageRect(node.getBoundingClientRect(), rootRect, snapStageGeometry)
       );
+      const startElementStageRects = Object.fromEntries(
+        Object.entries(targetNodes).map(([elementId, node]) => [
+          elementId,
+          elementRectToStageRect(node.getBoundingClientRect(), rootRect, snapStageGeometry),
+        ])
+      );
+      const startParentStageRects = Object.fromEntries(
+        Object.values(targetNodes)
+          .map((node) => node.parentElement)
+          .filter((node): node is HTMLElement => Boolean(node))
+          .map((node) => [
+            getParentStageRectKey(node),
+            elementRectToStageRect(node.getBoundingClientRect(), rootRect, snapStageGeometry),
+          ])
+      );
       const freshSelectedStageRect = freshStageRects.length
         ? unionStageRects(freshStageRects)
         : selectedStageRect;
@@ -194,6 +218,9 @@ function useBlockManipulation({
         },
         previousStyle: previousStyles[selectedElementId],
         previousStyles,
+        startElementStageRects,
+        resizeParentElementIds,
+        startParentStageRects,
         targetNodes,
         snapTargets,
       };
@@ -212,8 +239,6 @@ function useBlockManipulation({
         moveEvent.preventDefault();
         const stageDeltaX = moveEvent.clientX - session.startPointer.x;
         const stageDeltaY = moveEvent.clientY - session.startPointer.y;
-        const transformParts = parseTransformParts(session.previousStyle.transform);
-
         if (session.mode === "move") {
           const unsnappedRect = {
             x: session.startStageRect.x + stageDeltaX,
@@ -251,7 +276,6 @@ function useBlockManipulation({
         }
 
         if (session.mode === "resize") {
-          const transformParts = parseTransformParts(session.previousStyle.transform);
           const unsnappedRect = createResizedStageRect({
             resizeCorner: session.resizeCorner,
             scale,
@@ -266,19 +290,17 @@ function useBlockManipulation({
 
           setTransientStageRect(snapResult.rect);
           setSnapGuides(snapResult.guides);
-          applyLayoutSnapshot(targetNode, {
-            ...session.previousStyle,
-            width: px(snapResult.rect.width / scale),
-            height: px(snapResult.rect.height / scale),
-            transform: composeTransform(
-              transformParts.translateX + (snapResult.rect.x - session.startStageRect.x) / scale,
-              transformParts.translateY + (snapResult.rect.y - session.startStageRect.y) / scale,
-              transformParts.rotate
-            ),
+          applyGeometryScaledResize(session, snapResult.rect, {
+            offsetX,
+            offsetY,
+            scale,
+            slideHeight,
+            slideWidth,
           });
           return;
         }
 
+        const transformParts = parseTransformParts(session.previousStyle.transform);
         const startAngle = getRotationDeltaDegrees(
           session.startPointer.x,
           session.startPointer.y,
@@ -397,5 +419,130 @@ function useBlockManipulation({
       beginManipulation("rotate", event);
     },
   };
+}
+
+function getManipulationElementIds({
+  activeSlide,
+  doc,
+  mode,
+  selectedElementId,
+  selectedElementIds,
+}: {
+  activeSlide: SlideModel;
+  doc: Document;
+  mode: "move" | "resize" | "rotate";
+  selectedElementId: string;
+  selectedElementIds: string[];
+}) {
+  const selectedLayoutElementIds = selectedElementIds.filter((elementId) => {
+    const element = activeSlide.elements.find((candidate) => candidate.id === elementId);
+    return isLayoutEditable(element);
+  });
+
+  if (mode === "move") {
+    return selectedLayoutElementIds;
+  }
+
+  if (mode === "rotate") {
+    return [selectedElementId];
+  }
+
+  const resizeElementIds = new Set<string>();
+  for (const elementId of selectedLayoutElementIds.length ? selectedLayoutElementIds : [selectedElementId]) {
+    const node = querySlideElement<HTMLElement>(doc, elementId);
+    if (!node) {
+      continue;
+    }
+
+    resizeElementIds.add(elementId);
+    if (node.getAttribute("data-group") === "true") {
+      for (const child of node.querySelectorAll<HTMLElement>(`[data-editable][${SELECTOR_ATTR}]`)) {
+        const childElementId = child.getAttribute(SELECTOR_ATTR);
+        if (childElementId) {
+          resizeElementIds.add(childElementId);
+        }
+      }
+    }
+  }
+
+  return [...resizeElementIds];
+}
+
+function getResizeParentElementId(
+  node: HTMLElement,
+  targetNodes: Record<string, HTMLElement>
+): string | null {
+  const targetEntries = Object.entries(targetNodes);
+  let parent = node.parentElement;
+
+  while (parent) {
+    const targetEntry = targetEntries.find(([, targetNode]) => targetNode === parent);
+    if (targetEntry) {
+      return targetEntry[0];
+    }
+    parent = parent.parentElement;
+  }
+
+  return null;
+}
+
+function applyGeometryScaledResize(
+  session: ManipulationSession,
+  nextSelectionRect: StageRect,
+  geometry: StageGeometry
+) {
+  const scaleX =
+    session.startStageRect.width > 0 ? nextSelectionRect.width / session.startStageRect.width : 1;
+  const scaleY =
+    session.startStageRect.height > 0 ? nextSelectionRect.height / session.startStageRect.height : 1;
+  const slideStageRect = {
+    x: geometry.offsetX,
+    y: geometry.offsetY,
+    width: geometry.slideWidth * geometry.scale,
+    height: geometry.slideHeight * geometry.scale,
+  };
+  const nextRects = Object.fromEntries(
+    Object.entries(session.startElementStageRects).map(([elementId, startRect]) => [
+      elementId,
+      {
+        x: nextSelectionRect.x + (startRect.x - session.startStageRect.x) * scaleX,
+        y: nextSelectionRect.y + (startRect.y - session.startStageRect.y) * scaleY,
+        width: startRect.width * scaleX,
+        height: startRect.height * scaleY,
+      },
+    ])
+  );
+
+  for (const elementId of session.elementIds) {
+    const node = session.targetNodes[elementId];
+    const previousStyle = session.previousStyles[elementId];
+    const nextRect = nextRects[elementId];
+    if (!node || !previousStyle || !nextRect) {
+      continue;
+    }
+
+    const parentRect = session.resizeParentElementIds[elementId]
+      ? nextRects[session.resizeParentElementIds[elementId] as string]
+      : session.startParentStageRects[getParentStageRectKey(node.parentElement)] ?? slideStageRect;
+    if (!parentRect) {
+      continue;
+    }
+
+    const transformParts = parseTransformParts(previousStyle.transform);
+    applyLayoutSnapshot(node, {
+      ...previousStyle,
+      position: previousStyle.position || "absolute",
+      left: px((nextRect.x - parentRect.x) / geometry.scale),
+      top: px((nextRect.y - parentRect.y) / geometry.scale),
+      width: px(nextRect.width / geometry.scale),
+      height: px(nextRect.height / geometry.scale),
+      transform: composeTransform(0, 0, transformParts.rotate),
+      transformOrigin: previousStyle.transformOrigin || "center center",
+    });
+  }
+}
+
+function getParentStageRectKey(node: HTMLElement | null): string {
+  return node?.getAttribute(SELECTOR_ATTR) ? `editable:${node.getAttribute(SELECTOR_ATTR)}` : "slide";
 }
 export { useBlockManipulation };

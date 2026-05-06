@@ -15,7 +15,9 @@ import {
   CaseSensitive,
   ChevronDown,
   ChevronUp,
+  Columns3,
   Eye,
+  Group,
   Hash,
   Italic,
   Layers,
@@ -23,10 +25,12 @@ import {
   Lock,
   Palette,
   Pilcrow,
+  Rows3,
   Square,
   Strikethrough,
   Type,
   Underline,
+  Ungroup,
 } from "lucide-react";
 import type {
   ElementToolFeatureId,
@@ -39,7 +43,6 @@ export type {
   ElementToolFeature,
   ElementToolFeatureId,
   ElementToolGroup,
-  ElementToolMode,
   ElementToolOption,
   ElementToolSubgroup,
 } from "./element-tool-types";
@@ -64,6 +67,11 @@ export const LAYER_ORDER_OPTIONS: ElementToolOption[] = [
   { value: "forward", icon: ChevronUp, label: "Bring forward" },
   { value: "backward", icon: ChevronDown, label: "Send backward" },
   { value: "back", icon: ArrowDownToLine, label: "Send to back" },
+];
+
+export const DISTRIBUTE_OPTIONS: ElementToolOption[] = [
+  { value: "horizontal", icon: Columns3, label: "Distribute horizontally" },
+  { value: "vertical", icon: Rows3, label: "Distribute vertically" },
 ];
 
 export const ELEMENT_TOOL_GROUPS: ElementToolGroup[] = [
@@ -259,7 +267,7 @@ export const ELEMENT_TOOL_GROUPS: ElementToolGroup[] = [
       },
       {
         id: "layer-alignment",
-        label: "Layer and Alignment",
+        label: "Layer, Align, Distribute",
         icon: Layers,
         features: [
           {
@@ -275,6 +283,34 @@ export const ELEMENT_TOOL_GROUPS: ElementToolGroup[] = [
             controlType: "action-group",
             target: "operation",
             options: LAYER_ORDER_OPTIONS,
+          },
+          {
+            id: "distribute",
+            label: "Distribute selection",
+            controlType: "action-group",
+            target: "operation",
+            options: DISTRIBUTE_OPTIONS,
+          },
+        ],
+      },
+      {
+        id: "grouping",
+        label: "Group",
+        icon: Group,
+        features: [
+          {
+            id: "group",
+            label: "Group selection",
+            controlType: "action-group",
+            target: "operation",
+            options: [{ value: "group", icon: Group, label: "Group" }],
+          },
+          {
+            id: "ungroup",
+            label: "Ungroup selected group",
+            controlType: "action-group",
+            target: "operation",
+            options: [{ value: "ungroup", icon: Ungroup, label: "Ungroup" }],
           },
         ],
       },

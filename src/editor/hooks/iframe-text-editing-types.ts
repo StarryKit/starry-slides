@@ -16,9 +16,12 @@ export interface UseIframeTextEditingOptions {
 export interface UseIframeTextEditingResult {
   selectedElementId: string | null;
   selectedElementIds: string[];
+  activeGroupScopeId: string | null;
   isEditingText: boolean;
   setSelectedElementId: Dispatch<SetStateAction<string | null>>;
   setSelectedElementIds: Dispatch<SetStateAction<string[]>>;
   beginTextEditing: (elementId: string) => void;
+  beginGroupEditingScope: (elementId: string) => void;
+  exitGroupEditingScope: () => void;
   clearSelection: () => void;
 }
