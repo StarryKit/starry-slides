@@ -5,7 +5,7 @@
   "type": "module",
   "packageManager": "pnpm@10.33.2",
   "bin": {
-    "sslides": "./dist/cli/index.js"
+    "starry-slides": "./dist/cli/index.js"
   },
   "exports": {
     ".": {
@@ -15,7 +15,7 @@
   },
   "scripts": {
     "dev": "vite",
-    "sslides": "tsx src/cli/index.ts",
+    "starry-slides": "tsx src/cli/index.ts",
     "build": "pnpm build:types && pnpm build:js && pnpm build:app",
     "build:types": "tsc -p tsconfig.build.json --emitDeclarationOnly",
     "build:js": "tsup src/editor/index.tsx src/cli/index.ts --format esm",
@@ -23,10 +23,10 @@
     "editor:e2e:generate-deck": "node e2e/tools/prepare-regression-deck.mjs --app-out-dir sample-slides",
     "prepare:regression-deck": "node e2e/tools/prepare-regression-deck.mjs",
     "starry:contract:create-style-pack": "node skills/starry-slides-skill/tools/contract-protocol/create-style-pack.mjs",
-    "starry:contract:validate": "pnpm sslides verify",
+    "starry:contract:validate": "pnpm starry-slides verify",
     "starry:contract:annotate": "node skills/starry-slides-skill/tools/contract-protocol/annotate-slides.mjs",
     "starry:contract:manifest": "node skills/starry-slides-skill/tools/contract-protocol/build-manifest.mjs",
-    "starry:open": "pnpm sslides open",
+    "starry:open": "pnpm starry-slides open",
     "test:e2e:prepare": "pnpm prepare:regression-deck",
     "lint": "biome check .",
     "lint:fix": "biome check --write .",

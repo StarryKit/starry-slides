@@ -1,4 +1,4 @@
-export type EditableType = "text" | "image" | "block";
+export type EditableType = "text" | "image" | "block" | "group";
 
 export interface EditableElement {
   id: string;

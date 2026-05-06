@@ -1,8 +1,7 @@
 <!DOCTYPE html>
-<html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<html lang="en"><head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <style>
     * { box-sizing: border-box; }
     html, body {
@@ -119,51 +118,39 @@
     }</style>
   </head>
   <body>
-    <div class="slide-container" data-slide-root="true" data-slide-width="1920" data-slide-height="1080">
+    <div class="slide-container" data-slide-root="true" data-slide-width="1920" data-slide-height="1080" data-editor-id="slide-root">
       
       <div class="header">
-        <div class="kicker" data-editable="text">Images</div>
-        <h1 data-editable="text">Image-heavy slides expose sizing, cropping, and selection behavior around data-editable image nodes</h1>
-        <p data-editable="text">The images here are inline data URIs, so the generated deck remains self-contained and portable. That keeps the fixture stable for tests and demo environments.</p>
+        <div class="kicker" data-editable="text" data-editor-id="text-1">Images</div>
+        <h1 data-editable="text" data-editor-id="text-2">Image-heavy slides expose sizing, cropping, and selection behavior around data-editable image nodes</h1>
+        <p data-editable="text" data-editor-id="text-3">The images here are inline data URIs, so the generated deck remains self-contained and portable. That keeps the fixture stable for tests and demo environments.</p>
       </div>
       <div class="gallery">
-        <figure class="hero-image" data-editable="block">
-          <img
-            data-editable="image"
-            alt="Illustrated browser editing canvas"
-            src="data:image/svg+xml;utf8,%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%3Csvg%20xmlns%3D'http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg'%20viewBox%3D'0%200%201200%20760'%3E%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%3Cdefs%3E%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%3ClinearGradient%20id%3D'bg'%20x1%3D'0'%20x2%3D'1'%20y1%3D'0'%20y2%3D'1'%3E%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%3Cstop%20offset%3D'0%25'%20stop-color%3D'%230f172a'%2F%3E%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%3Cstop%20offset%3D'100%25'%20stop-color%3D'%231d4ed8'%2F%3E%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%3C%2FlinearGradient%3E%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%3C%2Fdefs%3E%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%3Crect%20width%3D'1200'%20height%3D'760'%20rx%3D'48'%20fill%3D'url(%23bg)'%2F%3E%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%3Crect%20x%3D'92'%20y%3D'88'%20width%3D'1016'%20height%3D'584'%20rx%3D'30'%20fill%3D'%23f8fafc'%20opacity%3D'0.96'%2F%3E%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%3Crect%20x%3D'140'%20y%3D'148'%20width%3D'216'%20height%3D'456'%20rx%3D'24'%20fill%3D'%23e2e8f0'%2F%3E%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%3Crect%20x%3D'394'%20y%3D'148'%20width%3D'566'%20height%3D'456'%20rx%3D'28'%20fill%3D'%23ffffff'%2F%3E%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%3Crect%20x%3D'988'%20y%3D'148'%20width%3D'80'%20height%3D'456'%20rx%3D'20'%20fill%3D'%23dbeafe'%2F%3E%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%3Crect%20x%3D'444'%20y%3D'204'%20width%3D'356'%20height%3D'42'%20rx%3D'21'%20fill%3D'%230f172a'%2F%3E%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%3Crect%20x%3D'444'%20y%3D'278'%20width%3D'434'%20height%3D'24'%20rx%3D'12'%20fill%3D'%2394a3b8'%2F%3E%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%3Crect%20x%3D'444'%20y%3D'324'%20width%3D'396'%20height%3D'24'%20rx%3D'12'%20fill%3D'%23cbd5e1'%2F%3E%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%3Crect%20x%3D'444'%20y%3D'388'%20width%3D'438'%20height%3D'142'%20rx%3D'30'%20fill%3D'%23dbeafe'%2F%3E%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%3Ccircle%20cx%3D'1032'%20cy%3D'202'%20r%3D'18'%20fill%3D'%231d4ed8'%2F%3E%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%3Ccircle%20cx%3D'1032'%20cy%3D'252'%20r%3D'18'%20fill%3D'%2338bdf8'%2F%3E%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%3Ccircle%20cx%3D'1032'%20cy%3D'302'%20r%3D'18'%20fill%3D'%237dd3fc'%2F%3E%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%3C%2Fsvg%3E%0A%20%20%20%20%20%20%20%20%20%20%20%20"
-          />
-          <figcaption class="caption" data-editable="block">
-            <strong data-editable="text">Product mockup</strong>
-            <span data-editable="text">A synthetic image that represents the iframe editor, sidebar, and inspector working together.</span>
+        <figure class="hero-image" data-editable="block" data-editor-id="block-4">
+          <img data-editable="image" alt="Illustrated browser editing canvas" src="data:image/svg+xml;utf8,%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%3Csvg%20xmlns%3D'http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg'%20viewBox%3D'0%200%201200%20760'%3E%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%3Cdefs%3E%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%3ClinearGradient%20id%3D'bg'%20x1%3D'0'%20x2%3D'1'%20y1%3D'0'%20y2%3D'1'%3E%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%3Cstop%20offset%3D'0%25'%20stop-color%3D'%230f172a'%2F%3E%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%3Cstop%20offset%3D'100%25'%20stop-color%3D'%231d4ed8'%2F%3E%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%3C%2FlinearGradient%3E%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%3C%2Fdefs%3E%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%3Crect%20width%3D'1200'%20height%3D'760'%20rx%3D'48'%20fill%3D'url(%23bg)'%2F%3E%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%3Crect%20x%3D'92'%20y%3D'88'%20width%3D'1016'%20height%3D'584'%20rx%3D'30'%20fill%3D'%23f8fafc'%20opacity%3D'0.96'%2F%3E%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%3Crect%20x%3D'140'%20y%3D'148'%20width%3D'216'%20height%3D'456'%20rx%3D'24'%20fill%3D'%23e2e8f0'%2F%3E%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%3Crect%20x%3D'394'%20y%3D'148'%20width%3D'566'%20height%3D'456'%20rx%3D'28'%20fill%3D'%23ffffff'%2F%3E%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%3Crect%20x%3D'988'%20y%3D'148'%20width%3D'80'%20height%3D'456'%20rx%3D'20'%20fill%3D'%23dbeafe'%2F%3E%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%3Crect%20x%3D'444'%20y%3D'204'%20width%3D'356'%20height%3D'42'%20rx%3D'21'%20fill%3D'%230f172a'%2F%3E%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%3Crect%20x%3D'444'%20y%3D'278'%20width%3D'434'%20height%3D'24'%20rx%3D'12'%20fill%3D'%2394a3b8'%2F%3E%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%3Crect%20x%3D'444'%20y%3D'324'%20width%3D'396'%20height%3D'24'%20rx%3D'12'%20fill%3D'%23cbd5e1'%2F%3E%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%3Crect%20x%3D'444'%20y%3D'388'%20width%3D'438'%20height%3D'142'%20rx%3D'30'%20fill%3D'%23dbeafe'%2F%3E%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%3Ccircle%20cx%3D'1032'%20cy%3D'202'%20r%3D'18'%20fill%3D'%231d4ed8'%2F%3E%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%3Ccircle%20cx%3D'1032'%20cy%3D'252'%20r%3D'18'%20fill%3D'%2338bdf8'%2F%3E%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%3Ccircle%20cx%3D'1032'%20cy%3D'302'%20r%3D'18'%20fill%3D'%237dd3fc'%2F%3E%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%3C%2Fsvg%3E%0A%20%20%20%20%20%20%20%20%20%20%20%20" data-editor-id="image-5">
+          <figcaption class="caption" data-editable="block" data-editor-id="block-6">
+            <strong data-editable="text" data-editor-id="text-7">Product mockup</strong>
+            <span data-editable="text" data-editor-id="text-8">A synthetic image that represents the iframe editor, sidebar, and inspector working together.</span>
           </figcaption>
         </figure>
         <div class="stack">
-          <figure class="stack-card" data-editable="block">
-            <img
-              data-editable="image"
-              alt="Collaboration illustration"
-              src="data:image/svg+xml;utf8,%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%3Csvg%20xmlns%3D'http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg'%20viewBox%3D'0%200%20760%20360'%3E%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%3Cdefs%3E%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%3ClinearGradient%20id%3D'g1'%20x1%3D'0'%20x2%3D'1'%20y1%3D'0'%20y2%3D'1'%3E%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%3Cstop%20offset%3D'0%25'%20stop-color%3D'%23f59e0b'%2F%3E%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%3Cstop%20offset%3D'100%25'%20stop-color%3D'%23ef4444'%2F%3E%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%3C%2FlinearGradient%3E%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%3C%2Fdefs%3E%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%3Crect%20width%3D'760'%20height%3D'360'%20rx%3D'36'%20fill%3D'%23fff7ed'%2F%3E%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%3Ccircle%20cx%3D'168'%20cy%3D'182'%20r%3D'92'%20fill%3D'url(%23g1)'%20opacity%3D'0.9'%2F%3E%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%3Crect%20x%3D'288'%20y%3D'88'%20width%3D'352'%20height%3D'56'%20rx%3D'28'%20fill%3D'%231f2937'%2F%3E%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%3Crect%20x%3D'288'%20y%3D'164'%20width%3D'268'%20height%3D'26'%20rx%3D'13'%20fill%3D'%2394a3b8'%2F%3E%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%3Crect%20x%3D'288'%20y%3D'208'%20width%3D'308'%20height%3D'26'%20rx%3D'13'%20fill%3D'%23cbd5e1'%2F%3E%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%3Crect%20x%3D'288'%20y%3D'252'%20width%3D'224'%20height%3D'26'%20rx%3D'13'%20fill%3D'%23e2e8f0'%2F%3E%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%3C%2Fsvg%3E%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20"
-            />
-            <figcaption class="caption" data-editable="block">
-              <strong data-editable="text">Workflow illustration</strong>
-              <span data-editable="text">Demonstrates another aspect ratio and image crop behavior.</span>
+          <figure class="stack-card" data-editable="block" data-editor-id="block-9">
+            <img data-editable="image" alt="Collaboration illustration" src="data:image/svg+xml;utf8,%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%3Csvg%20xmlns%3D'http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg'%20viewBox%3D'0%200%20760%20360'%3E%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%3Cdefs%3E%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%3ClinearGradient%20id%3D'g1'%20x1%3D'0'%20x2%3D'1'%20y1%3D'0'%20y2%3D'1'%3E%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%3Cstop%20offset%3D'0%25'%20stop-color%3D'%23f59e0b'%2F%3E%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%3Cstop%20offset%3D'100%25'%20stop-color%3D'%23ef4444'%2F%3E%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%3C%2FlinearGradient%3E%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%3C%2Fdefs%3E%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%3Crect%20width%3D'760'%20height%3D'360'%20rx%3D'36'%20fill%3D'%23fff7ed'%2F%3E%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%3Ccircle%20cx%3D'168'%20cy%3D'182'%20r%3D'92'%20fill%3D'url(%23g1)'%20opacity%3D'0.9'%2F%3E%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%3Crect%20x%3D'288'%20y%3D'88'%20width%3D'352'%20height%3D'56'%20rx%3D'28'%20fill%3D'%231f2937'%2F%3E%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%3Crect%20x%3D'288'%20y%3D'164'%20width%3D'268'%20height%3D'26'%20rx%3D'13'%20fill%3D'%2394a3b8'%2F%3E%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%3Crect%20x%3D'288'%20y%3D'208'%20width%3D'308'%20height%3D'26'%20rx%3D'13'%20fill%3D'%23cbd5e1'%2F%3E%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%3Crect%20x%3D'288'%20y%3D'252'%20width%3D'224'%20height%3D'26'%20rx%3D'13'%20fill%3D'%23e2e8f0'%2F%3E%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%3C%2Fsvg%3E%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20" data-editor-id="image-10">
+            <figcaption class="caption" data-editable="block" data-editor-id="block-11">
+              <strong data-editable="text" data-editor-id="text-12">Workflow illustration</strong>
+              <span data-editable="text" data-editor-id="text-13">Demonstrates another aspect ratio and image crop behavior.</span>
             </figcaption>
           </figure>
-          <figure class="stack-card" data-editable="block">
-            <img
-              data-editable="image"
-              alt="Metrics dashboard illustration"
-              src="data:image/svg+xml;utf8,%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%3Csvg%20xmlns%3D'http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg'%20viewBox%3D'0%200%20760%20360'%3E%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%3Crect%20width%3D'760'%20height%3D'360'%20rx%3D'36'%20fill%3D'%23eff6ff'%2F%3E%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%3Crect%20x%3D'72'%20y%3D'76'%20width%3D'616'%20height%3D'208'%20rx%3D'28'%20fill%3D'%23ffffff'%2F%3E%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%3Crect%20x%3D'112'%20y%3D'118'%20width%3D'94'%20height%3D'126'%20rx%3D'22'%20fill%3D'%2393c5fd'%2F%3E%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%3Crect%20x%3D'234'%20y%3D'142'%20width%3D'94'%20height%3D'102'%20rx%3D'22'%20fill%3D'%2360a5fa'%2F%3E%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%3Crect%20x%3D'356'%20y%3D'96'%20width%3D'94'%20height%3D'148'%20rx%3D'22'%20fill%3D'%233b82f6'%2F%3E%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%3Crect%20x%3D'478'%20y%3D'164'%20width%3D'94'%20height%3D'80'%20rx%3D'22'%20fill%3D'%231d4ed8'%2F%3E%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%3Crect%20x%3D'600'%20y%3D'128'%20width%3D'48'%20height%3D'116'%20rx%3D'18'%20fill%3D'%231e3a8a'%2F%3E%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%3C%2Fsvg%3E%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20"
-            />
-            <figcaption class="caption" data-editable="block">
-              <strong data-editable="text">Metric art</strong>
-              <span data-editable="text">Useful for testing images beside text-dense captions and different crop regions.</span>
+          <figure class="stack-card" data-editable="block" data-editor-id="block-14">
+            <img data-editable="image" alt="Metrics dashboard illustration" src="data:image/svg+xml;utf8,%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%3Csvg%20xmlns%3D'http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg'%20viewBox%3D'0%200%20760%20360'%3E%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%3Crect%20width%3D'760'%20height%3D'360'%20rx%3D'36'%20fill%3D'%23eff6ff'%2F%3E%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%3Crect%20x%3D'72'%20y%3D'76'%20width%3D'616'%20height%3D'208'%20rx%3D'28'%20fill%3D'%23ffffff'%2F%3E%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%3Crect%20x%3D'112'%20y%3D'118'%20width%3D'94'%20height%3D'126'%20rx%3D'22'%20fill%3D'%2393c5fd'%2F%3E%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%3Crect%20x%3D'234'%20y%3D'142'%20width%3D'94'%20height%3D'102'%20rx%3D'22'%20fill%3D'%2360a5fa'%2F%3E%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%3Crect%20x%3D'356'%20y%3D'96'%20width%3D'94'%20height%3D'148'%20rx%3D'22'%20fill%3D'%233b82f6'%2F%3E%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%3Crect%20x%3D'478'%20y%3D'164'%20width%3D'94'%20height%3D'80'%20rx%3D'22'%20fill%3D'%231d4ed8'%2F%3E%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%3Crect%20x%3D'600'%20y%3D'128'%20width%3D'48'%20height%3D'116'%20rx%3D'18'%20fill%3D'%231e3a8a'%2F%3E%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%3C%2Fsvg%3E%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20" data-editor-id="image-15">
+            <figcaption class="caption" data-editable="block" data-editor-id="block-16">
+              <strong data-editable="text" data-editor-id="text-17">Metric art</strong>
+              <span data-editable="text" data-editor-id="text-18">Useful for testing images beside text-dense captions and different crop regions.</span>
             </figcaption>
           </figure>
         </div>
       </div>
     
     </div>
-  </body>
-</html>
+  
+</body></html>

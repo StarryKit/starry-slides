@@ -2,6 +2,7 @@ import { describe, expect, test } from "vitest";
 import {
   applySlideOperation,
   createElementPlacement,
+  createGroupCreateOperation,
   createUniqueElementId,
   duplicateSlideElement,
   ensureEditableSelectors,
@@ -214,5 +215,43 @@ describe("slide operations", () => {
 
     expect(updatedSlide.elements.map((element) => element.content)).toEqual(["Two", "Three"]);
     expect(restoredSlide.elements.map((element) => element.content)).toEqual(["One", "Two"]);
+  });
+
+  test("group operations apply and undo as a single domain operation", () => {
+    const originalSlide = parseSlide(
+      `<!DOCTYPE html>
+<html lang="en">
+  <body>
+    <div class="slide-container" data-slide-root="true">
+      <p data-editable="text" data-editor-id="text-1" style="left: 20px; top: 30px; width: 100px; height: 40px;">One</p>
+      <p data-editable="text" data-editor-id="text-2" style="left: 140px; top: 50px; width: 100px; height: 40px;">Two</p>
+    </div>
+  </body>
+</html>`,
+      "slide-a"
+    );
+    const operation = createGroupCreateOperation({
+      html: originalSlide.htmlSource,
+      slideId: originalSlide.id,
+      groupElementId: "group-new",
+      elementIds: ["text-1", "text-2"],
+      timestamp: 5,
+    });
+
+    expect(operation).not.toBeNull();
+    if (!operation) {
+      return;
+    }
+
+    const groupedSlide = applySlideOperation(originalSlide, operation);
+    const restoredSlide = applySlideOperation(groupedSlide, invertSlideOperation(operation));
+
+    expect(groupedSlide.elements.map((element) => `${element.id}:${element.type}`)).toEqual([
+      "group-new:group",
+      "text-1:text",
+      "text-2:text",
+    ]);
+    expect(invertSlideOperation(operation).type).toBe("group.ungroup");
+    expect(restoredSlide.htmlSource).toBe(originalSlide.htmlSource);
   });
 });

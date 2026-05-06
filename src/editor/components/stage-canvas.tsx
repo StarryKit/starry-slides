@@ -1,9 +1,9 @@
 import type { CSSProperties, MouseEvent as ReactMouseEvent, RefObject } from "react";
-import type { StageRect } from "../../core";
+import type { EditableType, StageRect } from "../../core";
 import type { CssPropertyRow } from "../lib/collect-css-properties";
-import type { ElementToolMode } from "../lib/element-tool-model";
 import { cn } from "../lib/utils";
 import { BlockManipulationOverlay } from "./block-manipulation-overlay";
+import { SelectionContextMenu } from "./context-menu";
 import { FloatingToolbar } from "./floating-toolbar";
 
 type ResizeHandleCorner = "top-left" | "top-right" | "bottom-right" | "bottom-left";
@@ -17,7 +17,7 @@ interface StageCanvasProps {
   selectionOverlay: StageRect | null;
   toolbarKey: string | null;
   inspectedStyles: CssPropertyRow[];
-  isSelectionOverlayInteractive: boolean;
+  selectedElementType: EditableType | "multi";
   isEditingText: boolean;
   manipulationOverlay: {
     selectionBounds: StageRect;
@@ -34,7 +34,6 @@ interface StageCanvasProps {
     }>;
     rotationHandle: { x: number; y: number };
   } | null;
-  elementToolMode: ElementToolMode;
   attributeValues: {
     locked: string;
     altText: string;
@@ -56,8 +55,12 @@ interface StageCanvasProps {
   onStyleChange: (propertyName: string, nextValue: string) => void;
   onAttributeChange: (attributeName: string, nextValue: string) => void;
   onAlignToSlide: (action: string) => void;
+  onDistribute: (action: string) => void;
+  onGroup: () => void;
   onLayerOrder: (action: string) => void;
-  onModeChange: () => void;
+  onUngroup: () => void;
+  onDuplicate: () => void;
+  onDelete: () => void;
 }
 
 function StageCanvas({
@@ -69,10 +72,9 @@ function StageCanvas({
   selectionOverlay,
   toolbarKey,
   inspectedStyles,
-  isSelectionOverlayInteractive,
+  selectedElementType,
   isEditingText,
   manipulationOverlay,
-  elementToolMode,
   attributeValues,
   iframeRef,
   stageViewportRef,
@@ -86,8 +88,12 @@ function StageCanvas({
   onStyleChange,
   onAttributeChange,
   onAlignToSlide,
+  onDistribute,
+  onGroup,
   onLayerOrder,
-  onModeChange,
+  onUngroup,
+  onDuplicate,
+  onDelete,
 }: StageCanvasProps) {
   const clearSelectionIfBackground = (
     target: EventTarget | null,
@@ -115,7 +121,7 @@ function StageCanvas({
         }
       }}
     >
-      {selectionOverlay && !isManipulating && !isEditingText && elementToolMode === "floating" ? (
+      {selectionOverlay && !isManipulating && !isEditingText ? (
         <div
           className="pointer-events-none absolute z-40 w-max max-[1200px]:static max-[1200px]:mb-4 max-[1200px]:pointer-events-auto"
           style={toolbarStyle}
@@ -124,12 +130,15 @@ function StageCanvas({
           <FloatingToolbar
             key={toolbarKey}
             inspectedStyles={inspectedStyles}
+            selectedElementType={selectedElementType}
             attributeValues={attributeValues}
             onStyleChange={onStyleChange}
             onAttributeChange={onAttributeChange}
             onAlignToSlide={onAlignToSlide}
+            onDistribute={onDistribute}
+            onGroup={onGroup}
             onLayerOrder={onLayerOrder}
-            onModeChange={onModeChange}
+            onUngroup={onUngroup}
           />
         </div>
       ) : null}
@@ -159,24 +168,31 @@ function StageCanvas({
         />
       </div>
       {selectionOverlay && !isEditingText ? (
-        <div
-          ref={selectionOverlayRef}
-          data-testid="selection-overlay"
-          className={cn(
-            "pointer-events-none absolute z-[3] border border-dashed border-foreground/55 bg-foreground/[0.02]",
-            isSelectionOverlayInteractive && "pointer-events-auto"
-          )}
-          style={{
-            left: `${selectionOverlay.x}px`,
-            top: `${selectionOverlay.y}px`,
-            width: `${selectionOverlay.width}px`,
-            height: `${selectionOverlay.height}px`,
-          }}
-          onMouseDown={onSelectionOverlayMouseDown}
-          onDoubleClick={() => {
-            onSelectionOverlayDoubleClick();
-          }}
-        />
+        <SelectionContextMenu
+          onAlignToSlide={onAlignToSlide}
+          onDelete={onDelete}
+          onDistribute={onDistribute}
+          onDuplicate={onDuplicate}
+          onGroup={onGroup}
+          onLayerOrder={onLayerOrder}
+          onUngroup={onUngroup}
+        >
+          <div
+            ref={selectionOverlayRef}
+            data-testid="selection-overlay"
+            className="pointer-events-auto absolute z-[3] border border-dashed border-foreground/55 bg-foreground/[0.02]"
+            style={{
+              left: `${selectionOverlay.x}px`,
+              top: `${selectionOverlay.y}px`,
+              width: `${selectionOverlay.width}px`,
+              height: `${selectionOverlay.height}px`,
+            }}
+            onMouseDown={onSelectionOverlayMouseDown}
+            onDoubleClick={() => {
+              onSelectionOverlayDoubleClick();
+            }}
+          />
+        </SelectionContextMenu>
       ) : null}
       {manipulationOverlay ? (
         <BlockManipulationOverlay

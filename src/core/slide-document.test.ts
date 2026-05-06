@@ -82,6 +82,32 @@ describe("slide document contract", () => {
     ]);
   });
 
+  test("parseSlide treats data-group block containers as distinct group elements", () => {
+    const slide = parseSlide(
+      `<!DOCTYPE html>
+<html lang="en">
+  <body>
+    <div class="slide-container">
+      <div data-editable="block" data-group="true">
+        <p data-editable="text">Grouped text</p>
+      </div>
+      <div data-editable="block">
+        <p data-editable="text">Normal nested text</p>
+      </div>
+    </div>
+  </body>
+</html>`,
+      "slide-1"
+    );
+
+    expect(slide.elements.map((element) => `${element.id}:${element.type}`)).toEqual([
+      "block-1:group",
+      "text-2:text",
+      "block-3:block",
+      "text-4:text",
+    ]);
+  });
+
   test("querySlideElement and getSlideInlineStyleValue hide selector details", () => {
     const slide = parseSlide(
       `<!DOCTYPE html>

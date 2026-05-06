@@ -2,8 +2,9 @@ import type { SetStateAction } from "react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { SELECTOR_ATTR, getSlideElementSelector, querySlideElement } from "../../core";
 import {
+  applyGroupScopeFocus,
   ensureEditingTextStyle,
-  getEditableSelectionTarget,
+  getEditableSelectionTargetInScope,
   selectEditableNodeEnd,
 } from "./iframe-text-editing-dom";
 import type {
@@ -18,8 +19,10 @@ function useIframeTextEditing({
   onCommitOperation,
 }: UseIframeTextEditingOptions): UseIframeTextEditingResult {
   const [selectedElementIds, setSelectedElementIds] = useState<string[]>([]);
+  const [activeGroupScopeId, setActiveGroupScopeId] = useState<string | null>(null);
   const [textEditing, setTextEditing] = useState<TextEditingState | null>(null);
   const textEditingRef = useRef<TextEditingState | null>(null);
+  const activeGroupScopeIdRef = useRef<string | null>(null);
   const commitTextEditRef = useRef<(elementId: string, nextText: string) => void>(() => {});
   const cancelTextEditRef = useRef<() => void>(() => {});
   const selectedElementId = selectedElementIds[selectedElementIds.length - 1] ?? null;
@@ -66,6 +69,19 @@ function useIframeTextEditing({
     },
     [activeSlide, iframeRef]
   );
+
+  const beginGroupEditingScope = useCallback((elementId: string) => {
+    setActiveGroupScopeId(elementId);
+    activeGroupScopeIdRef.current = elementId;
+    setSelectedElementIds([elementId]);
+  }, []);
+
+  const exitGroupEditingScope = useCallback(() => {
+    const groupElementId = activeGroupScopeIdRef.current;
+    activeGroupScopeIdRef.current = null;
+    setActiveGroupScopeId(null);
+    setSelectedElementIds(groupElementId ? [groupElementId] : []);
+  }, []);
 
   function commitTextEdit(elementId: string, nextText: string) {
     const editing = textEditing;
@@ -119,6 +135,10 @@ function useIframeTextEditing({
   }, [textEditing]);
 
   useEffect(() => {
+    activeGroupScopeIdRef.current = activeGroupScopeId;
+  }, [activeGroupScopeId]);
+
+  useEffect(() => {
     if (!activeSlide || !textEditing || textEditing.slideId === activeSlide.id) {
       return;
     }
@@ -148,6 +168,7 @@ function useIframeTextEditing({
     doc.close();
 
     ensureEditingTextStyle(doc);
+    applyGroupScopeFocus(doc, activeGroupScopeIdRef.current);
 
     const commitNodeText = (node: HTMLElement) => {
       const elementId = node.getAttribute(SELECTOR_ATTR);
@@ -185,9 +206,11 @@ function useIframeTextEditing({
         return;
       }
 
-      const editableTarget = getEditableSelectionTarget(target);
+      const editableTarget = getEditableSelectionTargetInScope(target, activeGroupScopeIdRef.current);
       if (!editableTarget) {
-        setSelectedElementIds([]);
+        if (!activeGroupScopeIdRef.current) {
+          setSelectedElementIds([]);
+        }
         return;
       }
 
@@ -212,7 +235,10 @@ function useIframeTextEditing({
       node.onclick = (event) => {
         event.stopPropagation();
 
-        const editableTarget = getEditableSelectionTarget(event.target as Element);
+        const editableTarget = getEditableSelectionTargetInScope(
+          event.target as Element,
+          activeGroupScopeIdRef.current
+        );
         const targetId =
           editableTarget?.getAttribute(SELECTOR_ATTR) ?? node.getAttribute(SELECTOR_ATTR);
 
@@ -229,13 +255,20 @@ function useIframeTextEditing({
         }
       };
 
-      if (node.getAttribute("data-editable") !== "text") {
-        continue;
-      }
-
       node.ondblclick = (event) => {
         const elementId = node.getAttribute(SELECTOR_ATTR);
         const activeEditing = textEditingRef.current;
+
+        if (elementId && node.getAttribute("data-group") === "true") {
+          event.preventDefault();
+          event.stopPropagation();
+          beginGroupEditingScope(elementId);
+          return;
+        }
+
+        if (node.getAttribute("data-editable") !== "text") {
+          return;
+        }
 
         if (
           elementId &&
@@ -254,7 +287,14 @@ function useIframeTextEditing({
         }
       };
     }
-  }, [activeSlide, beginTextEditing, iframeRef, toggleSelectedElementId]);
+  }, [activeSlide, beginGroupEditingScope, beginTextEditing, iframeRef, toggleSelectedElementId]);
+
+  useEffect(() => {
+    const doc = iframeRef.current?.contentDocument;
+    if (doc) {
+      applyGroupScopeFocus(doc, activeGroupScopeId);
+    }
+  }, [activeGroupScopeId, iframeRef]);
 
   useEffect(() => {
     const editing = textEditing;
@@ -385,13 +425,20 @@ function useIframeTextEditing({
   return {
     selectedElementId,
     selectedElementIds,
+    activeGroupScopeId,
     isEditingText: Boolean(activeSlide && textEditing?.slideId === activeSlide.id),
     setSelectedElementId,
     setSelectedElementIds,
     beginTextEditing,
+    beginGroupEditingScope,
+    exitGroupEditingScope,
     clearSelection: () => {
       if (!textEditingRef.current) {
-        setSelectedElementIds([]);
+        if (activeGroupScopeIdRef.current) {
+          exitGroupEditingScope();
+        } else {
+          setSelectedElementIds([]);
+        }
       }
     },
   };

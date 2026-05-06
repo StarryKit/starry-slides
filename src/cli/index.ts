@@ -1,47 +1,162 @@
 #!/usr/bin/env node
 
 import { spawn } from "node:child_process";
-import { formatVerifyDeckResult, hasVerifyErrors, verifyDeck } from "../core/verify-deck";
+import { type VerifyResult, createVerifyResult, verifyDeck } from "../core/verify-deck";
 import { resolveDeckPath } from "../runtime/deck-source";
 import { openBrowser } from "../runtime/open-browser";
 import { findAvailablePort } from "../runtime/ports";
+import { renderPreviewManifest, verifyRenderedOverflow } from "../runtime/view-renderer";
 
-const COMMANDS = new Set(["open", "verify", "add-skill", "help", "--help", "-h"]);
+type Command = "open" | "verify" | "view" | "add-skill" | "help";
+
+interface ParsedArgs {
+  command: Command;
+  deckPath?: string;
+  staticVerify: boolean;
+  viewMode?: "slide" | "all";
+  slideFile?: string;
+}
+
+const COMMANDS = new Set(["open", "verify", "view", "add-skill", "help", "--help", "-h"]);
 
 function usage(): string {
   return `Usage:
-  sslides [deck]
-  sslides open [deck]
-  sslides verify [deck]
-  sslides add-skill`;
+  starry-slides [deck]
+  starry-slides open [deck]
+  starry-slides verify [deck]
+  starry-slides verify [deck] --static
+  starry-slides view [deck] --slide <manifest-file>
+  starry-slides view [deck] --all
+  starry-slides add-skill`;
 }
 
-function parseArgs(argv: string[]) {
-  const [first, second] = argv;
+function parseArgs(argv: string[]): ParsedArgs {
+  const [first, ...rest] = argv;
+  const command = normalizeCommand(first);
+  const remaining = command === "open" && first && !COMMANDS.has(first) ? [first, ...rest] : rest;
+  let deckPath: string | undefined;
+  let staticVerify = false;
+  let viewMode: ParsedArgs["viewMode"];
+  let slideFile: string | undefined;
 
+  for (let index = 0; index < remaining.length; index += 1) {
+    const arg = remaining[index];
+    if (!arg) {
+      continue;
+    }
+
+    if (arg === "--static") {
+      staticVerify = true;
+      continue;
+    }
+
+    if (arg === "--all") {
+      viewMode = "all";
+      continue;
+    }
+
+    if (arg === "--slide") {
+      const value = remaining[index + 1];
+      if (!value || value.startsWith("--")) {
+        throw new Error("--slide requires a manifest slide file value");
+      }
+      viewMode = "slide";
+      slideFile = value;
+      index += 1;
+      continue;
+    }
+
+    if (arg.startsWith("--")) {
+      throw new Error(`Unknown option: ${arg}`);
+    }
+
+    if (deckPath) {
+      throw new Error(`Unexpected extra argument: ${arg}`);
+    }
+    deckPath = arg;
+  }
+
+  return { command, deckPath, staticVerify, viewMode, slideFile };
+}
+
+function normalizeCommand(first: string | undefined): Command {
   if (!first) {
-    return { command: "open", deckPath: undefined };
+    return "open";
   }
 
-  if (COMMANDS.has(first)) {
-    return { command: first, deckPath: second };
+  if (first === "help" || first === "--help" || first === "-h") {
+    return "help";
   }
 
-  return { command: "open", deckPath: first };
+  if (first === "open" || first === "verify" || first === "view" || first === "add-skill") {
+    return first;
+  }
+
+  return "open";
 }
 
-function runVerify(deckPath: string): boolean {
-  const result = verifyDeck(deckPath);
-  const output = formatVerifyDeckResult(result);
-  if (output) {
-    console.log(output);
+function writeJson(value: unknown) {
+  process.stdout.write(`${JSON.stringify(value, null, 2)}\n`);
+}
+
+async function runStaticVerify(deckPath: string): Promise<VerifyResult> {
+  return verifyDeck(deckPath, { mode: "static" });
+}
+
+async function runCompleteVerify(deckPath: string): Promise<VerifyResult> {
+  const staticResult = verifyDeck(deckPath, { mode: "static" });
+  if (!staticResult.ok) {
+    return createVerifyResult({
+      deck: staticResult.deck,
+      mode: "complete",
+      checks: ["structure", "static-overflow", "rendered-overflow"],
+      issues: staticResult.issues,
+    });
   }
 
-  return !hasVerifyErrors(result);
+  const renderedIssues = await verifyRenderedOverflow(deckPath);
+  return verifyDeck(deckPath, {
+    mode: "complete",
+    renderedIssues,
+  });
+}
+
+async function runVerify(deckPath: string, mode: "static" | "complete"): Promise<boolean> {
+  const result =
+    mode === "static" ? await runStaticVerify(deckPath) : await runCompleteVerify(deckPath);
+  writeJson(result);
+  return result.ok;
+}
+
+async function runView(deckPath: string, parsed: ParsedArgs) {
+  if (parsed.staticVerify) {
+    throw new Error("view always runs Static Verify; do not pass --static");
+  }
+  if (parsed.viewMode === "slide" && !parsed.slideFile) {
+    throw new Error("--slide requires a manifest slide file value");
+  }
+  if (!parsed.viewMode) {
+    throw new Error("view requires either --slide <manifest-file> or --all");
+  }
+
+  const staticResult = await runStaticVerify(deckPath);
+  if (!staticResult.ok) {
+    writeJson(staticResult);
+    process.exitCode = 1;
+    return;
+  }
+
+  const manifest = await renderPreviewManifest({
+    deckPath,
+    slideFile: parsed.viewMode === "slide" ? parsed.slideFile : undefined,
+  });
+  writeJson(manifest);
 }
 
 async function runOpen(deckPath: string) {
-  if (!runVerify(deckPath)) {
+  const result = await runCompleteVerify(deckPath);
+  if (!result.ok) {
+    writeJson(result);
     process.exitCode = 1;
     return;
   }
@@ -72,40 +187,39 @@ async function runOpen(deckPath: string) {
     });
   }
 
-  console.log(`Opening Starry Slides at ${url}`);
+  console.error(`Opening Starry Slides at ${url}`);
   setTimeout(() => openBrowser(url), 750);
 }
 
 async function main() {
-  const { command, deckPath: rawDeckPath } = parseArgs(process.argv.slice(2));
+  const parsed = parseArgs(process.argv.slice(2));
 
-  if (command === "help" || command === "--help" || command === "-h") {
+  if (parsed.command === "help") {
     console.log(usage());
     return;
   }
 
-  if (command === "add-skill") {
-    console.log("add-skill is not implemented yet.");
+  if (parsed.command === "add-skill") {
+    console.error("add-skill is not implemented yet.");
     return;
   }
 
-  const deckPath = resolveDeckPath(rawDeckPath);
+  const deckPath = resolveDeckPath(parsed.deckPath);
 
-  if (command === "verify") {
-    if (!runVerify(deckPath)) {
+  if (parsed.command === "verify") {
+    const ok = await runVerify(deckPath, parsed.staticVerify ? "static" : "complete");
+    if (!ok) {
       process.exitCode = 1;
     }
     return;
   }
 
-  if (command === "open") {
-    await runOpen(deckPath);
+  if (parsed.command === "view") {
+    await runView(deckPath, parsed);
     return;
   }
 
-  console.error(`Unknown command: ${command}`);
-  console.error(usage());
-  process.exitCode = 1;
+  await runOpen(deckPath);
 }
 
 main().catch((error) => {

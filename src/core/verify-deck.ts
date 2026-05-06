@@ -1,37 +1,86 @@
 import fs from "node:fs";
 import path from "node:path";
 import { JSDOM, VirtualConsole } from "jsdom";
+import { SELECTOR_ATTR, SLIDE_ROOT_ATTR } from "./slide-contract";
 
-const VALID_EDITABLE_TYPES = new Set(["text", "image", "block"]);
+export type VerifyMode = "static" | "complete";
+export type VerifyCheck = "structure" | "static-overflow" | "rendered-overflow";
 
-export interface VerifyDeckIssue {
-  filePath: string;
-  message: string;
+export interface VerifyIssue {
   severity: "error" | "warning";
+  code: string;
+  message: string;
+  slideFile?: string;
+  selector?: string;
+  details?: Record<string, unknown>;
 }
 
-export interface VerifyDeckResult {
-  deckDir: string;
-  filesChecked: number;
-  issues: VerifyDeckIssue[];
+export interface VerifySummary {
+  errorCount: number;
+  warningCount: number;
+}
+
+export interface VerifyResult {
+  ok: boolean;
+  deck: string;
+  mode: VerifyMode;
+  checks: VerifyCheck[];
+  issues: VerifyIssue[];
+  summary: VerifySummary;
+}
+
+export interface VerifyDeckSourceResult {
+  deck: string;
+  manifestPath: string;
+  manifest: {
+    topic?: string;
+    slides?: Array<{ file?: unknown; title?: unknown }>;
+  } | null;
+  slideFiles: string[];
+  issues: VerifyIssue[];
+}
+
+export function createVerifyIssue(
+  severity: VerifyIssue["severity"],
+  code: string,
+  message: string,
+  details?: VerifyIssue["details"]
+): VerifyIssue {
+  const slideFile = typeof details?.slideFile === "string" ? details.slideFile : undefined;
+  const selector = typeof details?.selector === "string" ? details.selector : undefined;
+
+  return {
+    severity,
+    code,
+    message,
+    ...(slideFile ? { slideFile } : {}),
+    ...(selector ? { selector } : {}),
+    ...(details ? { details } : {}),
+  };
+}
+
+function issue(
+  severity: VerifyIssue["severity"],
+  code: string,
+  message: string,
+  details?: VerifyIssue["details"]
+): VerifyIssue {
+  return createVerifyIssue(severity, code, message, details);
 }
 
 function collectHtmlFiles(targetPath: string): string[] {
-  const resolvedPath = path.resolve(process.cwd(), targetPath);
-  const stat = fs.statSync(resolvedPath);
+  const stat = fs.statSync(targetPath);
 
   if (stat.isFile()) {
-    return [resolvedPath];
+    return targetPath.endsWith(".html") ? [targetPath] : [];
   }
 
   const files: string[] = [];
-  for (const entry of fs.readdirSync(resolvedPath, { withFileTypes: true })) {
-    const entryPath = path.join(resolvedPath, entry.name);
+  for (const entry of fs.readdirSync(targetPath, { withFileTypes: true })) {
+    const entryPath = path.join(targetPath, entry.name);
     if (entry.isDirectory()) {
       files.push(...collectHtmlFiles(entryPath));
-      continue;
-    }
-    if (entry.isFile() && entry.name.endsWith(".html")) {
+    } else if (entry.isFile() && entry.name.endsWith(".html")) {
       files.push(entryPath);
     }
   }
@@ -39,68 +88,104 @@ function collectHtmlFiles(targetPath: string): string[] {
   return files.sort();
 }
 
-function issue(filePath: string, severity: VerifyDeckIssue["severity"], message: string) {
-  return { filePath, severity, message } satisfies VerifyDeckIssue;
+function parseManifest(manifestPath: string): {
+  topic?: string;
+  slides?: Array<{ file?: unknown; title?: unknown }>;
+} | null {
+  try {
+    return JSON.parse(fs.readFileSync(manifestPath, "utf8")) as {
+      topic?: string;
+      slides?: Array<{ file?: unknown; title?: unknown }>;
+    };
+  } catch (error) {
+    throw new Error(
+      error instanceof Error ? `invalid manifest.json: ${error.message}` : "invalid manifest.json"
+    );
+  }
 }
 
-function validateFile(filePath: string): VerifyDeckIssue[] {
-  const html = fs.readFileSync(filePath, "utf8");
-  const dom = new JSDOM(html, {
-    virtualConsole: new VirtualConsole(),
-  });
+function validateSlideHtml(_filePath: string, slideFile: string, html: string): VerifyIssue[] {
+  const dom = new JSDOM(html, { virtualConsole: new VirtualConsole() });
   const { document } = dom.window;
-  const issues: VerifyDeckIssue[] = [];
-  const roots = Array.from(document.querySelectorAll<HTMLElement>('[data-slide-root="true"]'));
+  const issues: VerifyIssue[] = [];
 
+  const roots = Array.from(document.querySelectorAll<HTMLElement>(`[${SLIDE_ROOT_ATTR}]`));
   if (roots.length === 0) {
-    issues.push(issue(filePath, "error", 'missing required [data-slide-root="true"]'));
+    issues.push(
+      issue("error", "structure.missing-root", "missing required slide root", {
+        slideFile,
+      })
+    );
   }
-
   if (roots.length > 1) {
-    issues.push(issue(filePath, "error", "found multiple slide roots"));
+    issues.push(
+      issue("error", "structure.multiple-roots", "found multiple slide roots", {
+        slideFile,
+      })
+    );
   }
 
   const root = roots[0] ?? null;
   if (root) {
     if (!root.getAttribute("data-slide-width")) {
       issues.push(
-        issue(filePath, "warning", "missing data-slide-width, default 1920 will be assumed")
+        issue(
+          "warning",
+          "structure.missing-width",
+          "missing data-slide-width, default 1920 will be assumed",
+          {
+            slideFile,
+          }
+        )
       );
     }
     if (!root.getAttribute("data-slide-height")) {
       issues.push(
-        issue(filePath, "warning", "missing data-slide-height, default 1080 will be assumed")
+        issue(
+          "warning",
+          "structure.missing-height",
+          "missing data-slide-height, default 1080 will be assumed",
+          { slideFile }
+        )
       );
-    }
-    if (!root.getAttribute("data-archetype")) {
-      issues.push(issue(filePath, "warning", "missing optional data-archetype hint"));
     }
   }
 
   const editableNodes = Array.from(document.querySelectorAll<HTMLElement>("[data-editable]"));
   if (editableNodes.length === 0) {
-    issues.push(issue(filePath, "warning", "slide contains no editable nodes"));
+    issues.push(
+      issue("warning", "structure.empty-slide", "slide contains no editable nodes", {
+        slideFile,
+      })
+    );
   }
 
   for (const node of editableNodes) {
     const editableType = node.getAttribute("data-editable") ?? "";
-    if (!VALID_EDITABLE_TYPES.has(editableType)) {
+    if (!["text", "image", "block"].includes(editableType)) {
       issues.push(
         issue(
-          filePath,
           "error",
-          `invalid data-editable value "${editableType}" on <${node.tagName.toLowerCase()}>`
+          "structure.invalid-editable",
+          `invalid data-editable value "${editableType}" on <${node.tagName.toLowerCase()}>`,
+          {
+            slideFile,
+            selector: node.getAttribute(SELECTOR_ATTR) ?? undefined,
+          }
         )
       );
-      continue;
     }
 
-    if (editableType === "image" && node.tagName.toLowerCase() !== "img") {
+    if (node.getAttribute("data-group") === "true" && editableType !== "block") {
       issues.push(
         issue(
-          filePath,
-          "warning",
-          `editable image is <${node.tagName.toLowerCase()}> instead of <img>; parser support may be limited`
+          "error",
+          "structure.invalid-group",
+          'data-group="true" is only allowed on block editables',
+          {
+            slideFile,
+            selector: node.getAttribute(SELECTOR_ATTR) ?? undefined,
+          }
         )
       );
     }
@@ -109,103 +194,212 @@ function validateFile(filePath: string): VerifyDeckIssue[] {
   return issues;
 }
 
-export function verifyDeck(deckPath: string): VerifyDeckResult {
-  const deckDir = path.resolve(process.cwd(), deckPath);
-  const manifestPath = path.join(deckDir, "manifest.json");
-  const issues: VerifyDeckIssue[] = [];
+function allowsOverflow(node: HTMLElement): boolean {
+  return Boolean(node.closest('[data-allow-overflow="true"]'));
+}
 
-  if (!fs.existsSync(deckDir)) {
+function validateStaticOverflow(_filePath: string, slideFile: string, html: string): VerifyIssue[] {
+  const dom = new JSDOM(html, { virtualConsole: new VirtualConsole() });
+  const { document } = dom.window;
+  const issues: VerifyIssue[] = [];
+  const candidates = [
+    document.querySelector<HTMLElement>(`[${SLIDE_ROOT_ATTR}]`),
+    ...Array.from(document.querySelectorAll<HTMLElement>("[data-editable]")),
+  ].filter((node): node is HTMLElement => Boolean(node));
+
+  for (const node of candidates) {
+    if (allowsOverflow(node)) {
+      continue;
+    }
+
+    const overflow = node.style.overflow.trim().toLowerCase();
+    const overflowX = node.style.overflowX.trim().toLowerCase();
+    const overflowY = node.style.overflowY.trim().toLowerCase();
+    const hasExplicitOverflow =
+      ["auto", "scroll"].includes(overflow) ||
+      ["auto", "scroll"].includes(overflowX) ||
+      ["auto", "scroll"].includes(overflowY);
+
+    if (!hasExplicitOverflow) {
+      continue;
+    }
+
+    issues.push(
+      issue("error", "overflow.static", "explicit scrolling overflow is not allowed", {
+        slideFile,
+        selector: node.getAttribute(SELECTOR_ATTR) ?? undefined,
+      })
+    );
+  }
+
+  return issues;
+}
+
+export function loadVerifyDeckSource(deckPath: string): VerifyDeckSourceResult {
+  const deck = path.resolve(process.cwd(), deckPath);
+  const manifestPath = path.join(deck, "manifest.json");
+  const issues: VerifyIssue[] = [];
+
+  if (!fs.existsSync(deck)) {
     return {
-      deckDir,
-      filesChecked: 0,
-      issues: [issue(deckDir, "error", "deck path does not exist")],
+      deck,
+      manifestPath,
+      manifest: null,
+      slideFiles: [],
+      issues: [issue("error", "structure.missing-deck", "deck path does not exist")],
     };
   }
 
   if (!fs.existsSync(manifestPath)) {
     return {
-      deckDir,
-      filesChecked: 0,
-      issues: [issue(manifestPath, "error", "deck package is missing manifest.json")],
+      deck,
+      manifestPath,
+      manifest: null,
+      slideFiles: [],
+      issues: [
+        issue("error", "structure.missing-manifest", "deck package is missing manifest.json"),
+      ],
     };
   }
 
-  let manifest: { slides?: Array<{ file?: unknown }> };
+  let manifest: VerifyDeckSourceResult["manifest"] = null;
   try {
-    manifest = JSON.parse(fs.readFileSync(manifestPath, "utf8")) as {
-      slides?: Array<{ file?: unknown }>;
-    };
+    manifest = parseManifest(manifestPath);
   } catch (error) {
     return {
-      deckDir,
-      filesChecked: 0,
+      deck,
+      manifestPath,
+      manifest: null,
+      slideFiles: [],
       issues: [
         issue(
-          manifestPath,
           "error",
-          error instanceof Error
-            ? `invalid manifest.json: ${error.message}`
-            : "invalid manifest.json"
+          "structure.invalid-manifest",
+          error instanceof Error ? error.message : "invalid manifest.json"
         ),
       ],
     };
   }
 
-  if (!Array.isArray(manifest.slides) || manifest.slides.length === 0) {
-    issues.push(issue(manifestPath, "error", "manifest.json must include at least one slide"));
+  const slideFiles: string[] = [];
+  const manifestSlidePaths = new Set<string>();
+  if (!Array.isArray(manifest?.slides) || !manifest?.slides?.length) {
+    issues.push(
+      issue("error", "structure.empty-manifest", "manifest.json must include at least one slide")
+    );
+  } else {
+    for (const [index, slide] of manifest.slides.entries()) {
+      if (typeof slide.file !== "string" || !slide.file.trim()) {
+        issues.push(
+          issue(
+            "error",
+            "structure.missing-slide-file",
+            `manifest slide ${index + 1} is missing file`,
+            { slideIndex: index }
+          )
+        );
+        continue;
+      }
+
+      const slidePath = path.resolve(deck, slide.file);
+      if (slidePath !== deck && !slidePath.startsWith(`${deck}${path.sep}`)) {
+        issues.push(
+          issue(
+            "error",
+            "structure.slide-escape",
+            `manifest slide escapes deck directory: ${slide.file}`,
+            {
+              slideFile: slide.file,
+            }
+          )
+        );
+        continue;
+      }
+
+      if (!fs.existsSync(slidePath)) {
+        issues.push(
+          issue(
+            "error",
+            "structure.missing-slide",
+            `manifest slide file does not exist: ${slide.file}`,
+            {
+              slideFile: slide.file,
+            }
+          )
+        );
+        continue;
+      }
+
+      slideFiles.push(slide.file);
+      manifestSlidePaths.add(slidePath);
+      const html = fs.readFileSync(slidePath, "utf8");
+      issues.push(...validateSlideHtml(slidePath, slide.file, html));
+      issues.push(...validateStaticOverflow(slidePath, slide.file, html));
+    }
   }
 
-  for (const [index, slide] of manifest.slides?.entries() ?? []) {
-    if (typeof slide.file !== "string" || !slide.file.trim()) {
-      issues.push(issue(manifestPath, "error", `manifest slide ${index + 1} is missing file`));
+  for (const filePath of collectHtmlFiles(deck)) {
+    if (manifestSlidePaths.has(filePath)) {
       continue;
     }
-
-    const slidePath = path.resolve(deckDir, slide.file);
-    const normalizedDeckDir = `${deckDir}${path.sep}`;
-    if (slidePath !== deckDir && !slidePath.startsWith(normalizedDeckDir)) {
-      issues.push(
-        issue(manifestPath, "error", `manifest slide escapes deck directory: ${slide.file}`)
-      );
-      continue;
-    }
-
-    if (!fs.existsSync(slidePath)) {
-      issues.push(
-        issue(manifestPath, "error", `manifest slide file does not exist: ${slide.file}`)
-      );
-    }
-  }
-
-  const htmlFiles = collectHtmlFiles(deckDir);
-  for (const filePath of htmlFiles) {
-    issues.push(...validateFile(filePath));
+    // Keep the manifest-driven contract the source of truth, but still validate
+    // additional HTML fixtures inside the deck package for structural hygiene.
+    const slideFile = path.relative(deck, filePath);
+    const html = fs.readFileSync(filePath, "utf8");
+    issues.push(...validateSlideHtml(filePath, slideFile, html));
   }
 
   return {
-    deckDir,
-    filesChecked: htmlFiles.length,
+    deck,
+    manifestPath,
+    manifest,
+    slideFiles,
     issues,
   };
 }
 
-export function formatVerifyDeckResult(result: VerifyDeckResult): string {
-  const lines: string[] = [];
-  const errorCount = result.issues.filter((item) => item.severity === "error").length;
-  const warningCount = result.issues.filter((item) => item.severity === "warning").length;
+export function createVerifyResult({
+  deck,
+  mode,
+  checks,
+  issues,
+}: {
+  deck: string;
+  mode: VerifyMode;
+  checks: VerifyCheck[];
+  issues: VerifyIssue[];
+}): VerifyResult {
+  const errorCount = issues.filter((item) => item.severity === "error").length;
+  const warningCount = issues.filter((item) => item.severity === "warning").length;
 
-  for (const item of result.issues) {
-    lines.push(`${item.severity.toUpperCase()} ${item.filePath}`);
-    lines.push(`  ${item.message}`);
-  }
-
-  lines.push(
-    `Validated ${result.filesChecked} file(s); ${errorCount} error(s), ${warningCount} warning(s).`
-  );
-
-  return lines.join("\n");
+  return {
+    ok: errorCount === 0,
+    deck,
+    mode,
+    checks,
+    issues,
+    summary: {
+      errorCount,
+      warningCount,
+    },
+  };
 }
 
-export function hasVerifyErrors(result: VerifyDeckResult): boolean {
-  return result.issues.some((item) => item.severity === "error");
+export function verifyDeck(
+  deckPath: string,
+  options: { mode?: VerifyMode; renderedIssues?: VerifyIssue[] } = {}
+): VerifyResult {
+  const source = loadVerifyDeckSource(deckPath);
+  const mode = options.mode ?? "static";
+  const renderedIssues = mode === "complete" ? (options.renderedIssues ?? []) : [];
+  const issues = [...source.issues, ...renderedIssues];
+  return createVerifyResult({
+    deck: source.deck,
+    mode,
+    checks:
+      mode === "complete"
+        ? ["structure", "static-overflow", "rendered-overflow"]
+        : ["structure", "static-overflow"],
+    issues,
+  });
 }

@@ -1,8 +1,6 @@
 import type { LucideIcon } from "lucide-react";
 import { FONT_FAMILY_OPTIONS } from "./style-controls";
 
-export type ElementToolMode = "floating" | "panel";
-
 export type ElementToolFeatureId =
   | "font-family"
   | "font-size"
@@ -21,7 +19,10 @@ export type ElementToolFeatureId =
   | "height"
   | "opacity"
   | "align-to-slide"
+  | "distribute"
   | "layer-order"
+  | "group"
+  | "ungroup"
   | "locked"
   | "link-url"
   | "alt-text"

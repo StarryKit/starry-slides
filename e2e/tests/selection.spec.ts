@@ -1,12 +1,5 @@
 import { expect, test } from "@playwright/test";
-import {
-  coverFrame,
-  getHeaderControls,
-  getHistoryControls,
-  gotoEditor,
-  switchToFloatingToolbarMode,
-  switchToToolPanelMode,
-} from "./helpers";
+import { coverFrame, getHeaderControls, getHistoryControls, gotoEditor } from "./helpers";
 
 test("plain click selects text only, and double click enters editing", async ({ page }) => {
   await gotoEditor(page);
@@ -89,22 +82,15 @@ test("plain click selects nested text instead of its parent block", async ({ pag
   expect(Math.abs(overlayBox.height - blockBox.height)).toBeGreaterThan(24);
 });
 
-test("floating toolbar and tool panel buttons switch editing surfaces", async ({ page }) => {
+test("floating toolbar is the only element tooling surface", async ({ page }) => {
   await gotoEditor(page);
 
   const frame = coverFrame(page);
   await frame.locator('[data-editor-id="text-1"]').click();
 
-  const { floatingToolbarAnchor, inspector } = getHeaderControls(page);
+  const { floatingToolbarAnchor } = getHeaderControls(page);
 
   await expect(floatingToolbarAnchor).toBeVisible();
-  await expect(inspector).toBeHidden();
-
-  await switchToToolPanelMode(page);
-  await expect(inspector).toBeVisible();
-  await expect(floatingToolbarAnchor).toBeHidden();
-
-  await switchToFloatingToolbarMode(page);
-  await expect(inspector).toBeHidden();
-  await expect(floatingToolbarAnchor).toBeVisible();
+  await expect(page.getByTestId("sidebar-tool-panel")).toBeHidden();
+  await expect(page.getByRole("button", { name: "Use tool panel mode", exact: true })).toBeHidden();
 });

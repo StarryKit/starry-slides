@@ -80,6 +80,9 @@ export function applySlideOperation(slide: SlideModel, operation: SlideOperation
         slide,
         parseSlide(removeSlideElement(slide.htmlSource, operation.elementId), slide.id)
       );
+    case "group.create":
+    case "group.ungroup":
+      return preserveSlideSource(slide, parseSlide(operation.nextHtmlSource, slide.id));
   }
 }
 
@@ -138,6 +141,26 @@ export function invertSlideOperation(operation: SlideOperation): SlideOperation 
         previousSiblingElementId: operation.previousSiblingElementId,
         nextSiblingElementId: operation.nextSiblingElementId,
         html: operation.html,
+        timestamp: operation.timestamp,
+      };
+    case "group.create":
+      return {
+        type: "group.ungroup",
+        slideId: operation.slideId,
+        groupElementId: operation.groupElementId,
+        childElementIds: operation.elementIds,
+        previousHtmlSource: operation.nextHtmlSource,
+        nextHtmlSource: operation.previousHtmlSource,
+        timestamp: operation.timestamp,
+      };
+    case "group.ungroup":
+      return {
+        type: "group.create",
+        slideId: operation.slideId,
+        groupElementId: operation.groupElementId,
+        elementIds: operation.childElementIds,
+        previousHtmlSource: operation.nextHtmlSource,
+        nextHtmlSource: operation.previousHtmlSource,
         timestamp: operation.timestamp,
       };
   }

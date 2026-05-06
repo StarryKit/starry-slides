@@ -122,7 +122,7 @@ export function parseSlide(html: string, slideId = "slide-1"): SlideModel {
     return {
       id: selectorValue,
       selector: getSlideElementSelector(selectorValue),
-      type,
+      type: type === "block" && node.getAttribute("data-group") === "true" ? "group" : type,
       content: node instanceof HTMLImageElement ? node.src : node.textContent || "",
       tagName: node.tagName.toLowerCase(),
     };

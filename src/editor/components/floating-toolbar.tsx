@@ -1,11 +1,11 @@
-import { PanelLeftOpen } from "lucide-react";
-import type { MouseEvent as ReactMouseEvent } from "react";
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import type { EditableType } from "../../core";
 import type { CssPropertyRow } from "../lib/collect-css-properties";
 import { commitElementToolFeature } from "../lib/element-tool-commit";
 import {
   ELEMENT_TOOL_GROUPS,
   type ElementToolFeature,
+  type ElementToolGroup,
   type ElementToolSubgroup,
 } from "../lib/element-tool-model";
 import { getElementToolValue, isFeatureActive } from "../lib/element-tool-values";
@@ -30,12 +30,15 @@ import {
 
 interface FloatingToolbarProps {
   inspectedStyles: CssPropertyRow[];
+  selectedElementType: EditableType | "multi";
   attributeValues: AttributeValues;
   onStyleChange: (propertyName: string, nextValue: string) => void;
   onAttributeChange: (attributeName: string, nextValue: string) => void;
   onAlignToSlide: (action: string) => void;
+  onDistribute: (action: string) => void;
+  onGroup: () => void;
   onLayerOrder: (action: string) => void;
-  onModeChange: () => void;
+  onUngroup: () => void;
 }
 
 interface AttributeValues {
@@ -49,12 +52,15 @@ const EMPTY_SELECT_VALUE = "__empty__";
 
 function FloatingToolbar({
   inspectedStyles,
+  selectedElementType,
   attributeValues,
   onStyleChange,
   onAttributeChange,
   onAlignToSlide,
+  onDistribute,
+  onGroup,
   onLayerOrder,
-  onModeChange,
+  onUngroup,
 }: FloatingToolbarProps) {
   const toolbarRef = useRef<HTMLDivElement>(null);
   const [activeSubgroupId, setActiveSubgroupId] = useState<string | null>(null);
@@ -144,12 +150,42 @@ function FloatingToolbar({
     };
   }, []);
 
-  function toggleSubgroup(subgroupId: string, event: ReactMouseEvent<HTMLButtonElement>) {
-    setPanelLeft(event.currentTarget.offsetLeft);
+  useEffect(() => {
+    function closeOnEscape(event: KeyboardEvent) {
+      if (event.key !== "Escape") {
+        return;
+      }
+
+      setActiveSubgroupId(null);
+    }
+
+    document.addEventListener("keydown", closeOnEscape);
+    return () => {
+      document.removeEventListener("keydown", closeOnEscape);
+    };
+  }, []);
+
+  function toggleSubgroup(subgroupId: string, left: number) {
+    setPanelLeft(left);
     setActiveSubgroupId((current) => (current === subgroupId ? null : subgroupId));
   }
 
   function commitFeature(feature: ElementToolFeature, nextValue: string) {
+    if (feature.id === "distribute") {
+      onDistribute(nextValue);
+      return;
+    }
+
+    if (feature.id === "group") {
+      onGroup();
+      return;
+    }
+
+    if (feature.id === "ungroup") {
+      onUngroup();
+      return;
+    }
+
     commitElementToolFeature({
       attributeValues,
       feature,
@@ -161,6 +197,8 @@ function FloatingToolbar({
       onStyleChange,
     });
   }
+
+  const visibleToolGroups = getVisibleToolGroups(selectedElementType);
 
   return (
     <div
@@ -176,7 +214,7 @@ function FloatingToolbar({
         className="flex w-max items-center gap-0.5 overflow-x-auto overflow-y-hidden rounded-md border border-foreground/[0.08] bg-white px-1.5 py-1.5 shadow-[0_2px_12px_rgba(0,0,0,0.04),0_8px_32px_rgba(0,0,0,0.06)] max-[1200px]:min-w-[760px]"
         aria-label="Formatting toolbar"
       >
-        {ELEMENT_TOOL_GROUPS.map((group, groupIndex) => (
+        {visibleToolGroups.map((group, groupIndex) => (
           <div key={group.id} className="contents">
             {groupIndex > 0 ? <Divider /> : null}
             <div className="flex items-center gap-0.5 rounded-md bg-foreground/[0.02] px-0.5">
@@ -191,7 +229,7 @@ function FloatingToolbar({
                     key={subgroup.id}
                     active={activeSubgroupId === subgroup.id}
                     label={subgroup.label}
-                    onClick={(event) => toggleSubgroup(subgroup.id, event)}
+                    onClick={(event) => toggleSubgroup(subgroup.id, event.currentTarget.offsetLeft)}
                   >
                     <ToolbarIcon icon={subgroup.icon} />
                   </ToolbarTrigger>
@@ -200,13 +238,9 @@ function FloatingToolbar({
             </div>
           </div>
         ))}
-        <Divider />
-        <IconButton label="Use tool panel mode" onClick={onModeChange}>
-          <ToolbarIcon icon={PanelLeftOpen} />
-        </IconButton>
       </div>
 
-      {ELEMENT_TOOL_GROUPS.flatMap((group) => group.subgroups).map((subgroup) =>
+      {visibleToolGroups.flatMap((group) => group.subgroups).map((subgroup) =>
         activeSubgroupId === subgroup.id ? (
           <ToolbarPanel key={subgroup.id} left={panelLeft} width={getPanelWidth(subgroup)}>
             <PanelTitle>{subgroup.label}</PanelTitle>
@@ -241,6 +275,27 @@ function FloatingToolbar({
       onStyleChange,
     });
   }
+}
+
+function getVisibleToolGroups(selectedElementType: EditableType | "multi"): ElementToolGroup[] {
+  if (selectedElementType !== "group") {
+    return ELEMENT_TOOL_GROUPS;
+  }
+
+  return ELEMENT_TOOL_GROUPS.flatMap((group) => {
+    if (group.id !== "layout") {
+      return [];
+    }
+
+    return [
+      {
+        ...group,
+        subgroups: group.subgroups.filter((subgroup) =>
+          ["size", "layer-alignment", "grouping"].includes(subgroup.id)
+        ),
+      },
+    ];
+  });
 }
 
 export { FloatingToolbar };

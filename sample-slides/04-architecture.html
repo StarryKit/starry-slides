@@ -1,8 +1,7 @@
 <!DOCTYPE html>
-<html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<html lang="en"><head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <style>
     * { box-sizing: border-box; }
     html, body {
@@ -121,53 +120,53 @@
     }</style>
   </head>
   <body>
-    <div class="slide-container" data-slide-root="true" data-slide-width="1920" data-slide-height="1080">
+    <div class="slide-container" data-slide-root="true" data-slide-width="1920" data-slide-height="1080" data-editor-id="slide-root">
       
       <div class="header">
         <div>
-          <div class="kicker" data-editable="text">Architecture</div>
-          <h1 data-editable="text">One pipeline from generated HTML to live iframe editing</h1>
+          <div class="kicker" data-editable="text" data-editor-id="text-1">Architecture</div>
+          <h1 data-editable="text" data-editor-id="text-2">One pipeline from generated HTML to live iframe editing</h1>
         </div>
-        <p data-editable="text">The same files serve as generated artifacts, app input, and editor runtime source. That keeps the system inspectable end to end.</p>
+        <p data-editable="text" data-editor-id="text-3">The same files serve as generated artifacts, app input, and editor runtime source. That keeps the system inspectable end to end.</p>
       </div>
       <div class="flow">
-        <section class="flow-card" data-editable="block">
-          <strong data-editable="text">1. Generate</strong>
-          <p data-editable="text">A local skill writes standalone HTML slides plus a manifest. The generator is deterministic enough for tests and rich enough for demos.</p>
+        <section class="flow-card" data-editable="block" data-editor-id="block-4">
+          <strong data-editable="text" data-editor-id="text-5">1. Generate</strong>
+          <p data-editable="text" data-editor-id="text-6">A local skill writes standalone HTML slides plus a manifest. The generator is deterministic enough for tests and rich enough for demos.</p>
           <ul>
-            <li data-editable="text">Self-contained 1920x1080 HTML documents</li>
-            <li data-editable="text">Stable data-editable markers</li>
-            <li data-editable="text">Latest output synced into the app</li>
+            <li data-editable="text" data-editor-id="text-7">Self-contained 1920x1080 HTML documents</li>
+            <li data-editable="text" data-editor-id="text-8">Stable data-editable markers</li>
+            <li data-editable="text" data-editor-id="text-9">Latest output synced into the app</li>
           </ul>
         </section>
-        <div class="arrow" data-editable="block">
-          <span data-editable="text">Manifest</span>
+        <div class="arrow" data-editable="block" data-editor-id="block-10">
+          <span data-editable="text" data-editor-id="text-11">Manifest</span>
           <div class="arrow-line"></div>
         </div>
-        <section class="flow-card" data-editable="block">
-          <strong data-editable="text">2. Parse</strong>
-          <p data-editable="text">Core utilities fetch the manifest, load each HTML file, normalize selector IDs, and derive a SlideModel without inventing a second document format.</p>
+        <section class="flow-card" data-editable="block" data-editor-id="block-12">
+          <strong data-editable="text" data-editor-id="text-13">2. Parse</strong>
+          <p data-editable="text" data-editor-id="text-14">Core utilities fetch the manifest, load each HTML file, normalize selector IDs, and derive a SlideModel without inventing a second document format.</p>
           <ul>
-            <li data-editable="text">Node IDs like text-1 and block-4</li>
-            <li data-editable="text">Root dimensions preserved from source</li>
-            <li data-editable="text">Title inferred from heading structure</li>
+            <li data-editable="text" data-editor-id="text-15">Node IDs like text-1 and block-4</li>
+            <li data-editable="text" data-editor-id="text-16">Root dimensions preserved from source</li>
+            <li data-editable="text" data-editor-id="text-17">Title inferred from heading structure</li>
           </ul>
         </section>
-        <div class="arrow" data-editable="block">
-          <span data-editable="text">Iframe</span>
+        <div class="arrow" data-editable="block" data-editor-id="block-18">
+          <span data-editable="text" data-editor-id="text-19">Iframe</span>
           <div class="arrow-line"></div>
         </div>
-        <section class="flow-card" data-editable="block">
-          <strong data-editable="text">3. Edit</strong>
-          <p data-editable="text">The editor renders raw HTML in an iframe, overlays selection geometry, exposes styles, and commits text edits back into the slide source.</p>
+        <section class="flow-card" data-editable="block" data-editor-id="block-20">
+          <strong data-editable="text" data-editor-id="text-21">3. Edit</strong>
+          <p data-editable="text" data-editor-id="text-22">The editor renders raw HTML in an iframe, overlays selection geometry, exposes styles, and commits text edits back into the slide source.</p>
           <ul>
-            <li data-editable="text">Direct text editing on double click</li>
-            <li data-editable="text">Undo and redo on source-level operations</li>
-            <li data-editable="text">Selection overlay for block inspection</li>
+            <li data-editable="text" data-editor-id="text-23">Direct text editing on double click</li>
+            <li data-editable="text" data-editor-id="text-24">Undo and redo on source-level operations</li>
+            <li data-editable="text" data-editor-id="text-25">Selection overlay for block inspection</li>
           </ul>
         </section>
       </div>
     
     </div>
-  </body>
-</html>
+  
+</body></html>
