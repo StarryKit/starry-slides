@@ -11,7 +11,11 @@ import {
 } from "./regression-deck/narrative-slides.mjs";
 import { buildArchitectureSlide, buildProblemSlide } from "./regression-deck/pipeline-slides.mjs";
 import { copyDirectory, resetDirectory, slugify, splitPoints } from "./regression-deck/shared.mjs";
-import { buildSnapCenterSlide, buildSnapSiblingSlide } from "./regression-deck/snap-slides.mjs";
+import {
+  buildGroupGeometrySlide,
+  buildSnapCenterSlide,
+  buildSnapSiblingSlide,
+} from "./regression-deck/snap-slides.mjs";
 import { buildTableSlide } from "./regression-deck/table-slide.mjs";
 
 function getArg(name, fallback = "") {
@@ -99,7 +103,12 @@ const slides = [
     html: buildSnapSiblingSlide(),
   },
   {
-    file: "13-closing.html",
+    file: "13-group-geometry.html",
+    title: "Group geometry fixture",
+    html: buildGroupGeometrySlide(),
+  },
+  {
+    file: "14-closing.html",
     title: "Closing and next steps",
     html: buildClosingSlide(),
   },

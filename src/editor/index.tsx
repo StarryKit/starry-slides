@@ -75,9 +75,11 @@ function SlidesEditor({
     selectedElementId,
     selectedElementIds,
     isEditingText,
+    activeGroupScopeId,
     setSelectedElementId,
     setSelectedElementIds,
     beginTextEditing,
+    beginGroupEditingScope,
     clearSelection,
   } = useIframeTextEditing({
     activeSlide,
@@ -86,8 +88,13 @@ function SlidesEditor({
   });
 
   const selectedElement = activeSlide?.elements.find((element) => element.id === selectedElementId);
+  const activeGroupScopeElement = activeSlide?.elements.find(
+    (element) => element.id === activeGroupScopeId
+  );
   const selectedElementType =
-    selectedElementIds.length > 1 ? "multi" : (selectedElement?.type ?? "block");
+    selectedElementIds.length > 1
+      ? "multi"
+      : (selectedElement?.type ?? activeGroupScopeElement?.type ?? "block");
   const resolvedDeckTitle = deckTitle?.trim() || "Untitled deck";
 
   const slideWidth = activeSlide?.width || DEFAULT_SLIDE_WIDTH;
@@ -503,6 +510,7 @@ function SlidesEditor({
     canRedo: redoDepth > 0,
     onCommitOperation: commitOperation,
     onSelectElementIds: setSelectedElementIds,
+    onEscapeSelection: clearSelection,
     onUndo: runUndo,
     onRedo: runRedo,
   });
@@ -592,6 +600,15 @@ function SlidesEditor({
                   selectedElementId
                 ) {
                   beginTextEditing(selectedElementId);
+                  return;
+                }
+
+                if (
+                  selectedElementIds.length === 1 &&
+                  selectedElement?.type === "group" &&
+                  selectedElementId
+                ) {
+                  beginGroupEditingScope(selectedElementId);
                 }
               }}
               onBackgroundClick={() => {

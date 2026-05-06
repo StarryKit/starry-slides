@@ -23,5 +23,5 @@ export interface UseIframeTextEditingResult {
   beginTextEditing: (elementId: string) => void;
   beginGroupEditingScope: (elementId: string) => void;
   exitGroupEditingScope: () => void;
-  clearSelection: () => void;
+  clearSelection: () => boolean;
 }

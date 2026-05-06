@@ -172,3 +172,65 @@ export function buildSnapSiblingSlide() {
     `
   );
 }
+
+export function buildGroupGeometrySlide() {
+  return wrapHtml(
+    `${baseStyles("linear-gradient(135deg, #f8fafc 0%, #eef2ff 48%, #f8fafc 100%)", "#172033")}
+    .stage-label {
+      position: absolute;
+      left: 96px;
+      top: 72px;
+      display: grid;
+      gap: 14px;
+    }
+    .stage-label .kicker {
+      width: fit-content;
+      background: rgba(127, 29, 29, 0.08);
+      color: #8a3b12;
+    }
+    .stage-label h1 {
+      max-width: 920px;
+      font-size: 62px;
+      line-height: 1;
+      letter-spacing: -0.03em;
+    }
+    .group-card {
+      position: absolute;
+      border-radius: 20px;
+      padding: 24px;
+      background: rgba(255, 255, 255, 0.84);
+      border: 1px solid rgba(74, 85, 104, 0.16);
+      box-shadow: 0 22px 46px rgba(30, 41, 59, 0.13);
+    }
+    .group-card strong {
+      display: block;
+      margin-bottom: 12px;
+      font-size: 28px;
+      color: #172033;
+    }
+    .group-card span {
+      display: block;
+      font-size: 20px;
+      line-height: 1.35;
+      color: rgba(23, 32, 51, 0.66);
+    }`,
+    `
+      <section class="stage-label">
+        <div class="kicker" data-editable="text">Group geometry fixture</div>
+        <h1 data-editable="text">Inline-positioned cards for group resize and scope tests</h1>
+      </section>
+      <article class="group-card group-a" data-editable="block" data-editor-id="group-card-a" style="left: 260px; top: 470px; width: 260px; height: 180px;">
+        <strong data-editable="text" data-editor-id="group-card-a-title">Card A</strong>
+        <span data-editable="text" data-editor-id="group-card-a-copy">Fixed geometry source</span>
+      </article>
+      <article class="group-card group-b" data-editable="block" data-editor-id="group-card-b" style="left: 620px; top: 510px; width: 260px; height: 180px;">
+        <strong data-editable="text" data-editor-id="group-card-b-title">Card B</strong>
+        <span data-editable="text" data-editor-id="group-card-b-copy">Fixed geometry source</span>
+      </article>
+      <article class="group-card group-c" data-editable="block" data-editor-id="group-card-c" style="left: 1240px; top: 500px; width: 260px; height: 180px;">
+        <strong data-editable="text">Card C</strong>
+        <span data-editable="text">Outside group target</span>
+      </article>
+    `
+  );
+}

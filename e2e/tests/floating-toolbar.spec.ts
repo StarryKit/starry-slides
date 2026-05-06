@@ -4,6 +4,7 @@ import {
   applyCustomCssProperty,
   clickFloatingToolbarButton,
   coverFrame,
+  createGroupFromSnapCards,
   expectInlineStyle,
   getComputedStyleValue,
   getHeaderControls,
@@ -145,6 +146,24 @@ test("floating toolbar shows layout commands and omits duplicate/delete", async 
 
   await page.keyboard.press(`${MODIFIER}+Z`);
   await expect(editableHeading).toBeVisible();
+});
+
+test("selected group toolbar only exposes layout and organization controls", async ({ page }) => {
+  await gotoEditor(page);
+  await createGroupFromSnapCards(page);
+
+  const toolbar = page.getByTestId("floating-toolbar-anchor");
+  await expect(toolbar.getByRole("button", { name: "Size", exact: true })).toBeVisible();
+  await expect(
+    toolbar.getByRole("button", { name: "Layer, Align, Distribute", exact: true })
+  ).toBeVisible();
+  await expect(toolbar.getByRole("button", { name: "Group", exact: true })).toBeVisible();
+
+  await expect(toolbar.getByRole("button", { name: "Font", exact: true })).toBeHidden();
+  await expect(toolbar.getByRole("button", { name: "Paragraph", exact: true })).toBeHidden();
+  await expect(toolbar.getByRole("button", { name: "Fill", exact: true })).toBeHidden();
+  await expect(toolbar.getByRole("button", { name: "Border", exact: true })).toBeHidden();
+  await expect(toolbar.getByRole("button", { name: "CSS", exact: true })).toBeHidden();
 });
 
 test("floating toolbar font size field does not remount the toolbar", async ({ page }) => {

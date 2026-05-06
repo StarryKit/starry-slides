@@ -39,6 +39,7 @@ function useEditorKeyboardShortcuts({
   isEditingText,
   canUndo,
   canRedo,
+  onEscapeSelection,
   onCommitOperation,
   onSelectElementIds,
   onUndo,
@@ -50,12 +51,14 @@ function useEditorKeyboardShortcuts({
   const canUndoRef = useRef(canUndo);
   const canRedoRef = useRef(canRedo);
   const isEditingTextRef = useRef(isEditingText);
+  const onEscapeSelectionRef = useRef(onEscapeSelection);
 
   activeSlideRef.current = activeSlide;
   selectedElementIdsRef.current = selectedElementIds;
   canUndoRef.current = canUndo;
   canRedoRef.current = canRedo;
   isEditingTextRef.current = isEditingText;
+  onEscapeSelectionRef.current = onEscapeSelection;
 
   useEffect(() => {
     const copySelection = () => {
@@ -327,10 +330,7 @@ function useEditorKeyboardShortcuts({
       } else if (event.key === "Backspace" || event.key === "Delete") {
         handled = removeSelection();
       } else if (event.key === "Escape") {
-        if (selectedElementIdsRef.current.length) {
-          onSelectElementIds([]);
-          handled = true;
-        }
+        handled = onEscapeSelectionRef.current();
       } else if (event.key in ARROW_DELTAS) {
         handled = moveSelection(event);
       } else if (commandKey && event.key === "]") {

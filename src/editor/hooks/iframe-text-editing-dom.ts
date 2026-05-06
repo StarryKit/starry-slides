@@ -76,9 +76,11 @@ export function getEditableSelectionTargetInScope(
   }
 
   if (!activeGroupScopeId) {
-    return editableTarget.closest<HTMLElement>(
-      `[data-editable="block"][data-group="true"][${SELECTOR_ATTR}]`
-    ) ?? editableTarget;
+    return (
+      editableTarget.closest<HTMLElement>(
+        `[data-editable="block"][data-group="true"][${SELECTOR_ATTR}]`
+      ) ?? editableTarget
+    );
   }
 
   const activeGroup = editableTarget.closest<HTMLElement>(

@@ -83,6 +83,24 @@ function useIframeTextEditing({
     setSelectedElementIds(groupElementId ? [groupElementId] : []);
   }, []);
 
+  const clearSelection = useCallback(() => {
+    if (textEditingRef.current) {
+      return false;
+    }
+
+    if (activeGroupScopeIdRef.current) {
+      exitGroupEditingScope();
+      return true;
+    }
+
+    if (selectedElementIds.length) {
+      setSelectedElementIds([]);
+      return true;
+    }
+
+    return false;
+  }, [exitGroupEditingScope, selectedElementIds.length]);
+
   function commitTextEdit(elementId: string, nextText: string) {
     const editing = textEditing;
     if (
@@ -206,7 +224,10 @@ function useIframeTextEditing({
         return;
       }
 
-      const editableTarget = getEditableSelectionTargetInScope(target, activeGroupScopeIdRef.current);
+      const editableTarget = getEditableSelectionTargetInScope(
+        target,
+        activeGroupScopeIdRef.current
+      );
       if (!editableTarget) {
         if (!activeGroupScopeIdRef.current) {
           setSelectedElementIds([]);
@@ -239,6 +260,10 @@ function useIframeTextEditing({
           event.target as Element,
           activeGroupScopeIdRef.current
         );
+        if (activeGroupScopeIdRef.current && !editableTarget) {
+          return;
+        }
+
         const targetId =
           editableTarget?.getAttribute(SELECTOR_ATTR) ?? node.getAttribute(SELECTOR_ATTR);
 
@@ -432,15 +457,7 @@ function useIframeTextEditing({
     beginTextEditing,
     beginGroupEditingScope,
     exitGroupEditingScope,
-    clearSelection: () => {
-      if (!textEditingRef.current) {
-        if (activeGroupScopeIdRef.current) {
-          exitGroupEditingScope();
-        } else {
-          setSelectedElementIds([]);
-        }
-      }
-    },
+    clearSelection,
   };
 }
 

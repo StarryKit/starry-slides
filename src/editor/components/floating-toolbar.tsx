@@ -240,14 +240,16 @@ function FloatingToolbar({
         ))}
       </div>
 
-      {visibleToolGroups.flatMap((group) => group.subgroups).map((subgroup) =>
-        activeSubgroupId === subgroup.id ? (
-          <ToolbarPanel key={subgroup.id} left={panelLeft} width={getPanelWidth(subgroup)}>
-            <PanelTitle>{subgroup.label}</PanelTitle>
-            <div className="grid gap-2">{subgroup.features.map(renderFeature)}</div>
-          </ToolbarPanel>
-        ) : null
-      )}
+      {visibleToolGroups
+        .flatMap((group) => group.subgroups)
+        .map((subgroup) =>
+          activeSubgroupId === subgroup.id ? (
+            <ToolbarPanel key={subgroup.id} left={panelLeft} width={getPanelWidth(subgroup)}>
+              <PanelTitle>{subgroup.label}</PanelTitle>
+              <div className="grid gap-2">{subgroup.features.map(renderFeature)}</div>
+            </ToolbarPanel>
+          ) : null
+        )}
     </div>
   );
 

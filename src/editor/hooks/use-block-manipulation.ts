@@ -448,7 +448,9 @@ function getManipulationElementIds({
   }
 
   const resizeElementIds = new Set<string>();
-  for (const elementId of selectedLayoutElementIds.length ? selectedLayoutElementIds : [selectedElementId]) {
+  for (const elementId of selectedLayoutElementIds.length
+    ? selectedLayoutElementIds
+    : [selectedElementId]) {
     const node = querySlideElement<HTMLElement>(doc, elementId);
     if (!node) {
       continue;
@@ -494,7 +496,9 @@ function applyGeometryScaledResize(
   const scaleX =
     session.startStageRect.width > 0 ? nextSelectionRect.width / session.startStageRect.width : 1;
   const scaleY =
-    session.startStageRect.height > 0 ? nextSelectionRect.height / session.startStageRect.height : 1;
+    session.startStageRect.height > 0
+      ? nextSelectionRect.height / session.startStageRect.height
+      : 1;
   const slideStageRect = {
     x: geometry.offsetX,
     y: geometry.offsetY,
@@ -523,7 +527,8 @@ function applyGeometryScaledResize(
 
     const parentRect = session.resizeParentElementIds[elementId]
       ? nextRects[session.resizeParentElementIds[elementId] as string]
-      : session.startParentStageRects[getParentStageRectKey(node.parentElement)] ?? slideStageRect;
+      : (session.startParentStageRects[getParentStageRectKey(node.parentElement)] ??
+        slideStageRect);
     if (!parentRect) {
       continue;
     }
@@ -543,6 +548,8 @@ function applyGeometryScaledResize(
 }
 
 function getParentStageRectKey(node: HTMLElement | null): string {
-  return node?.getAttribute(SELECTOR_ATTR) ? `editable:${node.getAttribute(SELECTOR_ATTR)}` : "slide";
+  return node?.getAttribute(SELECTOR_ATTR)
+    ? `editable:${node.getAttribute(SELECTOR_ATTR)}`
+    : "slide";
 }
 export { useBlockManipulation };

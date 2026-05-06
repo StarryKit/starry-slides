@@ -246,6 +246,63 @@ export async function clickFloatingToolbarButton(page: Page, label: string) {
   await button.click();
 }
 
+export async function createGroupFromSnapCards(
+  page: Page,
+  elementIds = ["snap-card-a", "snap-card-b"]
+) {
+  await page.getByLabel("Slide 12").click();
+  const frame = coverFrame(page);
+
+  await frame.locator(`[data-editor-id="${elementIds[0]}"]`).locator(".snap-drag-surface").click();
+  for (const elementId of elementIds.slice(1)) {
+    await frame
+      .locator(`[data-editor-id="${elementId}"]`)
+      .locator(".snap-drag-surface")
+      .click({ modifiers: ["Shift"] });
+  }
+
+  await clickFloatingToolbarButton(page, "Group");
+  await page
+    .getByTestId("floating-toolbar-anchor")
+    .getByRole("menu")
+    .getByRole("button", { name: "Group", exact: true })
+    .click();
+
+  const group = frame.locator('[data-editor-id="group-1"]');
+  await expect(group).toBeVisible();
+  await expect(page.getByTestId("selection-overlay")).toBeVisible();
+
+  return group;
+}
+
+export async function createGroupFromGeometryCards(
+  page: Page,
+  elementIds = ["group-card-a", "group-card-b"]
+) {
+  await page.getByLabel("Slide 13").click();
+  const frame = coverFrame(page);
+
+  await frame.locator(`[data-editor-id="${elementIds[0]}"]`).click({ position: { x: 8, y: 8 } });
+  for (const elementId of elementIds.slice(1)) {
+    await frame
+      .locator(`[data-editor-id="${elementId}"]`)
+      .click({ modifiers: ["Shift"], position: { x: 8, y: 8 } });
+  }
+
+  await clickFloatingToolbarButton(page, "Group");
+  await page
+    .getByTestId("floating-toolbar-anchor")
+    .getByRole("menu")
+    .getByRole("button", { name: "Group", exact: true })
+    .click();
+
+  const group = frame.locator('[data-editor-id="group-1"]');
+  await expect(group).toBeVisible();
+  await expect(page.getByTestId("selection-overlay")).toBeVisible();
+
+  return group;
+}
+
 export async function selectToolPanelOptionAndExpectInlineStyle(
   page: Page,
   target: Locator,

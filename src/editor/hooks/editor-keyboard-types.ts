@@ -35,6 +35,7 @@ export interface UseEditorKeyboardShortcutsOptions {
   isEditingText: boolean;
   canUndo: boolean;
   canRedo: boolean;
+  onEscapeSelection: () => boolean;
   onCommitOperation: (
     operation:
       | ElementInsertOperation
