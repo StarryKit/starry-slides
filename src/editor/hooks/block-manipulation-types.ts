@@ -35,6 +35,7 @@ export interface ManipulationSession {
   previousStyle: ElementLayoutStyleSnapshot;
   previousStyles: Record<string, ElementLayoutStyleSnapshot>;
   targetNodes: Record<string, HTMLElement>;
+  elementStartStageRects: Record<string, StageRect>;
   snapTargets: {
     vertical: SnapTarget[];
     horizontal: SnapTarget[];
