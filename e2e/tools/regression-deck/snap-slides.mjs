@@ -147,11 +147,15 @@ export function buildSnapSiblingSlide() {
       left: 1220px;
       top: 470px;
     }
+    .snap-d {
+      left: 1560px;
+      top: 470px;
+    }
     }`,
     `
       <section class="stage-label">
         <div class="kicker" data-editable="text">Snap sibling fixture</div>
-        <h1 data-editable="text">Three isolated cards for sibling edge and equal spacing snaps</h1>
+        <h1 data-editable="text">Four isolated cards for sibling edge and equal spacing snaps</h1>
         <p data-editable="text">The cards are intentionally identical. Drag Card C to the sibling edge or empty equal-spacing slot after Card B.</p>
       </section>
       <article class="snap-card snap-a" data-editable="block" data-editor-id="snap-card-a">
@@ -167,6 +171,11 @@ export function buildSnapSiblingSlide() {
       <article class="snap-card snap-c" data-editable="block" data-editor-id="snap-card-c">
         <strong data-editable="text">Card C</strong>
         <span data-editable="text">Drag this card</span>
+        <div class="snap-drag-surface"></div>
+      </article>
+      <article class="snap-card snap-d" data-editable="block" data-editor-id="snap-card-d">
+        <strong data-editable="text">Card D</strong>
+        <span data-editable="text">Flatten target</span>
         <div class="snap-drag-surface"></div>
       </article>
     `

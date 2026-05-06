@@ -109,7 +109,9 @@ export async function renderPreviewManifest({
     throw new Error(`--slide must match a manifest slide file exactly: ${slideFile}`);
   }
 
-  const outputDir = outDir ? path.resolve(process.cwd(), outDir) : path.join(deck, ".starry-slides", "view");
+  const outputDir = outDir
+    ? path.resolve(process.cwd(), outDir)
+    : path.join(deck, ".starry-slides", "view");
   clearPreviewOutput(outputDir);
 
   const chromium = await loadChromium();
@@ -210,7 +212,7 @@ async function measureOverflow(page: PlaywrightPage): Promise<OverflowMeasuremen
     }
 
     const body = document.body;
-    if (body && !hasAllowedOverflow(body)) {
+    if (body && !hasAllowedOverflow(body) && !hasAllowedOverflow(root)) {
       const viewportWidth = document.documentElement.clientWidth;
       const viewportHeight = document.documentElement.clientHeight;
       const bodyOverflowX = Math.max(

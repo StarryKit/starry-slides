@@ -32,9 +32,10 @@
     "lint:fix": "biome check --write .",
     "format": "biome format --write .",
     "test": "vitest run",
+    "test:packaged-cli": "vitest run --config vitest.packaged-cli.config.ts",
     "test:e2e:serve": "pnpm test:e2e:prepare && pnpm build && STARRY_SLIDES_DECK_SOURCE=e2e pnpm exec vite preview --host 127.0.0.1 --port 4173 --strictPort",
     "test:e2e": "playwright test",
-    "verify": "pnpm lint && pnpm test && pnpm build && pnpm test:e2e"
+    "verify": "pnpm lint && pnpm test && pnpm build && pnpm test:packaged-cli && pnpm test:e2e"
   },
   "dependencies": {
     "class-variance-authority": "^0.7.1",

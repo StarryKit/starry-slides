@@ -65,16 +65,16 @@ function getAbsoluteNodeRect(
   let current: HTMLElement | null = node;
   let x = 0;
   let y = 0;
-  let width = 0;
-  let height = 0;
+  const ownElementId = node.getAttribute(SELECTOR_ATTR) ?? "";
+  const ownRect = elementRects[ownElementId] ?? getNodeRect(node);
+  const width = ownRect.width;
+  const height = ownRect.height;
 
   while (current) {
     const elementId = current.getAttribute(SELECTOR_ATTR) ?? "";
     const rect = elementRects[elementId] ?? getNodeRect(current);
     x += rect.x;
     y += rect.y;
-    width = rect.width;
-    height = rect.height;
 
     const parent: HTMLElement | null = current.parentElement;
     if (!parent || !parent.hasAttribute("data-editable")) {
@@ -539,11 +539,13 @@ export function createGroupUngroupOperation({
   html,
   slideId,
   groupElementId,
+  elementRects = {},
   timestamp = Date.now(),
 }: {
   html: string;
   slideId: string;
   groupElementId: string;
+  elementRects?: GroupElementRectMap;
   timestamp?: number;
 }): GroupUngroupOperation | null {
   const doc = parseHtmlDocument(html);
@@ -557,7 +559,7 @@ export function createGroupUngroupOperation({
   }
 
   const parent = groupNode.parentElement;
-  const parentRect = getEditableAncestorRect(groupNode);
+  const parentRect = getEditableAncestorRect(groupNode, elementRects);
   const children = childEditableElements(groupNode);
   if (!children.length) {
     return null;
@@ -568,7 +570,7 @@ export function createGroupUngroupOperation({
     .filter((elementId): elementId is string => Boolean(elementId));
 
   for (const child of children) {
-    const rect = getAbsoluteNodeRect(child);
+    const rect = getAbsoluteNodeRect(child, elementRects);
     setNodeRect(child, {
       x: rect.x - parentRect.x,
       y: rect.y - parentRect.y,

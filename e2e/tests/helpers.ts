@@ -347,8 +347,12 @@ export async function applyCustomCssProperty(
   propertyName: string,
   propertyValue: string
 ) {
-  await clickFloatingToolbarButton(page, "CSS");
-  await page.getByLabel("Property name").first().fill(propertyName);
+  const propertyNameField = page.getByLabel("Property name").first();
+  if (!(await propertyNameField.isVisible().catch(() => false))) {
+    await clickFloatingToolbarButton(page, "CSS");
+  }
+  await expect(propertyNameField).toBeVisible();
+  await propertyNameField.fill(propertyName);
   await page.getByLabel("Property value").first().fill(propertyValue);
   await page.getByRole("button", { name: "Apply property" }).click();
 }

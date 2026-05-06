@@ -32,6 +32,11 @@ import {
   getHtmlAttributeValue,
   getInlineStyleValue,
 } from "./editor-operations";
+import {
+  elementRectToSlideRect,
+  offsetSlideRect,
+  placeCopiedElement,
+} from "./hooks/editor-keyboard-geometry";
 import { useBlockManipulation } from "./hooks/use-block-manipulation";
 import { useEditorKeyboardShortcuts } from "./hooks/use-editor-keyboard-shortcuts";
 import { useIframeTextEditing } from "./hooks/use-iframe-text-editing";
@@ -284,13 +289,17 @@ function SlidesEditor({
       return;
     }
 
+    const doc = iframeRef.current?.contentDocument;
+    const rootNode = doc?.querySelector<HTMLElement>(activeSlide.rootSelector);
+    const rootRect = rootNode?.getBoundingClientRect();
     let htmlSource = activeSlide.htmlSource;
     const nextElementIds: string[] = [];
     const operations = selectedElementIds
       .map((sourceElementId) => {
         const html = getSlideElementHtml(activeSlide.htmlSource, sourceElementId);
         const placement = createElementPlacement(activeSlide.htmlSource, sourceElementId);
-        if (!html || !placement) {
+        const node = doc ? querySlideElement<HTMLElement>(doc, sourceElementId) : null;
+        if (!html || !placement || !node || !rootRect) {
           return null;
         }
 
@@ -299,6 +308,12 @@ function SlidesEditor({
           html,
           createIdMapForCopiedElement(html, sourceElementId, nextElementId)
         );
+        const copiedRect = offsetSlideRect(
+          elementRectToSlideRect(node.getBoundingClientRect(), rootRect),
+          24,
+          24
+        );
+        const shiftedHtml = placeCopiedElement(nextHtml, copiedRect);
         htmlSource = `${htmlSource}\n<!-- ${nextElementId} reserved -->`;
         nextElementIds.push(nextElementId);
 
@@ -307,7 +322,7 @@ function SlidesEditor({
           slideId: activeSlide.id,
           elementId: nextElementId,
           ...placement,
-          html: nextHtml,
+          html: shiftedHtml,
           timestamp: Date.now(),
         };
       })
@@ -417,6 +432,7 @@ function SlidesEditor({
       html: activeSlide.htmlSource,
       slideId: activeSlide.id,
       groupElementId: selectedElementId,
+      elementRects: createGroupElementRectMap(),
     });
 
     if (operation) {

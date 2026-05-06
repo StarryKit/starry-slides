@@ -177,6 +177,12 @@ async function runOpen(deckPath: string) {
 
   const port = await findAvailablePort(Number(process.env.PORT ?? 5173));
   const url = `http://127.0.0.1:${port}/`;
+  if (process.env.STARRY_SLIDES_TEST_STUB_OPEN === "1") {
+    console.error(`Opening Starry Slides at ${url}`);
+    console.error(`Editor startup stub: STARRY_SLIDES_DECK_DIR=${deckPath}`);
+    return;
+  }
+
   const child = spawn("vite", ["--host", "127.0.0.1", "--port", String(port), "--strictPort"], {
     env: {
       ...process.env,

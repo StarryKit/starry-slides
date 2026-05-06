@@ -330,5 +330,8 @@ function createSaveGeneratedDeckPlugin() {
 }
 
 export default defineConfig({
+  build: {
+    emptyOutDir: false,
+  },
   plugins: [react(), tailwindcss(), createSaveGeneratedDeckPlugin()],
 });

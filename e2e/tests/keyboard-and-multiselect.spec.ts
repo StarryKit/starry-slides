@@ -31,6 +31,20 @@ test("keyboard delete removes selected element and undo restores it", async ({ p
   await expect(editableHeading).toHaveText(HERO_KICKER);
 });
 
+test("keyboard Delete removes selected element like Backspace", async ({ page }) => {
+  await gotoEditor(page);
+
+  const frame = coverFrame(page);
+  const editableHeading = frame.locator('[data-editor-id="text-1"]');
+
+  await editableHeading.click();
+  await page.keyboard.press("Delete");
+  await expect(editableHeading).toBeHidden();
+
+  await page.keyboard.press(`${MODIFIER}+Z`);
+  await expect(editableHeading).toHaveText(HERO_KICKER);
+});
+
 test("keyboard arrows move the selected element and preserve undo redo", async ({ page }) => {
   await gotoEditor(page);
 
@@ -48,6 +62,17 @@ test("keyboard arrows move the selected element and preserve undo redo", async (
   await expectInlineStyleContains(editableHeading, "transform", "translate(5px, 0px)");
   await page.keyboard.press(`${MODIFIER}+Shift+Z`);
   await expectInlineStyleContains(editableHeading, "transform", "translate(5px, 10px)");
+});
+
+test("keyboard Alt arrows use the fine movement step", async ({ page }) => {
+  await gotoEditor(page);
+
+  const frame = coverFrame(page);
+  const editableHeading = frame.locator('[data-editor-id="text-1"]');
+
+  await editableHeading.click();
+  await page.keyboard.press("Alt+ArrowRight");
+  await expectInlineStyleContains(editableHeading, "transform", "translate(1px, 0px)");
 });
 
 test("keyboard copy paste duplicates the selected element and selects the copy", async ({
@@ -89,6 +114,22 @@ test("keyboard copy paste duplicates the selected element and selects the copy",
   await expectInlineStyle(copiedHeading, "transform", "");
   await page.keyboard.press(`${MODIFIER}+Z`);
   await expect(copiedHeading).toBeHidden();
+});
+
+test("keyboard paste with an empty object clipboard is a no-op", async ({ page }) => {
+  await gotoEditor(page);
+
+  const frame = coverFrame(page);
+  const editableHeading = frame.locator('[data-editor-id="text-1"]');
+
+  await editableHeading.click();
+  const beforeHtml = await editableHeading.evaluate((node) => node.ownerDocument.body.innerHTML);
+  await page.keyboard.press(`${MODIFIER}+V`);
+
+  await expect(editableHeading).toHaveText(HERO_KICKER);
+  await expect(frame.locator('[data-editor-id="text-1-copy"]')).toHaveCount(0);
+  const afterHtml = await editableHeading.evaluate((node) => node.ownerDocument.body.innerHTML);
+  expect(afterHtml).toBe(beforeHtml);
 });
 
 test("keyboard paste keeps repeated copies inside the slide bounds", async ({ page }) => {
@@ -214,6 +255,7 @@ test("multi-select copy paste duplicates the selected set", async ({ page }) => 
 
   await expect(firstCopy).toHaveText(HERO_KICKER);
   await expect(secondCopy).toBeVisible();
+  await expect(firstCopy.locator('[data-editor-id="text-1-copy-text-1"]')).toHaveCount(0);
   const firstCopyRect = await getSlideElementRect(firstCopy);
   const secondCopyRect = await getSlideElementRect(secondCopy);
   const firstDelta = firstCopyRect.x - firstRect.x;

@@ -354,5 +354,42 @@ describe("HTML write-back", () => {
     expect(operation?.nextHtmlSource).not.toContain('data-group="true"');
     expect(operation?.nextHtmlSource).toContain("left: 110px");
     expect(operation?.nextHtmlSource).toContain("left: 250px");
+    expect(operation?.nextHtmlSource).toContain("width: 120px");
+    expect(operation?.nextHtmlSource).toContain("width: 90px");
+  });
+
+  test("group ungroup preserves child dimensions when a rendered rect map is supplied", () => {
+    const html = ensureEditableSelectors(`<!DOCTYPE html>
+<html lang="en">
+  <body>
+    <div class="slide-container" data-slide-root="true">
+      <div data-editable="block" data-group="true" data-editor-id="group-1" style="left: 240px; top: 470px; width: 600px; height: 180px;">
+        <article data-editable="block" data-editor-id="card-a" style="left: 0px; top: 0px; width: 260px; height: 180px;">A</article>
+        <article data-editable="block" data-editor-id="card-b" style="left: 340px; top: 0px; width: 260px; height: 180px;">B</article>
+      </div>
+    </div>
+  </body>
+</html>`);
+
+    const operation = createGroupUngroupOperation({
+      html,
+      slideId: "slide-1",
+      groupElementId: "group-1",
+      elementRects: {
+        "group-1": { x: 240, y: 470, width: 600, height: 180 },
+        "card-a": { x: 0, y: 0, width: 155, height: 107 },
+        "card-b": { x: 202.5, y: 0, width: 155, height: 107 },
+      },
+      timestamp: 6,
+    });
+
+    const doc = new DOMParser().parseFromString(operation?.nextHtmlSource ?? "", "text/html");
+    const firstCard = doc.querySelector<HTMLElement>('[data-editor-id="card-a"]');
+    const secondCard = doc.querySelector<HTMLElement>('[data-editor-id="card-b"]');
+
+    expect(firstCard?.style.width).toBe("155px");
+    expect(firstCard?.style.height).toBe("107px");
+    expect(secondCard?.style.width).toBe("155px");
+    expect(secondCard?.style.height).toBe("107px");
   });
 });

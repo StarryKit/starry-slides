@@ -24,6 +24,7 @@ Update this directory whenever a change affects:
 - `accepted`: current decision
 - `superseded`: replaced by a newer ADR
 - `proposed`: drafted but not yet adopted
+- `implemented-reference`: implemented direction retained as reference context
 
 ## ADRs
 
@@ -43,3 +44,4 @@ Update this directory whenever a change affects:
 | [0012](./0012-keep-sample-slides-out-of-project-git.md)            | Keep sample slides out of project Git                                    | accepted   |
 | [0013](./0013-adopt-editing-e2e-coverage-contract.md)              | Adopt editing E2E coverage contract                                      | proposed   |
 | [0014](./0014-adopt-cli-and-core-verification-test-contract.md)     | Adopt CLI and core verification test contract                            | proposed   |
+| [0015](./0015-adopt-minimal-mono-editor-chrome-direction.md)        | Adopt Minimal Mono editor chrome direction                               | implemented-reference |
