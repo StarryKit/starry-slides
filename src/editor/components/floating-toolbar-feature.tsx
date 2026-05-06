@@ -21,12 +21,14 @@ export function renderFloatingToolbarFeature({
   feature,
   onClosePanel,
   onCommitFeature,
+  operationAvailability,
   onStyleChange,
 }: {
   currentValue: string;
   feature: ElementToolFeature;
   onClosePanel: () => void;
   onCommitFeature: (feature: ElementToolFeature, nextValue: string) => void;
+  operationAvailability?: Partial<Record<ElementToolFeature["id"], boolean>>;
   onStyleChange: (propertyName: string, nextValue: string) => void;
 }) {
   const fieldId = `floating-${feature.id}`;
@@ -126,11 +128,19 @@ export function renderFloatingToolbarFeature({
         <div className="grid gap-1">
           {(feature.options ?? []).map((option) => {
             const Icon = option.icon;
+            const disabled =
+              feature.target === "operation" && operationAvailability
+                ? operationAvailability[feature.id] === false
+                : false;
             return (
               <ToolbarOption
                 key={option.value}
+                disabled={disabled}
                 title={option.label}
                 onClick={() => {
+                  if (disabled) {
+                    return;
+                  }
                   onCommitFeature(feature, option.value);
                   onClosePanel();
                 }}

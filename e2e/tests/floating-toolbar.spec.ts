@@ -144,8 +144,8 @@ test("floating toolbar shows layout commands and omits duplicate/delete", async 
   await editableHeading.click();
   await clickFloatingToolbarButton(page, "Group");
   const groupMenu = toolbar.getByRole("menu");
-  await expect(groupMenu.getByRole("button", { name: "Group", exact: true })).toBeVisible();
-  await expect(groupMenu.getByRole("button", { name: "Ungroup", exact: true })).toBeVisible();
+  await expect(groupMenu.getByRole("button", { name: "Group", exact: true })).toBeDisabled();
+  await expect(groupMenu.getByRole("button", { name: "Ungroup", exact: true })).toBeDisabled();
   await expect(groupMenu.getByRole("button", { name: "Duplicate", exact: true })).toBeHidden();
   await expect(groupMenu.getByRole("button", { name: "Delete", exact: true })).toBeHidden();
 
@@ -169,6 +169,10 @@ test("selected group toolbar only exposes layout and organization controls", asy
     toolbar.getByRole("button", { name: "Layer, Align, Distribute", exact: true })
   ).toBeVisible();
   await expect(toolbar.getByRole("button", { name: "Group", exact: true })).toBeVisible();
+  await clickFloatingToolbarButton(page, "Group");
+  await expect(
+    toolbar.getByRole("menu").getByRole("button", { name: "Ungroup", exact: true })
+  ).toBeEnabled();
 
   await expect(toolbar.getByRole("button", { name: "Font", exact: true })).toBeHidden();
   await expect(toolbar.getByRole("button", { name: "Paragraph", exact: true })).toBeHidden();

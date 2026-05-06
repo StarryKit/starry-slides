@@ -6,6 +6,7 @@ import {
   type ElementInsertOperation,
   type ElementLayoutUpdateOperation,
   type ElementRemoveOperation,
+  type GroupElementRectMap,
   SELECTOR_ATTR,
   type SlideModel,
   type StyleUpdateOperation,
@@ -95,6 +96,19 @@ function SlidesEditor({
     selectedElementIds.length > 1
       ? "multi"
       : (selectedElement?.type ?? activeGroupScopeElement?.type ?? "block");
+  const selectedElements = activeSlide
+    ? selectedElementIds
+        .map((elementId) => activeSlide.elements.find((element) => element.id === elementId))
+        .filter((element): element is SlideModel["elements"][number] => Boolean(element))
+    : [];
+  const selectionCommandAvailability = {
+    group: selectedElementIds.length >= 2 && selectedElements.length === selectedElementIds.length,
+    ungroup: selectedElementIds.length === 1 && selectedElement?.type === "group",
+  };
+  const groupScopeOverlayPassive =
+    Boolean(activeGroupScopeId) &&
+    selectedElementIds.length === 1 &&
+    selectedElementId === activeGroupScopeId;
   const resolvedDeckTitle = deckTitle?.trim() || "Untitled deck";
 
   const slideWidth = activeSlide?.width || DEFAULT_SLIDE_WIDTH;
@@ -340,11 +354,13 @@ function SlidesEditor({
       return;
     }
 
+    const elementRects = createGroupElementRectMap();
     const groupElementId = createUniqueElementId(activeSlide.htmlSource, "group-1");
     const operation = createGroupCreateOperation({
       html: activeSlide.htmlSource,
       slideId: activeSlide.id,
       groupElementId,
+      elementRects,
       elementIds: selectedElementIds,
     });
 
@@ -352,6 +368,44 @@ function SlidesEditor({
       commitOperation(operation);
       setSelectedElementIds([groupElementId]);
     }
+  }
+
+  function createGroupElementRectMap(): GroupElementRectMap {
+    const doc = iframeRef.current?.contentDocument;
+    const root = doc?.querySelector<HTMLElement>(activeSlide?.rootSelector ?? "");
+    if (!doc || !root) {
+      return {};
+    }
+
+    const rootRect = root.getBoundingClientRect();
+    const scaleX = activeSlide ? activeSlide.width / rootRect.width : 1;
+    const scaleY = activeSlide ? activeSlide.height / rootRect.height : 1;
+    const rects: GroupElementRectMap = {};
+    for (const node of doc.querySelectorAll<HTMLElement>(`[data-editable][${SELECTOR_ATTR}]`)) {
+      const elementId = node.getAttribute(SELECTOR_ATTR);
+      if (!elementId) {
+        continue;
+      }
+
+      const rect = node.getBoundingClientRect();
+      const parent = node.parentElement;
+      const parentId =
+        parent?.hasAttribute("data-editable") && parent.getAttribute(SELECTOR_ATTR)
+          ? parent.getAttribute(SELECTOR_ATTR)
+          : null;
+      const parentRect = parentId
+        ? (rects[parentId] ?? { x: 0, y: 0, width: rootRect.width, height: rootRect.height })
+        : { x: 0, y: 0, width: rootRect.width, height: rootRect.height };
+
+      rects[elementId] = {
+        x: (rect.left - rootRect.left) * scaleX - parentRect.x,
+        y: (rect.top - rootRect.top) * scaleY - parentRect.y,
+        width: rect.width * scaleX,
+        height: rect.height * scaleY,
+      };
+    }
+
+    return rects;
   }
 
   function ungroupSelection() {
@@ -551,6 +605,8 @@ function SlidesEditor({
               }
               inspectedStyles={inspectedStyles}
               selectedElementType={selectedElementType}
+              selectionCommandAvailability={selectionCommandAvailability}
+              groupScopeOverlayPassive={groupScopeOverlayPassive}
               isEditingText={isEditingText}
               manipulationOverlay={manipulationOverlay}
               iframeRef={iframeRef}
@@ -593,7 +649,27 @@ function SlidesEditor({
                   stopPropagation: () => event.stopPropagation(),
                 });
               }}
-              onSelectionOverlayDoubleClick={() => {
+              onSelectionOverlayDoubleClick={(event) => {
+                if (activeGroupScopeId && iframeRef.current?.contentDocument) {
+                  const iframeRect = iframeRef.current.getBoundingClientRect();
+                  const doc = iframeRef.current.contentDocument;
+                  const scopedTarget = doc.elementFromPoint(
+                    event.clientX - iframeRect.left,
+                    event.clientY - iframeRect.top
+                  );
+                  const scopedEditable = scopedTarget?.closest<HTMLElement>(
+                    `[data-editable][${SELECTOR_ATTR}]`
+                  );
+
+                  if (scopedEditable?.getAttribute("data-editable") === "text") {
+                    const scopedElementId = scopedEditable.getAttribute(SELECTOR_ATTR);
+                    if (scopedElementId) {
+                      beginTextEditing(scopedElementId);
+                      return;
+                    }
+                  }
+                }
+
                 if (
                   selectedElementIds.length === 1 &&
                   selectedElement?.type === "text" &&

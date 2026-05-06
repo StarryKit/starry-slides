@@ -17,6 +17,7 @@ import {
   Ungroup,
 } from "lucide-react";
 import type { ReactNode } from "react";
+import type { SelectionCommandAvailability } from "./floating-toolbar";
 import {
   ContextMenu,
   ContextMenuContent,
@@ -31,6 +32,7 @@ import {
 
 interface SelectionContextMenuProps {
   children: ReactNode;
+  selectionCommandAvailability: SelectionCommandAvailability;
   onAlignToSlide: (action: string) => void;
   onDelete: () => void;
   onDistribute: (action: string) => void;
@@ -42,6 +44,7 @@ interface SelectionContextMenuProps {
 
 function SelectionContextMenu({
   children,
+  selectionCommandAvailability,
   onAlignToSlide,
   onDelete,
   onDistribute,
@@ -54,11 +57,11 @@ function SelectionContextMenu({
     <ContextMenu>
       <ContextMenuTrigger asChild>{children}</ContextMenuTrigger>
       <ContextMenuContent aria-label="Selection actions">
-        <ContextMenuItem onSelect={onGroup}>
+        <ContextMenuItem disabled={!selectionCommandAvailability.group} onSelect={onGroup}>
           <Group className="size-3.5" />
           Group
         </ContextMenuItem>
-        <ContextMenuItem onSelect={onUngroup}>
+        <ContextMenuItem disabled={!selectionCommandAvailability.ungroup} onSelect={onUngroup}>
           <Ungroup className="size-3.5" />
           Ungroup
         </ContextMenuItem>

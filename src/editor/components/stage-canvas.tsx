@@ -4,7 +4,7 @@ import type { CssPropertyRow } from "../lib/collect-css-properties";
 import { cn } from "../lib/utils";
 import { BlockManipulationOverlay } from "./block-manipulation-overlay";
 import { SelectionContextMenu } from "./context-menu";
-import { FloatingToolbar } from "./floating-toolbar";
+import { FloatingToolbar, type SelectionCommandAvailability } from "./floating-toolbar";
 
 type ResizeHandleCorner = "top-left" | "top-right" | "bottom-right" | "bottom-left";
 
@@ -18,6 +18,8 @@ interface StageCanvasProps {
   toolbarKey: string | null;
   inspectedStyles: CssPropertyRow[];
   selectedElementType: EditableType | "multi";
+  selectionCommandAvailability: SelectionCommandAvailability;
+  groupScopeOverlayPassive: boolean;
   isEditingText: boolean;
   manipulationOverlay: {
     selectionBounds: StageRect;
@@ -50,7 +52,7 @@ interface StageCanvasProps {
     event: ReactMouseEvent<HTMLButtonElement>
   ) => void;
   onRotateHandleMouseDown: (event: ReactMouseEvent<HTMLButtonElement>) => void;
-  onSelectionOverlayDoubleClick: () => void;
+  onSelectionOverlayDoubleClick: (event: ReactMouseEvent<HTMLDivElement>) => void;
   onBackgroundClick: () => void;
   onStyleChange: (propertyName: string, nextValue: string) => void;
   onAttributeChange: (attributeName: string, nextValue: string) => void;
@@ -73,6 +75,8 @@ function StageCanvas({
   toolbarKey,
   inspectedStyles,
   selectedElementType,
+  selectionCommandAvailability,
+  groupScopeOverlayPassive,
   isEditingText,
   manipulationOverlay,
   attributeValues,
@@ -131,6 +135,7 @@ function StageCanvas({
             key={toolbarKey}
             inspectedStyles={inspectedStyles}
             selectedElementType={selectedElementType}
+            selectionCommandAvailability={selectionCommandAvailability}
             attributeValues={attributeValues}
             onStyleChange={onStyleChange}
             onAttributeChange={onAttributeChange}
@@ -169,6 +174,7 @@ function StageCanvas({
       </div>
       {selectionOverlay && !isEditingText ? (
         <SelectionContextMenu
+          selectionCommandAvailability={selectionCommandAvailability}
           onAlignToSlide={onAlignToSlide}
           onDelete={onDelete}
           onDistribute={onDistribute}
@@ -180,7 +186,10 @@ function StageCanvas({
           <div
             ref={selectionOverlayRef}
             data-testid="selection-overlay"
-            className="pointer-events-auto absolute z-[3] border border-dashed border-foreground/55 bg-foreground/[0.02]"
+            className={cn(
+              "absolute z-[3] border border-dashed border-foreground/55 bg-foreground/[0.02]",
+              groupScopeOverlayPassive ? "pointer-events-none" : "pointer-events-auto"
+            )}
             style={{
               left: `${selectionOverlay.x}px`,
               top: `${selectionOverlay.y}px`,
@@ -188,8 +197,8 @@ function StageCanvas({
               height: `${selectionOverlay.height}px`,
             }}
             onMouseDown={onSelectionOverlayMouseDown}
-            onDoubleClick={() => {
-              onSelectionOverlayDoubleClick();
+            onDoubleClick={(event) => {
+              onSelectionOverlayDoubleClick(event);
             }}
           />
         </SelectionContextMenu>

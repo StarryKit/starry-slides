@@ -33,6 +33,11 @@ import type {
   SlideOperation,
 } from "./slide-operation-types";
 
+export type GroupElementRectMap = Record<
+  string,
+  { x: number; y: number; width: number; height: number }
+>;
+
 function numericStyleValue(value: string | null | undefined): number {
   const parsed = Number.parseFloat(value || "");
   return Number.isFinite(parsed) ? parsed : 0;
@@ -48,7 +53,10 @@ function getNodeRect(node: HTMLElement): { x: number; y: number; width: number; 
   };
 }
 
-function getAbsoluteNodeRect(node: HTMLElement): {
+function getAbsoluteNodeRect(
+  node: HTMLElement,
+  elementRects: GroupElementRectMap = {}
+): {
   x: number;
   y: number;
   width: number;
@@ -61,7 +69,8 @@ function getAbsoluteNodeRect(node: HTMLElement): {
   let height = 0;
 
   while (current) {
-    const rect = getNodeRect(current);
+    const elementId = current.getAttribute(SELECTOR_ATTR) ?? "";
+    const rect = elementRects[elementId] ?? getNodeRect(current);
     x += rect.x;
     y += rect.y;
     width = rect.width;
@@ -78,13 +87,16 @@ function getAbsoluteNodeRect(node: HTMLElement): {
   return { x, y, width, height };
 }
 
-function getEditableAncestorRect(node: HTMLElement): { x: number; y: number } {
+function getEditableAncestorRect(
+  node: HTMLElement,
+  elementRects: GroupElementRectMap = {}
+): { x: number; y: number } {
   const parent = node.parentElement;
   if (!parent || !parent.hasAttribute("data-editable")) {
     return { x: 0, y: 0 };
   }
 
-  const rect = getAbsoluteNodeRect(parent);
+  const rect = getAbsoluteNodeRect(parent, elementRects);
   return { x: rect.x, y: rect.y };
 }
 
@@ -404,17 +416,21 @@ export function updateSlideElementTransform(
   });
 }
 
+// ADR-0010: Groups are nested DOM containers, not flat groupId relationships.
+// See: docs/adr/0010-represent-groups-as-nested-dom-containers.md
 export function createGroupCreateOperation({
   html,
   slideId,
   groupElementId,
   elementIds,
+  elementRects = {},
   timestamp = Date.now(),
 }: {
   html: string;
   slideId: string;
   groupElementId: string;
   elementIds: string[];
+  elementRects?: GroupElementRectMap;
   timestamp?: number;
 }): GroupCreateOperation | null {
   const doc = parseHtmlDocument(html);
@@ -449,12 +465,12 @@ export function createGroupCreateOperation({
   }
 
   const selectedGroups = selectedNodes.filter((node) => node.getAttribute("data-group") === "true");
-  const rects = uniqueNodes.map(getAbsoluteNodeRect);
+  const rects = uniqueNodes.map((node) => getAbsoluteNodeRect(node, elementRects));
   const left = Math.min(...rects.map((rect) => rect.x));
   const top = Math.min(...rects.map((rect) => rect.y));
   const right = Math.max(...rects.map((rect) => rect.x + rect.width));
   const bottom = Math.max(...rects.map((rect) => rect.y + rect.height));
-  const parentRect = getEditableAncestorRect(selectedNodes[0]);
+  const parentRect = getEditableAncestorRect(selectedNodes[0], elementRects);
   const groupNode = doc.createElement("div");
   groupNode.setAttribute("data-editable", "block");
   groupNode.setAttribute("data-group", "true");
@@ -485,7 +501,7 @@ export function createGroupCreateOperation({
   }
 
   for (const node of orderedNodes) {
-    const rect = getAbsoluteNodeRect(node);
+    const rect = getAbsoluteNodeRect(node, elementRects);
     setNodeRect(node, {
       x: rect.x - left,
       y: rect.y - top,

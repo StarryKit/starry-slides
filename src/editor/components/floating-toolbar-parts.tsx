@@ -183,10 +183,12 @@ export function ToolbarIcon({ icon: Icon }: { icon: LucideIcon }) {
 
 export function ToolbarOption({
   children,
+  disabled = false,
   onClick,
   title,
 }: {
   children: ReactNode;
+  disabled?: boolean;
   onClick: () => void;
   title?: string;
 }) {
@@ -195,6 +197,7 @@ export function ToolbarOption({
       variant="ghost"
       className="min-h-8 w-full justify-start gap-2 rounded-md px-2 py-1.5 text-left text-[13px] font-normal text-foreground/70 hover:text-foreground"
       type="button"
+      disabled={disabled}
       title={title}
       onClick={onClick}
     >

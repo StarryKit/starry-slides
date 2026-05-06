@@ -246,6 +246,88 @@ describe("HTML write-back", () => {
     expect(operation?.nextHtmlSource).toContain('data-group="true"');
   });
 
+  test("group create converts children to group-relative coordinates", () => {
+    const html = ensureEditableSelectors(`<!DOCTYPE html>
+<html lang="en">
+  <body>
+    <div class="slide-container" data-slide-root="true">
+      <p data-editable="text" data-editor-id="text-1" style="left: 100px; top: 80px; width: 120px; height: 40px;">Alpha</p>
+      <div data-editable="block" data-editor-id="block-2" style="left: 260px; top: 140px; width: 160px; height: 90px;">Beta</div>
+    </div>
+  </body>
+</html>`);
+
+    const operation = createGroupCreateOperation({
+      html,
+      slideId: "slide-1",
+      groupElementId: "group-new",
+      elementIds: ["text-1", "block-2"],
+      timestamp: 3,
+    });
+    const doc = new DOMParser().parseFromString(operation?.nextHtmlSource ?? "", "text/html");
+    const group = doc.querySelector<HTMLElement>('[data-editor-id="group-new"]');
+    const firstChild = doc.querySelector<HTMLElement>('[data-editor-id="text-1"]');
+    const secondChild = doc.querySelector<HTMLElement>('[data-editor-id="block-2"]');
+
+    expect(operation?.type).toBe("group.create");
+    expect(group?.style.left).toBe("100px");
+    expect(group?.style.top).toBe("80px");
+    expect(group?.style.width).toBe("320px");
+    expect(group?.style.height).toBe("150px");
+    expect(firstChild?.parentElement).toBe(group);
+    expect(firstChild?.style.left).toBe("0px");
+    expect(firstChild?.style.top).toBe("0px");
+    expect(secondChild?.parentElement).toBe(group);
+    expect(secondChild?.style.left).toBe("160px");
+    expect(secondChild?.style.top).toBe("60px");
+  });
+
+  test("group create rejects cross-parent selections", () => {
+    const html = ensureEditableSelectors(`<!DOCTYPE html>
+<html lang="en">
+  <body>
+    <div class="slide-container" data-slide-root="true">
+      <div data-editable="block" data-editor-id="block-1" style="left: 40px; top: 40px; width: 300px; height: 200px;">
+        <p data-editable="text" data-editor-id="text-2" style="left: 10px; top: 10px; width: 100px; height: 40px;">Nested</p>
+      </div>
+      <p data-editable="text" data-editor-id="text-3" style="left: 420px; top: 80px; width: 100px; height: 40px;">Peer</p>
+    </div>
+  </body>
+</html>`);
+
+    const operation = createGroupCreateOperation({
+      html,
+      slideId: "slide-1",
+      groupElementId: "group-new",
+      elementIds: ["text-2", "text-3"],
+      timestamp: 4,
+    });
+
+    expect(operation).toBeNull();
+  });
+
+  test("group ungroup ignores ordinary blocks with nested editables", () => {
+    const html = ensureEditableSelectors(`<!DOCTYPE html>
+<html lang="en">
+  <body>
+    <div class="slide-container" data-slide-root="true">
+      <div data-editable="block" data-editor-id="block-1" style="left: 100px; top: 80px; width: 300px; height: 200px;">
+        <p data-editable="text" data-editor-id="text-2" style="left: 10px; top: 12px; width: 120px; height: 40px;">Alpha</p>
+      </div>
+    </div>
+  </body>
+</html>`);
+
+    const operation = createGroupUngroupOperation({
+      html,
+      slideId: "slide-1",
+      groupElementId: "block-1",
+      timestamp: 5,
+    });
+
+    expect(operation).toBeNull();
+  });
+
   test("group ungroup restores children to parent order and coordinate space", () => {
     const html = ensureEditableSelectors(`<!DOCTYPE html>
 <html lang="en">

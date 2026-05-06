@@ -31,6 +31,7 @@ import {
 interface FloatingToolbarProps {
   inspectedStyles: CssPropertyRow[];
   selectedElementType: EditableType | "multi";
+  selectionCommandAvailability: SelectionCommandAvailability;
   attributeValues: AttributeValues;
   onStyleChange: (propertyName: string, nextValue: string) => void;
   onAttributeChange: (attributeName: string, nextValue: string) => void;
@@ -48,11 +49,17 @@ interface AttributeValues {
   linkUrl: string;
 }
 
+export interface SelectionCommandAvailability {
+  group: boolean;
+  ungroup: boolean;
+}
+
 const EMPTY_SELECT_VALUE = "__empty__";
 
 function FloatingToolbar({
   inspectedStyles,
   selectedElementType,
+  selectionCommandAvailability,
   attributeValues,
   onStyleChange,
   onAttributeChange,
@@ -274,6 +281,7 @@ function FloatingToolbar({
       feature,
       onClosePanel: () => setActiveSubgroupId(null),
       onCommitFeature: commitFeature,
+      operationAvailability: selectionCommandAvailability,
       onStyleChange,
     });
   }
