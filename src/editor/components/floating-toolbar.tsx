@@ -293,7 +293,7 @@ function getVisibleToolGroups(selectedElementType: EditableType | "multi"): Elem
       {
         ...group,
         subgroups: group.subgroups.filter((subgroup) =>
-          ["size", "layer-alignment", "grouping"].includes(subgroup.id)
+          ["size", "rotation", "layer-alignment", "grouping"].includes(subgroup.id)
         ),
       },
     ];

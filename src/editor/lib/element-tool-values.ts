@@ -1,3 +1,4 @@
+import { parseTransformParts } from "../../core";
 import type { CssPropertyRow } from "./collect-css-properties";
 import type { ElementToolFeature, ElementToolOption } from "./element-tool-model";
 import {
@@ -55,6 +56,9 @@ export function getElementToolValue({
   }
   if (feature.id === "line-height" || feature.id === "opacity") {
     return rawValue || (feature.id === "opacity" ? "1" : "");
+  }
+  if (feature.id === "rotation") {
+    return String(parseTransformParts(rawValue).rotate);
   }
   if (feature.controlType === "color") {
     return getColorInputValue(rawValue);

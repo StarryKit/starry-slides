@@ -47,7 +47,6 @@ warm, orange-accented, and more expressive than Minimal Mono.
 | Stage frame | Rounded 20px card with warm brown shadow. Selection outline and label use orange primary. | Stage surface can remain framed, but border/shadow should be neutral and subtle; selection chrome should not use brand orange. | `src/editor/components/stage-canvas.tsx` |
 | Floating toolbar | Rounded 16px container, brown-tinted elevation, 36px controls, active buttons in orange, bold active text. | `rounded-xl`, 32px controls, neutral alpha hover/active, 14px icons, lighter shadow. | `src/editor/components/floating-toolbar.tsx` |
 | Toolbar popovers | Rounded 16px, p-3, warm shadow, zoom/slide animation. | `rounded-xl`, `p-1.5`, neutral double shadow, fade-only entrance. | `src/editor/components/floating-toolbar.tsx`, `src/editor/lib/motion.ts` |
-| Inspector panel | Accordion cards with rounded 18px, descriptions under each section, warm card surfaces. | More compact tool panel; labels are small uppercase; cards only where needed, no card-inside-card feel. | `src/editor/components/sidebar-tool-panel.tsx` |
 | Color picker | Useful control shape, but presets use hover scale, strong primary ring, gradients available. | Swatches should stay visual because they represent user content; chrome around them should be neutral, no hover scale. | `src/editor/components/color-picker.tsx` |
 | Block manipulation overlay | Orange handles and snap guides, hover scale. | Neutral manipulation chrome unless a strong selection color is intentionally retained as an editor affordance. If retained, document it as the one exception. | `src/editor/components/block-manipulation-overlay.tsx` |
 | Motion | `zoom-in-95`, slide-in classes, hover scale on swatches/handles. | Fade and color transitions only; no scale/zoom/large translate motion. | `src/editor/lib/motion.ts`, toolbar, color picker, manipulation overlay |
@@ -143,31 +142,23 @@ Leverage:
 This module becomes the main reference implementation for Minimal Mono
 toolbar, dropdown, label, divider, and active-state patterns.
 
-### 4. Inspector Tool Panel Module
+### 4. Removed Inspector Tool Panel
 
-Files:
-
-- `src/editor/components/sidebar-tool-panel.tsx`
-
-Problem:
-
-The inspector uses large rounded accordion cards and descriptive text for every
-section. It works functionally, but visually it is more card-heavy than the
-target tool surface.
+ADR-0009 removed the right-side Sidebar Tool Panel from the active editor model.
+Minimal Mono follow-up work should continue styling the Floating Toolbar and its
+dropdown panels instead of reviving the removed inspector surface.
 
 Solution:
 
-- Convert section headers to compact uppercase labels or low-weight row headers.
-- Reduce rounded 18px section cards to flatter neutral groups.
-- Use smaller gaps and neutral inputs/selects.
-- Keep the `Tabs` edit/chat interface, but neutralize active states and borders.
-- Keep descriptions only where they clarify behavior; otherwise remove visual
-  weight from repeated helper copy.
+- Do not reintroduce the removed right-side inspector surface for Minimal Mono
+  polish work.
+- Apply dense property editing patterns to Floating Toolbar dropdown panels.
+- Keep labels, gaps, inputs, and selects compact in toolbar popovers.
 
 Leverage:
 
-The inspector becomes the reference implementation for dense property editing
-and future CSS/layout controls.
+The Floating Toolbar dropdown panels become the reference implementation for
+dense property editing and future CSS/layout controls.
 
 ### 5. Shell, Sidebar, and Stage Chrome Module
 

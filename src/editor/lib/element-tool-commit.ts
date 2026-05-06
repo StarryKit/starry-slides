@@ -1,3 +1,4 @@
+import { composeTransform, parseTransformParts } from "../../core";
 import type { CssPropertyRow } from "./collect-css-properties";
 import type { ElementToolFeature } from "./element-tool-model";
 import {
@@ -35,6 +36,22 @@ export function commitElementToolFeature({
   if (feature.target === "style" && feature.propertyName) {
     const currentValue = getElementToolValue({ feature, inspectedStyles, attributeValues });
 
+    if (feature.id === "rotation") {
+      const currentTransform = getTransformValue(inspectedStyles);
+      const transformParts = parseTransformParts(currentTransform);
+      const nextRotation = Number.parseFloat(nextValue);
+
+      onStyleChange(
+        feature.propertyName,
+        composeTransform(
+          transformParts.translateX,
+          transformParts.translateY,
+          Number.isFinite(nextRotation) ? nextRotation : 0
+        ) ?? ""
+      );
+      return;
+    }
+
     if (feature.id === "font-underline") {
       onStyleChange(
         feature.propertyName,
@@ -67,4 +84,8 @@ export function commitElementToolFeature({
   if (feature.id === "layer-order") {
     onLayerOrder(nextValue);
   }
+}
+
+function getTransformValue(inspectedStyles: CssPropertyRow[]): string {
+  return inspectedStyles.find((property) => property.name === "transform")?.value ?? "";
 }

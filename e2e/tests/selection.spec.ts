@@ -91,6 +91,7 @@ test("floating toolbar is the only element tooling surface", async ({ page }) =>
   const { floatingToolbarAnchor } = getHeaderControls(page);
 
   await expect(floatingToolbarAnchor).toBeVisible();
-  await expect(page.getByTestId("sidebar-tool-panel")).toBeHidden();
-  await expect(page.getByRole("button", { name: "Use tool panel mode", exact: true })).toBeHidden();
+  await expect(
+    floatingToolbarAnchor.getByRole("button", { name: "Font", exact: true })
+  ).toBeVisible();
 });

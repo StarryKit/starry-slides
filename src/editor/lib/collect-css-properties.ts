@@ -39,7 +39,10 @@ export function collectCssProperties(element: HTMLElement): CssPropertyRow[] {
       continue;
     }
 
-    const value = styles.getPropertyValue(name).trim();
+    const value =
+      name === "transform" && element.style.transform
+        ? element.style.transform.trim()
+        : styles.getPropertyValue(name).trim();
     if (value.length === 0) {
       continue;
     }
