@@ -8,6 +8,10 @@ import {
   querySlideElement,
 } from "../../core";
 import { type CssPropertyRow, collectCssProperties } from "../lib/collect-css-properties";
+import {
+  type ContentBounds,
+  getVisualContentBounds,
+} from "../lib/content-bounds";
 
 interface UseSlideInspectorOptions {
   iframeRef: RefObject<HTMLIFrameElement | null>;
@@ -82,15 +86,25 @@ function useSlideInspector({
     const elementRects = selectedElementIds
       .map((elementId) => querySlideElement<HTMLElement>(doc, elementId))
       .filter((node): node is HTMLElement => Boolean(node))
-      .map((node) =>
-        elementRectToStageRect(node.getBoundingClientRect(), rootRect, {
-          scale,
-          offsetX,
-          offsetY,
-          slideWidth,
-          slideHeight,
-        })
-      );
+      .map((node) => {
+        const visualBounds: ContentBounds = getVisualContentBounds(node);
+        return elementRectToStageRect(
+          {
+            left: visualBounds.left,
+            top: visualBounds.top,
+            width: visualBounds.width,
+            height: visualBounds.height,
+          },
+          rootRect,
+          {
+            scale,
+            offsetX,
+            offsetY,
+            slideWidth,
+            slideHeight,
+          }
+        );
+      });
 
     if (!elementRects.length) {
       setSelectedStageRect((currentRect) => (currentRect === null ? currentRect : null));
