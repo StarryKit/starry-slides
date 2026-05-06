@@ -104,13 +104,6 @@ function useEditorKeyboardShortcuts({
       }
 
       clipboardRef.current = { elements, unionRect };
-
-      const clipboard = navigator.clipboard;
-      if (clipboard) {
-        void clipboard
-          .writeText(JSON.stringify({ type: "html-slides-editor.elements", elements, unionRect }))
-          .catch(() => {});
-      }
       return true;
     };
 

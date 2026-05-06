@@ -70,6 +70,12 @@ test("floating toolbar applies appearance, layout, and custom css controls", asy
 
   await page.keyboard.press("Escape");
   await editableHeading.click();
+  await clickFloatingToolbarButton(page, "Rotation");
+  await toolbar.getByRole("spinbutton", { name: "Rotation", exact: true }).fill("12");
+  await expectInlineStyle(editableHeading, "transform", "rotate(12deg)");
+
+  await page.keyboard.press("Escape");
+  await editableHeading.click();
   await clickFloatingToolbarButton(page, "Fill");
   await toolbar.getByRole("button", { name: "Use #EF4444", exact: true }).nth(1).click();
   await expectInlineStyle(editableHeading, "background-color", "rgb(239, 68, 68)");
@@ -95,16 +101,20 @@ test("floating toolbar is the only primary element tooling surface", async ({ pa
   const { floatingToolbarAnchor } = getHeaderControls(page);
 
   await expect(floatingToolbarAnchor).toBeHidden();
-  await expect(page.getByTestId("sidebar-tool-panel")).toBeHidden();
-  await expect(page.getByRole("button", { name: "Use tool panel mode", exact: true })).toBeHidden();
+  await expect(page.getByTestId("sidebar-tool-panel")).toHaveCount(0);
+  await expect(page.getByRole("button", { name: "Use tool panel mode", exact: true })).toHaveCount(
+    0
+  );
 
   await editableHeading.click();
   await expect(floatingToolbarAnchor).toBeVisible();
   await expect(
     floatingToolbarAnchor.getByRole("button", { name: "Font", exact: true })
   ).toBeVisible();
-  await expect(page.getByRole("button", { name: "Use tool panel mode", exact: true })).toBeHidden();
-  await expect(page.getByTestId("sidebar-tool-panel")).toBeHidden();
+  await expect(page.getByRole("button", { name: "Use tool panel mode", exact: true })).toHaveCount(
+    0
+  );
+  await expect(page.getByTestId("sidebar-tool-panel")).toHaveCount(0);
 
   await stagePanel.click({ position: { x: 12, y: 12 } });
   await expect(floatingToolbarAnchor).toBeHidden();
@@ -154,6 +164,7 @@ test("selected group toolbar only exposes layout and organization controls", asy
 
   const toolbar = page.getByTestId("floating-toolbar-anchor");
   await expect(toolbar.getByRole("button", { name: "Size", exact: true })).toBeVisible();
+  await expect(toolbar.getByRole("button", { name: "Rotation", exact: true })).toBeVisible();
   await expect(
     toolbar.getByRole("button", { name: "Layer, Align, Distribute", exact: true })
   ).toBeVisible();

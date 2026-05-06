@@ -54,6 +54,17 @@ test("keyboard copy paste duplicates the selected element and selects the copy",
   page,
 }) => {
   await gotoEditor(page);
+  await page.evaluate(() => {
+    const clipboard = {
+      writeText: () => {
+        throw new Error("Object copy should not write to the system clipboard.");
+      },
+    };
+    Object.defineProperty(navigator, "clipboard", {
+      configurable: true,
+      value: clipboard,
+    });
+  });
 
   const frame = coverFrame(page);
   const editableHeading = frame.locator('[data-editor-id="text-1"]');

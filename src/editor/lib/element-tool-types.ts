@@ -18,6 +18,7 @@ export type ElementToolFeatureId =
   | "width"
   | "height"
   | "opacity"
+  | "rotation"
   | "align-to-slide"
   | "distribute"
   | "layer-order"

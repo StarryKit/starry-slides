@@ -32,7 +32,6 @@ test("selecting another element after clearing selection keeps the app mounted",
   await secondElement.click();
   await expect(selectionOverlay).toBeVisible();
   await expect(page.getByTestId("stage-panel")).toBeVisible();
-  await expect(page.getByTestId("sidebar-tool-panel")).toBeHidden();
   expect(pageErrors).toEqual([]);
 });
 
@@ -168,7 +167,6 @@ test("text editing hides editor chrome and suppresses inline editing outline", a
 
   await expect(selectionOverlay).toBeHidden();
   await expect(floatingToolbarAnchor).toBeHidden();
-  await expect(page.getByRole("button", { name: "Use tool panel mode", exact: true })).toBeHidden();
   await expect(editableHeading).toHaveAttribute("data-hse-editing", "true");
   await expect(editableHeading).toHaveJSProperty("contentEditable", "plaintext-only");
   await expect(editableHeading).toHaveCSS("outline-style", "none");
