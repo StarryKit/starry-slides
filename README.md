@@ -46,14 +46,15 @@ starry-slides verify [deck]
 starry-slides verify [deck] --static
 starry-slides view [deck] --slide <manifest-file>
 starry-slides view [deck] --all
+starry-slides view [deck] --all --out-dir <directory>
 starry-slides add-skill
 ```
 
 `starry-slides [deck]` defaults to `starry-slides open [deck]`. `open` runs
 Complete Verify first and only starts the browser editor when validation passes.
 `verify` writes a JSON Verify Result to stdout. `view` runs Static Verify, writes
-PNG previews under `<deck>/.starry-slides/view/`, and writes a JSON Preview
-Manifest to stdout.
+PNG previews under `<deck>/.starry-slides/view/` or an explicit `--out-dir`, and
+writes a JSON Preview Manifest to stdout.
 
 The agent-facing skill remains in `skills/starry-slides-skill/`. It owns the
 deck-generation workflow and protocol references, but it should use
@@ -91,7 +92,7 @@ pnpm install
 Validate the built-in sample deck:
 
 ```bash
-pnpm starry-slides verify sample-slides
+pnpm --silent starry-slides verify sample-slides
 ```
 
 Open the built-in sample deck:
@@ -125,9 +126,9 @@ pnpm format
 pnpm test
 pnpm test:e2e
 pnpm verify
-pnpm starry-slides verify sample-slides
-pnpm starry-slides verify sample-slides --static
-pnpm starry-slides view sample-slides --slide 01-hero.html
+pnpm --silent starry-slides verify sample-slides
+pnpm --silent starry-slides verify sample-slides --static
+pnpm --silent starry-slides view sample-slides --slide 01-hero.html
 pnpm starry-slides open sample-slides
 ```
 
@@ -159,10 +160,10 @@ my-deck/
 Useful protocol commands:
 
 ```bash
-pnpm starry-slides verify path/to/deck
+pnpm --silent starry-slides verify path/to/deck
 pnpm starry:contract:annotate -- --input path/to/deck
 pnpm starry:contract:manifest -- --input-dir path/to/deck/slides --deck-title "My Deck"
-pnpm starry-slides view path/to/deck --all
+pnpm --silent starry-slides view path/to/deck --all
 pnpm starry-slides open path/to/deck
 ```
 

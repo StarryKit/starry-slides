@@ -10,7 +10,7 @@ export function buildChartSlide() {
       height: 100%;
     }
     .chart-card {
-      padding: 28px;
+      padding: 24px;
       border-radius: 34px;
       background: rgba(255, 255, 255, 0.82);
       border: 1px solid rgba(255, 255, 255, 0.92);
@@ -21,22 +21,22 @@ export function buildChartSlide() {
       color: #0f766e;
     }
     .chart-card h1 {
-      margin: 22px 0 18px;
-      font-size: 72px;
-      line-height: 0.98;
+      margin: 18px 0 14px;
+      font-size: 58px;
+      line-height: 1;
       letter-spacing: -0.03em;
     }
     .chart-card p {
       max-width: 860px;
-      margin-bottom: 24px;
-      font-size: 24px;
-      line-height: 1.5;
+      margin-bottom: 14px;
+      font-size: 20px;
+      line-height: 1.35;
       color: rgba(31, 41, 55, 0.74);
     }
     .legend {
       display: flex;
       gap: 18px;
-      margin-top: 16px;
+      margin-top: 10px;
       flex-wrap: wrap;
     }
     .legend-item {
@@ -53,12 +53,12 @@ export function buildChartSlide() {
     }
     .stats {
       display: grid;
-      gap: 16px;
+      gap: 12px;
       align-content: center;
     }
     .stat {
-      padding: 24px;
-      border-radius: 28px;
+      padding: 20px;
+      border-radius: 24px;
       background: rgba(15, 23, 42, 0.94);
       color: #f8fafc;
       box-shadow: 0 22px 50px rgba(15, 23, 42, 0.18);
@@ -73,13 +73,13 @@ export function buildChartSlide() {
     }
     .stat span {
       display: block;
-      font-size: 44px;
+      font-size: 36px;
       line-height: 1.05;
     }
     .stat p {
-      margin-top: 12px;
-      font-size: 20px;
-      line-height: 1.45;
+      margin-top: 10px;
+      font-size: 18px;
+      line-height: 1.35;
       color: rgba(226, 232, 240, 0.78);
     }`,
     `
@@ -88,7 +88,7 @@ export function buildChartSlide() {
           <div class="kicker" data-editable="text">Charts</div>
           <h1 data-editable="text">Inline SVG gives the deck a realistic chart slide without extra runtime dependencies</h1>
           <p data-editable="text">The editor does not yet understand charts semantically, but this slide still matters because it exercises block selection around vector-heavy content.</p>
-          <svg viewBox="0 0 980 560" width="100%" height="560" aria-label="Project milestones chart">
+          <svg viewBox="0 0 980 500" width="100%" height="500" aria-label="Project milestones chart">
             <defs>
               <linearGradient id="areaFill" x1="0%" x2="0%" y1="0%" y2="100%">
                 <stop offset="0%" stop-color="#38bdf8" stop-opacity="0.35"></stop>

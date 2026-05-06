@@ -135,16 +135,16 @@ export function buildComparisonSlide() {
   return wrapHtml(
     `${baseStyles("linear-gradient(160deg, #fdfaf4 0%, #f0fdf4 52%, #eff6ff 100%)")}
     .header {
-      margin-bottom: 34px;
+      margin-bottom: 26px;
     }
     .header .kicker {
       background: rgba(22, 163, 74, 0.12);
       color: #166534;
     }
     .header h1 {
-      margin-top: 18px;
+      margin-top: 14px;
       max-width: 1020px;
-      font-size: 74px;
+      font-size: 58px;
       line-height: 1;
       letter-spacing: -0.03em;
     }
@@ -152,10 +152,10 @@ export function buildComparisonSlide() {
       display: grid;
       grid-template-columns: 1fr 1fr;
       gap: 24px;
-      height: 790px;
+      height: 620px;
     }
     .panel {
-      padding: 28px;
+      padding: 24px;
       border-radius: 32px;
       box-shadow: 0 24px 50px rgba(15, 23, 42, 0.08);
     }
@@ -169,27 +169,27 @@ export function buildComparisonSlide() {
     }
     .panel strong {
       display: block;
-      margin-bottom: 18px;
-      font-size: 32px;
+      margin-bottom: 14px;
+      font-size: 28px;
     }
     .panel p {
-      margin-bottom: 24px;
-      font-size: 23px;
-      line-height: 1.5;
+      margin-bottom: 18px;
+      font-size: 20px;
+      line-height: 1.38;
     }
     .panel ul {
       margin: 0;
       padding-left: 22px;
-      font-size: 22px;
-      line-height: 1.6;
+      font-size: 18px;
+      line-height: 1.36;
     }
     .quote {
-      margin-top: 26px;
-      padding: 22px;
+      margin-top: 14px;
+      padding: 16px;
       border-radius: 24px;
       background: rgba(15, 23, 42, 0.06);
-      font-size: 22px;
-      line-height: 1.5;
+      font-size: 18px;
+      line-height: 1.32;
     }
     .panel.right .quote {
       background: rgba(148, 163, 184, 0.14);

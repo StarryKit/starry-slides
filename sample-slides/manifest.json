@@ -1,6 +1,6 @@
 {
   "topic": "Starry Slides Project Overview",
-  "generatedAt": "2026-05-05T08:52:47.320Z",
+  "generatedAt": "2026-05-06T11:32:07.224Z",
   "slides": [
     {
       "file": "01-hero.html",
@@ -51,7 +51,11 @@
       "title": "Snap sibling fixture"
     },
     {
-      "file": "13-closing.html",
+      "file": "13-group-geometry.html",
+      "title": "Group geometry fixture"
+    },
+    {
+      "file": "14-closing.html",
       "title": "Closing and next steps"
     }
   ]
