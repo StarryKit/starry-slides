@@ -15,6 +15,7 @@ interface ParsedArgs {
   staticVerify: boolean;
   viewMode?: "slide" | "all";
   slideFile?: string;
+  outDir?: string;
 }
 
 const COMMANDS = new Set(["open", "verify", "view", "add-skill", "help", "--help", "-h"]);
@@ -27,6 +28,7 @@ function usage(): string {
   starry-slides verify [deck] --static
   starry-slides view [deck] --slide <manifest-file>
   starry-slides view [deck] --all
+  starry-slides view [deck] --all --out-dir <directory>
   starry-slides add-skill`;
 }
 
@@ -38,6 +40,7 @@ function parseArgs(argv: string[]): ParsedArgs {
   let staticVerify = false;
   let viewMode: ParsedArgs["viewMode"];
   let slideFile: string | undefined;
+  let outDir: string | undefined;
 
   for (let index = 0; index < remaining.length; index += 1) {
     const arg = remaining[index];
@@ -66,6 +69,16 @@ function parseArgs(argv: string[]): ParsedArgs {
       continue;
     }
 
+    if (arg === "--out-dir") {
+      const value = remaining[index + 1];
+      if (!value || value.startsWith("--")) {
+        throw new Error("--out-dir requires a directory path");
+      }
+      outDir = value;
+      index += 1;
+      continue;
+    }
+
     if (arg.startsWith("--")) {
       throw new Error(`Unknown option: ${arg}`);
     }
@@ -76,7 +89,7 @@ function parseArgs(argv: string[]): ParsedArgs {
     deckPath = arg;
   }
 
-  return { command, deckPath, staticVerify, viewMode, slideFile };
+  return { command, deckPath, staticVerify, viewMode, slideFile, outDir };
 }
 
 function normalizeCommand(first: string | undefined): Command {
@@ -149,6 +162,7 @@ async function runView(deckPath: string, parsed: ParsedArgs) {
   const manifest = await renderPreviewManifest({
     deckPath,
     slideFile: parsed.viewMode === "slide" ? parsed.slideFile : undefined,
+    outDir: parsed.outDir,
   });
   writeJson(manifest);
 }

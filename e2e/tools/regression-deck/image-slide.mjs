@@ -4,31 +4,31 @@ export function buildImageSlide() {
   return wrapHtml(
     `${baseStyles("linear-gradient(145deg, #f7f2ea 0%, #f4fbff 48%, #eff6ff 100%)")}
     .header {
-      margin-bottom: 28px;
+      margin-bottom: 20px;
     }
     .header .kicker {
       background: rgba(124, 58, 237, 0.1);
       color: #6d28d9;
     }
     .header h1 {
-      margin-top: 18px;
+      margin-top: 14px;
       max-width: 1140px;
-      font-size: 74px;
+      font-size: 50px;
       line-height: 1.02;
       letter-spacing: -0.03em;
     }
     .header p {
-      margin-top: 18px;
+      margin-top: 10px;
       max-width: 960px;
-      font-size: 24px;
-      line-height: 1.5;
+      font-size: 18px;
+      line-height: 1.3;
       color: rgba(31, 41, 55, 0.74);
     }
     .gallery {
       display: grid;
       grid-template-columns: 1.25fr 0.9fr;
       gap: 24px;
-      height: 760px;
+      height: 580px;
     }
     .hero-image,
     .stack-card {

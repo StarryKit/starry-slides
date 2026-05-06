@@ -119,6 +119,25 @@ describe("starry-slides cli", () => {
     }
   });
 
+  test("view supports overriding the output directory", () => {
+    writeFixture();
+    const outDir = path.join(tmpDeck, "custom-preview");
+    fs.mkdirSync(outDir, { recursive: true });
+    fs.writeFileSync(path.join(outDir, "stale.png"), "stale");
+
+    const result = runCli(["view", tmpDeck, "--all", "--out-dir", outDir]);
+
+    expect(result.status).toBe(0);
+    expect(result.stderr).toBe("");
+    const parsed = JSON.parse(result.stdout);
+    expect(parsed.outputDir).toBe(outDir);
+    expect(parsed.slides).toHaveLength(1);
+    expect(parsed.slides[0].path).toContain(outDir);
+    expect(fs.existsSync(parsed.slides[0].path)).toBe(true);
+    expect(fs.existsSync(path.join(outDir, "stale.png"))).toBe(false);
+    expect(fs.existsSync(path.join(tmpDeck, ".starry-slides", "view"))).toBe(false);
+  });
+
   test("view slide rejects non-manifest slide references exactly", () => {
     writeFixture();
     const result = runCli(["view", tmpDeck, "--slide", "1"]);

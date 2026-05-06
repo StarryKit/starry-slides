@@ -95,9 +95,11 @@ export async function verifyRenderedOverflow(deckPath: string): Promise<VerifyIs
 export async function renderPreviewManifest({
   deckPath,
   slideFile,
+  outDir,
 }: {
   deckPath: string;
   slideFile?: string;
+  outDir?: string;
 }): Promise<PreviewManifest> {
   const deck = path.resolve(process.cwd(), deckPath);
   const slides = getManifestSlides(deck);
@@ -107,7 +109,7 @@ export async function renderPreviewManifest({
     throw new Error(`--slide must match a manifest slide file exactly: ${slideFile}`);
   }
 
-  const outputDir = path.join(deck, ".starry-slides", "view");
+  const outputDir = outDir ? path.resolve(process.cwd(), outDir) : path.join(deck, ".starry-slides", "view");
   clearPreviewOutput(outputDir);
 
   const chromium = await loadChromium();
@@ -262,7 +264,7 @@ async function measureOverflow(page: PlaywrightPage): Promise<OverflowMeasuremen
 
       const overflowX = node.scrollWidth - node.clientWidth;
       const overflowY = node.scrollHeight - node.clientHeight;
-      if (overflowX > tolerance || overflowY > tolerance) {
+      if (hasConstrainedContentBox(node) && (overflowX > tolerance || overflowY > tolerance)) {
         measurements.push({
           code: "overflow.element-content",
           selector: selectorFor(node),
@@ -279,6 +281,34 @@ async function measureOverflow(page: PlaywrightPage): Promise<OverflowMeasuremen
     }
 
     return measurements;
+
+    function hasConstrainedContentBox(node) {
+      const style = window.getComputedStyle(node);
+      const overflowValues = [
+        style.overflow,
+        style.overflowX,
+        style.overflowY,
+      ];
+      const clipsOverflow = overflowValues.some((value) =>
+        ["hidden", "clip", "auto", "scroll"].includes(value)
+      );
+      const hasExplicitBox =
+        style.position === "absolute" ||
+        style.position === "fixed" ||
+        style.display === "block" ||
+        style.display === "inline-block" ||
+        style.display === "inline-flex" ||
+        style.display === "flex" ||
+        style.display === "grid" ||
+        style.maxWidth !== "none" ||
+        style.maxHeight !== "none" ||
+        node.style.width ||
+        node.style.height ||
+        node.style.maxWidth ||
+        node.style.maxHeight;
+
+      return clipsOverflow && hasExplicitBox;
+    }
   })()`);
 }
 

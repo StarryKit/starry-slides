@@ -9,17 +9,17 @@ export function buildProblemSlide() {
       display: flex;
       justify-content: space-between;
       align-items: end;
-      margin-bottom: 48px;
+      margin-bottom: 24px;
     }
     .title-row .kicker {
       background: rgba(190, 24, 93, 0.1);
       color: #9d174d;
     }
     .title-row h1 {
-      margin-top: 22px;
-      font-size: 82px;
-      letter-spacing: -0.035em;
-      line-height: 0.95;
+      margin-top: 18px;
+      font-size: 62px;
+      letter-spacing: -0.03em;
+      line-height: 0.98;
     }
     .summary-chip {
       width: 360px;
@@ -46,8 +46,8 @@ export function buildProblemSlide() {
       gap: 24px;
     }
     .problem-card {
-      min-height: 560px;
-      padding: 30px;
+      min-height: 400px;
+      padding: 24px;
       border-radius: 30px;
       background: rgba(255, 255, 255, 0.8);
       border: 1px solid rgba(255, 255, 255, 0.88);
@@ -55,20 +55,20 @@ export function buildProblemSlide() {
     }
     .problem-card strong {
       display: block;
-      margin-bottom: 18px;
-      font-size: 30px;
+      margin-bottom: 14px;
+      font-size: 26px;
     }
     .problem-card p {
-      font-size: 24px;
-      line-height: 1.55;
+      font-size: 20px;
+      line-height: 1.36;
       color: rgba(31, 41, 55, 0.76);
     }
     .problem-card ul {
-      margin: 24px 0 0;
+      margin: 18px 0 0;
       padding-left: 24px;
       color: rgba(31, 41, 55, 0.78);
-      font-size: 22px;
-      line-height: 1.55;
+      font-size: 18px;
+      line-height: 1.32;
     }`,
     `
       <div class="title-row">
@@ -121,17 +121,17 @@ export function buildArchitectureSlide() {
       display: flex;
       justify-content: space-between;
       align-items: end;
-      margin-bottom: 40px;
+      margin-bottom: 26px;
     }
     .header .kicker {
       background: rgba(56, 189, 248, 0.14);
       color: #bae6fd;
     }
     .header h1 {
-      margin-top: 20px;
+      margin-top: 16px;
       max-width: 980px;
-      font-size: 82px;
-      line-height: 0.96;
+      font-size: 68px;
+      line-height: 0.98;
       letter-spacing: -0.035em;
     }
     .header p {
@@ -145,11 +145,11 @@ export function buildArchitectureSlide() {
       grid-template-columns: 1fr 140px 1fr 140px 1fr;
       gap: 18px;
       align-items: center;
-      height: 720px;
+      height: 620px;
     }
     .flow-card {
-      min-height: 360px;
-      padding: 30px;
+      min-height: 330px;
+      padding: 26px;
       border-radius: 32px;
       background: rgba(15, 23, 42, 0.46);
       border: 1px solid rgba(148, 163, 184, 0.2);
@@ -158,18 +158,18 @@ export function buildArchitectureSlide() {
     .flow-card strong {
       display: block;
       margin-bottom: 16px;
-      font-size: 34px;
+      font-size: 30px;
     }
     .flow-card p {
-      font-size: 24px;
-      line-height: 1.5;
+      font-size: 21px;
+      line-height: 1.4;
       color: rgba(226, 232, 240, 0.78);
     }
     .flow-card ul {
-      margin: 24px 0 0;
+      margin: 18px 0 0;
       padding-left: 22px;
-      font-size: 21px;
-      line-height: 1.55;
+      font-size: 18px;
+      line-height: 1.38;
       color: rgba(226, 232, 240, 0.8);
     }
     .arrow {
