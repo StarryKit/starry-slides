@@ -40,11 +40,17 @@ If a command is exposed through multiple surfaces, each surface needs an E2E
 entry-path test, and at least one shared behavior assertion must prove all paths
 reach the same operation semantics.
 
-### Required coverage categories
+### Required coverage by editing feature group
 
-#### Selection and editing modes
+E2E coverage must be organized by editing feature group first. UI surface is a
+property of each feature group, not the top-level category. A coverage matrix
+must record, for every supported command, the feature group, invocation
+surfaces, fixture, expected DOM/model effect, selection/focus effect, history
+expectation, persistence expectation, current test file, and remaining gaps.
 
-E2E must cover:
+#### Selection, focus, and edit-mode routing
+
+Required behavior coverage:
 
 - selecting text, block, nested text, group, and multi-selection targets
 - clearing selection from the stage background
@@ -54,6 +60,12 @@ E2E must cover:
   resizing, rotating, text-editing, and group-editing states
 - commands being unavailable when text editing should use native browser
   behavior
+- selection and command behavior after switching slides
+
+Invocation surfaces:
+
+- stage click, double-click, background click, keyboard Enter/Escape, blur, and
+  slide switching
 
 Current coverage is partially present in:
 
@@ -65,25 +77,56 @@ Current coverage is partially present in:
 
 Known gaps:
 
-- text-editing Cut, Copy, and Paste isolation from Object Clipboard is not
-  explicitly covered
 - selection and command behavior after switching slides is thinly covered
 - toolbar suppression during rotation is not explicitly covered
+- command unavailability during native text editing is not consistently covered
+  for all shortcut and toolbar paths
 
-#### Floating Toolbar controls
+#### Text content editing and native text clipboard
 
-Every Floating Toolbar control that commits a style, attribute, or operation
-must have an E2E test that invokes the control and verifies the resulting slide
-HTML or inline style.
+Required behavior coverage:
 
-Required style and attribute coverage:
+- text edits commit to the slide DOM, editor model, and persisted generated HTML
+- undo and redo restore exact previous and next text states
+- text-editing Cut, Copy, and Paste operate inside the active text element
+- text-editing Cut, Copy, and Paste do not mutate object selection or Object
+  Clipboard state
+- keyboard shortcuts that are native while editing text do not invoke object
+  commands
 
-- typography: font family, font size, weight, style, underline,
-  strikethrough, line height, text alignment
-- appearance: text color, background color, border, border radius, shadow
-- layout: width, height, opacity, rotation
-- attributes: lock state, link URL, alt text, ARIA label
-- custom CSS property add/update/remove behavior
+Invocation surfaces:
+
+- contenteditable/native browser text editing, keyboard shortcuts, blur, and
+  explicit edit-mode exit gestures
+
+Current coverage is partially present in:
+
+- `e2e/tests/text-editing.spec.ts`
+- `e2e/tests/text-editing-history.spec.ts`
+- `e2e/tests/selection.spec.ts`
+
+Known gaps:
+
+- text-editing Cut, Copy, and Paste isolation from Object Clipboard is not
+  explicitly covered
+- native text clipboard isolation is not explicitly covered
+- text refresh/persistence coverage is stronger than other feature groups, but
+  still needs to stay represented in the coverage matrix
+
+#### Text typography and paragraph formatting
+
+Required behavior coverage:
+
+- font family, font size, font weight, italic style, underline, strikethrough,
+  line height, text alignment, and text color
+- each formatting change writes the expected inline style or HTML attribute
+- each undoable formatting change participates in undo and redo
+- representative formatting changes persist after refresh or reopen
+
+Invocation surfaces:
+
+- Floating Toolbar typography controls and any secondary surface that exposes
+  the same formatting command
 
 Current coverage is partially present in:
 
@@ -93,29 +136,83 @@ Known gaps:
 
 - underline and strikethrough are not covered
 - text color is not covered separately from background color
+- formatting persistence after refresh is not consistently covered
+
+#### Object appearance, attributes, and custom CSS
+
+Required behavior coverage:
+
+- background color, border, border radius, box shadow, opacity, lock state,
+  link URL, alt text, ARIA label, and custom CSS property add/update/remove
+  behavior
+- each appearance or attribute change writes the expected generated HTML source
+  state when persisted
+- each undoable appearance or attribute change participates in undo and redo
+- invalid values are rejected, normalized, disabled, or no-op according to the
+  product contract
+
+Invocation surfaces:
+
+- Floating Toolbar appearance, attribute, and custom CSS controls
+
+Current coverage is partially present in:
+
+- `e2e/tests/floating-toolbar.spec.ts`
+
+Known gaps:
+
 - box shadow is not covered
 - lock state, link URL, alt text, and ARIA label are not covered
-- rotation is covered only for setting a non-zero value; clearing rotation and
-  preserving existing translate are not covered
 - custom CSS removal or overwriting an existing custom property is not covered
+- style and attribute edits are not consistently verified after refresh
 
-#### Arrangement, layout, and organization commands
+#### Layout, transform, and direct manipulation
 
-Every arrangement command must be tested as a real operation, not just as a
-visible menu item.
+Required behavior coverage:
 
-Required coverage:
-
-- Floating Toolbar layer order: bring to front, bring forward, send backward,
-  send to back
-- Floating Toolbar align to slide: left, horizontal center, right, top,
-  vertical center, bottom
-- Floating Toolbar distribute: horizontal and vertical distribution for three
-  or more selected elements
-- Floating Toolbar group and ungroup
-- keyboard layer shortcuts
+- width, height, opacity, and rotation mutations
+- clearing rotation while preserving existing translate
 - drag, resize, and rotate manipulation handles
 - snap guide behavior during drag and resize where supported
+- arrow-key movement with normal, Shift, and Alt step sizes
+- layout and transform operations participate in undo and redo
+
+Invocation surfaces:
+
+- Floating Toolbar layout controls, manipulation handles, and keyboard movement
+  shortcuts
+
+Current coverage is partially present in:
+
+- `e2e/tests/floating-toolbar.spec.ts`
+- `e2e/tests/keyboard-and-multiselect.spec.ts`
+- `e2e/tests/block-manipulation.spec.ts`
+
+Known gaps:
+
+- rotation is covered only for setting a non-zero value; clearing rotation and
+  preserving existing translate are not covered
+- rotate handle behavior is not covered by E2E
+- Alt-step keyboard movement is not covered
+- redo coverage is stronger for text edits than for object/layout operations
+
+#### Layering, alignment, and distribution
+
+Required behavior coverage:
+
+- bring to front, bring forward, send backward, and send to back
+- align to slide left, horizontal center, right, top, vertical center, and
+  bottom
+- horizontal and vertical distribution for three or more selected elements
+- keyboard layer shortcuts
+- commands are hidden, disabled, or no-op in irrelevant states
+- operation effects are asserted on rendered position/order, not just menu
+  visibility
+
+Invocation surfaces:
+
+- Floating Toolbar arrangement controls, Context Menu arrangement commands, and
+  keyboard layer shortcuts
 
 Current coverage is partially present in:
 
@@ -127,69 +224,55 @@ Known gaps:
 
 - Floating Toolbar layer, align, and distribute commands are mostly tested for
   visibility, not effect
-- Floating Toolbar ungroup is not covered as an invoked operation
-- rotate handle behavior is not covered by E2E
-- group rotation or group-specific layout operations are not covered
+- Context Menu Layer, Align, and Distribute behavior is not covered
+- arrangement persistence after refresh is not covered
 
-#### Context Menu commands
+#### Grouping, ungrouping, and nested-group flattening
 
-Context Menu is a secondary shortcut surface under ADR-0009. It must not be
-only visually present; commands must execute correctly.
+Required behavior coverage:
 
-Required coverage:
+- group and ungroup selected elements
+- disabled or absent Ungroup behavior for a normal block
+- group-specific selection, focus, toolbar, and manipulation state
+- group-specific layout and rotation operations where supported
+- Group then Ungroup on slide 12's Snap sibling fixture: after grouping Card A
+  and Card B, then ungrouping, each promoted card must return to the parent
+  layer with the same rendered bounding-box width and height it had before
+  grouping, within normal browser subpixel tolerance
+- Flatten and Group on slide 12's Snap sibling fixture: after creating two
+  separate groups and grouping those groups into a new group, the cards inside
+  the resulting group must keep their pre-flatten rendered bounding-box width
+  and height, within normal browser subpixel tolerance
+- grouping and ungrouping participate in undo, redo, and persistence
 
-- opening the Context Menu from a selected element and multi-selection
-- Context Menu Duplicate and Delete visibility and behavior
-- Context Menu Group and Ungroup visibility and behavior
-- Context Menu Layer, Align, and Distribute visibility and behavior
-- disabled or absent commands in irrelevant states, such as Ungroup for a
-  normal block
-- keyboard navigation and dismissal behavior provided by the Radix/shadcn
-  primitive where product-critical
+Invocation surfaces:
 
-Current coverage:
-
-- no dedicated Context Menu E2E coverage exists.
-
-Known gaps:
-
-- all Context Menu behavior listed above is missing.
-
-#### Keyboard editing commands
-
-Keyboard-first commands need direct tests because they bypass visible toolbar
-controls.
-
-Required coverage:
-
-- Delete and Backspace remove selected objects and undo restores them
-- Duplicate shortcut duplicates selected objects and selects the duplicate
-- object Cut, Copy, and Paste for single and multi-selection
-- repeated paste offset and clamping inside slide bounds
-- arrow-key movement with normal, Shift, and Alt step sizes
-- Escape behavior across selected, text-editing, and group-editing states
-- undo and redo stack behavior after keyboard commands
+- Floating Toolbar group controls and Context Menu Group/Ungroup commands
 
 Current coverage is partially present in:
 
+- `e2e/tests/floating-toolbar.spec.ts`
 - `e2e/tests/keyboard-and-multiselect.spec.ts`
-- `e2e/tests/text-editing-history.spec.ts`
 - `e2e/tests/block-manipulation.spec.ts`
 
 Known gaps:
 
-- Duplicate shortcut is not directly covered
-- Delete key and Backspace are not both covered across platforms
-- Alt-step keyboard movement is not covered
-- keyboard commands after group selection are thinly covered
+- Floating Toolbar ungroup is not covered as an invoked operation
+- Context Menu Group and Ungroup behavior is not covered
+- Group then Ungroup does not yet have an E2E assertion that child cards keep
+  their rendered dimensions after being promoted back to the parent layer
+- Flatten and Group does not yet have an E2E assertion that card dimensions are
+  preserved when selected groups are expanded into the new group
+- group rotation or group-specific layout operations are not covered
+- grouping and ungrouping persistence after refresh is not covered
 
-#### Object Clipboard and native text clipboard split
+#### Duplicate, remove, and Object Clipboard
 
-ADR-0009 requires object clipboard behavior to be editor-local while text
-editing keeps native browser semantics.
+Required behavior coverage:
 
-Required coverage:
-
+- Duplicate creates new element ids, preserves expected geometry, and selects
+  the duplicate
+- Delete and Backspace remove selected objects and undo restores them
 - object Copy does not write to the system clipboard
 - object Paste uses the editor-local Object Clipboard
 - object Cut is undoable as copy plus remove
@@ -197,49 +280,52 @@ Required coverage:
   positions
 - object Paste selects the inserted objects
 - object Paste with an empty Object Clipboard is a no-op
-- text-editing Cut, Copy, and Paste operate inside the active text element and
-  do not mutate object selection or Object Clipboard state
-
-Current coverage is partially present in:
-
-- `e2e/tests/keyboard-and-multiselect.spec.ts`
-- `e2e/tests/text-editing.spec.ts`
-
-Known gaps:
-
-- empty Object Clipboard paste no-op is not covered
-- native text clipboard isolation is not explicitly covered
-- new id assertions for pasted nested editable children are not explicit
-
-#### Persistence, write-back, and history
-
-Any command that mutates slide content must prove persistence and history
-behavior at the highest practical level.
-
-Required coverage:
-
-- inline style and attribute mutations are written to the generated HTML source
-  when the editor persists changes
-- insert, remove, group, ungroup, layout, text, style, and attribute operations
-  are undoable and redoable
+- repeated paste offset and clamping inside slide bounds
 - operation batches, such as multi-select delete or paste, undo as one user
   action
-- refreshing or reopening the editor preserves committed generated-deck edits
-  where the feature claims persistence
+
+Invocation surfaces:
+
+- keyboard shortcuts and Context Menu Duplicate/Delete where available
 
 Current coverage is partially present in:
 
-- `e2e/tests/text-editing.spec.ts`
-- `e2e/tests/text-editing-history.spec.ts`
 - `e2e/tests/keyboard-and-multiselect.spec.ts`
-- unit tests under `src/core/`
+- `e2e/tests/text-editing.spec.ts`
 
 Known gaps:
 
-- toolbar style and attribute edits are not consistently verified after refresh
-- grouping, ungrouping, arrangement, and object clipboard persistence after
-  refresh are not covered
-- redo coverage is stronger for text edits than for object/layout operations
+- Duplicate shortcut is not directly covered
+- Delete key and Backspace are not both covered across platforms
+- Context Menu Duplicate and Delete behavior is not covered
+- empty Object Clipboard paste no-op is not covered
+- new id assertions for pasted nested editable children are not explicit
+- object clipboard persistence after refresh is not covered
+
+#### Cross-surface command parity
+
+Required behavior coverage:
+
+- every command exposed through multiple surfaces has one invocation test per
+  surface
+- all invocation paths for the same command reach the same operation semantics
+- opening the Context Menu works from a selected element and multi-selection
+- Context Menu commands have visibility and behavior coverage for Duplicate,
+  Delete, Group, Ungroup, Layer, Align, and Distribute
+- keyboard navigation and dismissal behavior provided by the Radix/shadcn
+  primitive is covered where product-critical
+- irrelevant states hide, disable, or no-op commands consistently across
+  Floating Toolbar, Context Menu, keyboard, and direct-manipulation surfaces
+
+Current coverage:
+
+- no dedicated Context Menu E2E coverage exists.
+
+Known gaps:
+
+- all Context Menu behavior listed above is missing
+- keyboard commands after group selection are thinly covered
+- shared behavior assertions proving surface parity are not consistently present
 
 ### Coverage acceptance rules
 
@@ -258,20 +344,32 @@ operation coverage.
 
 ## Implementation Plan
 
-1. Create an E2E coverage matrix document or checklist that maps editor
-   capabilities to test files, test names, surfaces, and remaining gaps. This
-   may live in `docs/` or near `e2e/tests/`.
-2. Add Context Menu E2E tests first, because ADR-0009 currently has no direct
-   Context Menu behavior coverage.
-3. Add Floating Toolbar operation-effect tests for Layer, Align, Distribute,
-   Group, Ungroup, and missing style/attribute controls.
-4. Add keyboard tests for Duplicate, Delete key parity, Alt-step movement, and
-   group-selection keyboard behavior.
-5. Add Object Clipboard isolation tests for empty paste and native text
-   Cut/Copy/Paste behavior.
-6. Add persistence and undo/redo tests for non-text editing commands that
-   currently only have immediate DOM assertions.
-7. Keep core operation unit tests for exact HTML transformation edge cases, but
+1. Create an E2E coverage matrix document or checklist organized by the editing
+   feature groups in this ADR. For each command, record test file, test name,
+   invocation surface, fixture, DOM/model effect, selection/focus effect,
+   history expectation, persistence expectation, and remaining gaps. This may
+   live in `docs/` or near `e2e/tests/`.
+2. Fill the Selection, focus, and edit-mode routing group first, because all
+   other command tests depend on reliable selected, text-editing, and
+   group-editing state.
+3. Fill the Text content editing, Text typography, and Object appearance groups
+   with operation-effect tests that assert committed DOM, generated HTML, undo,
+   redo, and representative refresh persistence.
+4. Fill the Layout, transform, and direct manipulation group with toolbar,
+   handle, keyboard movement, snap guide, rotation-clear, undo, redo, and
+   refresh-persistence coverage.
+5. Fill the Layering, alignment, and distribution group with operation-effect
+   tests for Floating Toolbar, Context Menu, and keyboard entry paths.
+6. Fill the Grouping, ungrouping, and nested-group flattening group, including
+   the slide 12 Snap sibling fixture assertions for Group then Ungroup and
+   Flatten and Group rendered dimension preservation.
+7. Fill the Duplicate, remove, and Object Clipboard group, including Duplicate,
+   Delete/Backspace parity, empty Object Clipboard paste, multi-selection paste
+   id/position assertions, and native text clipboard isolation.
+8. Add Cross-surface command parity tests after each feature group has at least
+   one behavior assertion. Context Menu E2E tests are part of this work because
+   ADR-0009 currently has no direct Context Menu behavior coverage.
+9. Keep core operation unit tests for exact HTML transformation edge cases, but
    do not count them as substitutes for user-facing E2E coverage.
 
 Affected paths:
@@ -292,13 +390,22 @@ Affected paths:
 ## Verification
 
 - [ ] A coverage matrix exists and lists every supported editing command and
-      surface.
-- [ ] Context Menu commands have E2E behavior tests, not only visibility tests.
-- [ ] Floating Toolbar style, attribute, and operation controls have E2E tests
-      that assert actual committed effects.
-- [ ] Keyboard-first commands have direct E2E tests.
-- [ ] Object Clipboard and native text clipboard behavior are explicitly
-      separated by E2E tests.
+      surface under the editing feature groups defined in this ADR.
+- [ ] Selection, focus, and edit-mode routing behavior is covered before
+      command-specific tests rely on those states.
+- [ ] Text content editing, native text clipboard behavior, typography,
+      appearance, attribute, and custom CSS edits have E2E tests that assert
+      committed effects.
+- [ ] Layout, transform, layering, alignment, and distribution commands have
+      E2E behavior tests, not only visibility tests.
+- [ ] Group then Ungroup preserves each child card's rendered width and height
+      on the slide 12 Snap sibling fixture.
+- [ ] Flatten and Group preserves each card's rendered width and height when
+      two existing groups are grouped into one new group.
+- [ ] Duplicate, remove, Object Clipboard, and keyboard-first commands have
+      direct E2E tests.
+- [ ] Cross-surface command parity is covered for commands exposed by Floating
+      Toolbar, Context Menu, keyboard shortcuts, or direct manipulation.
 - [ ] Undo and redo are covered for every undoable editing operation category.
 - [ ] Persistence after refresh is covered for representative text, style,
       attribute, layout, grouping, and object clipboard mutations.
