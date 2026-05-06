@@ -1,4 +1,4 @@
-export type EditableType = "text" | "image" | "block";
+export type EditableType = "text" | "image" | "block" | "group";
 
 export interface EditableElement {
   id: string;
@@ -6,6 +6,11 @@ export interface EditableElement {
   type: EditableType;
   content: string;
   tagName: string;
+}
+
+export interface GroupElement extends EditableElement {
+  type: "group";
+  children: EditableElement[];
 }
 
 export interface SlideModel {

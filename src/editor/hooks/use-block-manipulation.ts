@@ -123,12 +123,17 @@ function useBlockManipulation({
         return;
       }
       const movableElementIds =
-        mode === "move"
+        mode === "resize" && selectedElementIds.length > 1
           ? selectedElementIds.filter((elementId) => {
               const element = activeSlide.elements.find((candidate) => candidate.id === elementId);
               return isLayoutEditable(element);
             })
-          : [selectedElementId];
+          : mode === "move"
+            ? selectedElementIds.filter((elementId) => {
+                const element = activeSlide.elements.find((candidate) => candidate.id === elementId);
+                return isLayoutEditable(element);
+              })
+            : [selectedElementId];
       const targetNodes = Object.fromEntries(
         movableElementIds
           .map((elementId) => [elementId, querySlideElement<HTMLElement>(doc, elementId)] as const)
@@ -180,6 +185,18 @@ function useBlockManipulation({
       const freshSelectedStageRect = freshStageRects.length
         ? unionStageRects(freshStageRects)
         : selectedStageRect;
+      const elementStartStageRects: Record<string, StageRect> = {};
+      for (let i = 0; i < Object.keys(targetNodes).length; i++) {
+        const elementId = Object.keys(targetNodes)[i];
+        const node = targetNodes[elementId];
+        if (node) {
+          elementStartStageRects[elementId] = elementRectToStageRect(
+            node.getBoundingClientRect(),
+            rootRect,
+            snapStageGeometry
+          );
+        }
+      }
       sessionRef.current = {
         slideId: activeSlide.id,
         elementId: selectedElementId,
@@ -195,6 +212,7 @@ function useBlockManipulation({
         previousStyle: previousStyles[selectedElementId],
         previousStyles,
         targetNodes,
+        elementStartStageRects,
         snapTargets,
       };
       setIsManipulating(true);
@@ -266,16 +284,76 @@ function useBlockManipulation({
 
           setTransientStageRect(snapResult.rect);
           setSnapGuides(snapResult.guides);
-          applyLayoutSnapshot(targetNode, {
-            ...session.previousStyle,
-            width: px(snapResult.rect.width / scale),
-            height: px(snapResult.rect.height / scale),
-            transform: composeTransform(
-              transformParts.translateX + (snapResult.rect.x - session.startStageRect.x) / scale,
-              transformParts.translateY + (snapResult.rect.y - session.startStageRect.y) / scale,
-              transformParts.rotate
-            ),
-          });
+
+          // Proportional scaling: compute scale factors from bounding box change
+          const oldW = session.startStageRect.width;
+          const oldH = session.startStageRect.height;
+          const newW = snapResult.rect.width;
+          const newH = snapResult.rect.height;
+          const factorX = oldW > 0 ? newW / oldW : 1;
+          const factorY = oldH > 0 ? newH / oldH : 1;
+
+          // Shift key locks aspect ratio
+          const uniformScale = moveEvent.shiftKey
+            ? Math.max(factorX, factorY)
+            : null;
+
+          const effectiveScaleX = uniformScale ?? factorX;
+          const effectiveScaleY = uniformScale ?? factorY;
+
+          // Determine which corner is fixed (opposite of the dragged handle)
+          const fixedCornerMap: Record<string, string> = {
+            "top-left": "bottom-right",
+            "top-right": "bottom-left",
+            "bottom-left": "top-right",
+            "bottom-right": "top-left",
+          };
+          const fixedCorner = session.resizeCorner
+            ? fixedCornerMap[session.resizeCorner]
+            : null;
+
+          // Fixed point in stage coordinates (the corner that doesn't move)
+          let fixedX = session.startStageRect.x + session.startStageRect.width;
+          let fixedY = session.startStageRect.y + session.startStageRect.height;
+          if (fixedCorner === "top-left" || fixedCorner === "bottom-left") {
+            fixedX = session.startStageRect.x;
+          }
+          if (fixedCorner === "top-left" || fixedCorner === "top-right") {
+            fixedY = session.startStageRect.y;
+          }
+
+          // Apply proportional scaling to all selected elements
+          for (const elementId of session.elementIds) {
+            const node = session.targetNodes[elementId];
+            const prevStyle = session.previousStyles[elementId];
+            const startRect = session.elementStartStageRects[elementId];
+            if (!node || !prevStyle || !startRect) continue;
+
+            // Element position relative to the fixed corner
+            const relX = startRect.x - fixedX;
+            const relY = startRect.y - fixedY;
+
+            // Scale position and size
+            const newX = fixedX + relX * effectiveScaleX;
+            const newY = fixedY + relY * effectiveScaleY;
+            const newElW = startRect.width * effectiveScaleX;
+            const newElH = startRect.height * effectiveScaleY;
+
+            const elTransformParts = parseTransformParts(prevStyle.transform);
+            const deltaX = (newX - startRect.x) / scale;
+            const deltaY = (newY - startRect.y) / scale;
+
+            applyLayoutSnapshot(node, {
+              ...prevStyle,
+              width: px(newElW / scale),
+              height: px(newElH / scale),
+              transform: composeTransform(
+                elTransformParts.translateX + deltaX,
+                elTransformParts.translateY + deltaY,
+                elTransformParts.rotate
+              ),
+            });
+          }
           return;
         }
 

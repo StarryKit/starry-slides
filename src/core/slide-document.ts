@@ -3,6 +3,7 @@ import {
   DEFAULT_SLIDE_WIDTH,
   type EditableElement,
   type EditableType,
+  type GroupElement,
   SELECTOR_ATTR,
   SLIDE_ROOT_ATTR,
   type SlideModel,
@@ -115,7 +116,7 @@ export function parseSlide(html: string, slideId = "slide-1"): SlideModel {
     DEFAULT_SLIDE_HEIGHT
   );
 
-  const elements = editableNodes.map<EditableElement>((node, index) => {
+  let elements = editableNodes.map<EditableElement>((node, index) => {
     const type = (node.getAttribute("data-editable") || "block") as EditableType;
     const selectorValue = node.getAttribute(SELECTOR_ATTR) || createElementId(index, type);
 
@@ -127,6 +128,41 @@ export function parseSlide(html: string, slideId = "slide-1"): SlideModel {
       tagName: node.tagName.toLowerCase(),
     };
   });
+
+  // Restructure flat elements list into tree: nest children under group parents.
+  const childOfGroup = new Set<string>();
+  const groupMap = new Map<string, GroupElement>();
+
+  for (const element of elements) {
+    const node = querySlideElement<HTMLElement>(normalizedDoc, element.id);
+    const parent = node?.parentElement;
+    if (parent?.getAttribute("data-group") === "true") {
+      const groupId = parent.getAttribute(SELECTOR_ATTR);
+      if (groupId) {
+        childOfGroup.add(element.id);
+        if (!groupMap.has(groupId)) {
+          const groupElement = elements.find((e) => e.id === groupId);
+          if (groupElement) {
+            groupMap.set(groupId, {
+              ...groupElement,
+              type: "group" as const,
+              children: [],
+            });
+          }
+        }
+        groupMap.get(groupId)?.children.push(element);
+      }
+    }
+  }
+
+  elements = elements.reduce<EditableElement[]>((acc, element) => {
+    if (groupMap.has(element.id)) {
+      acc.push(groupMap.get(element.id)!);
+    } else if (!childOfGroup.has(element.id)) {
+      acc.push(element);
+    }
+    return acc;
+  }, []);
 
   const firstHeading = normalizedDoc.querySelector("h1, h2, title");
   const title = firstHeading?.textContent?.trim() || `Slide ${slideId}`;
