@@ -5,6 +5,8 @@ export interface SnapGuide {
   start: { x: number; y: number };
   end: { x: number; y: number };
   variant: "alignment" | "spacing";
+  spacingValue?: number;
+  targetRect?: StageRect;
 }
 
 export interface SnapTarget {

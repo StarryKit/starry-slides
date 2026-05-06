@@ -8,6 +8,8 @@ import {
 } from "./block-snap-constants";
 import type { SnapCandidate, SnapTarget } from "./block-snap-types";
 
+export type MovementDirection = "horizontal" | "vertical" | "both";
+
 export function collectSnapTargets({
   activeSlide,
   doc,
@@ -15,6 +17,7 @@ export function collectSnapTargets({
   selectedElementId,
   slideStageRect,
   stageGeometry,
+  movementDirection,
 }: {
   activeSlide: SlideModel;
   doc: Document;
@@ -22,6 +25,7 @@ export function collectSnapTargets({
   selectedElementId: string;
   slideStageRect: StageRect;
   stageGeometry: StageGeometry;
+  movementDirection?: MovementDirection;
 }): { vertical: SnapTarget[]; horizontal: SnapTarget[] } {
   const slideTarget = (position: number, role: SnapTarget["role"]): SnapTarget => ({
     position,
@@ -45,6 +49,11 @@ export function collectSnapTargets({
   ];
 
   const selectedNode = doc.querySelector<HTMLElement>(`[data-editor-id="${selectedElementId}"]`);
+  const selectedRect = selectedNode?.getBoundingClientRect();
+  const selectedStageRect = selectedRect
+    ? elementRectToStageRect(selectedRect, rootRect, stageGeometry)
+    : null;
+
   const spacingSourceRects: Array<{ elementId: string; rect: StageRect }> = [];
   for (const element of activeSlide.elements) {
     if (element.id === selectedElementId) {
@@ -73,6 +82,9 @@ export function collectSnapTargets({
     if (element.type === "block" || element.type === "image") {
       spacingSourceRects.push({ elementId: element.id, rect: stageRect });
     }
+
+    const distanceBonus = computeDistanceBonus(selectedStageRect, stageRect, movementDirection);
+
     const left = stageRect.x;
     const centerX = stageRect.x + stageRect.width / 2;
     const right = stageRect.x + stageRect.width;
@@ -86,7 +98,7 @@ export function collectSnapTargets({
       kind: "element",
       role,
       anchor: null,
-      priority: role === "center" ? 3 : 4,
+      priority: (role === "center" ? 3 : 4) + distanceBonus,
       elementId: element.id,
       relatedRects: [],
     });
@@ -100,6 +112,34 @@ export function collectSnapTargets({
   horizontal.push(...spacingTargets.horizontal);
 
   return { vertical, horizontal };
+}
+
+function computeDistanceBonus(
+  selectedRect: StageRect | null,
+  targetRect: StageRect,
+  direction?: MovementDirection
+): number {
+  if (!selectedRect) {
+    return 0;
+  }
+
+  const selectedCenterX = selectedRect.x + selectedRect.width / 2;
+  const selectedCenterY = selectedRect.y + selectedRect.height / 2;
+  const targetCenterX = targetRect.x + targetRect.width / 2;
+  const targetCenterY = targetRect.y + targetRect.height / 2;
+
+  const horizontalDist = Math.abs(selectedCenterX - targetCenterX);
+  const verticalDist = Math.abs(selectedCenterY - targetCenterY);
+
+  if (direction === "horizontal") {
+    return Math.min(Math.round(verticalDist / 80), 10);
+  }
+  if (direction === "vertical") {
+    return Math.min(Math.round(horizontalDist / 80), 10);
+  }
+
+  const totalDist = Math.sqrt(horizontalDist * horizontalDist + verticalDist * verticalDist);
+  return Math.min(Math.round(totalDist / 120), 10);
 }
 
 function collectSpacingTargets(siblingRects: Array<{ elementId: string; rect: StageRect }>): {
@@ -147,12 +187,14 @@ function collectSpacingTargets(siblingRects: Array<{ elementId: string; rect: St
         vertical.push(
           createSpacingTarget({
             position: second.rect.x + second.rect.width + horizontalGap,
+            gapValue: horizontalGap,
             rect: second.rect,
             anchor: "start",
             relatedRects: [first.rect, second.rect],
           }),
           createSpacingTarget({
             position: first.rect.x - horizontalGap,
+            gapValue: horizontalGap,
             rect: first.rect,
             anchor: "end",
             relatedRects: [first.rect, second.rect],
@@ -192,12 +234,14 @@ function collectSpacingTargets(siblingRects: Array<{ elementId: string; rect: St
         horizontal.push(
           createSpacingTarget({
             position: second.rect.y + second.rect.height + verticalGap,
+            gapValue: verticalGap,
             rect: second.rect,
             anchor: "start",
             relatedRects: [first.rect, second.rect],
           }),
           createSpacingTarget({
             position: first.rect.y - verticalGap,
+            gapValue: verticalGap,
             rect: first.rect,
             anchor: "end",
             relatedRects: [first.rect, second.rect],
@@ -212,11 +256,13 @@ function collectSpacingTargets(siblingRects: Array<{ elementId: string; rect: St
 
 function createSpacingTarget({
   position,
+  gapValue,
   rect,
   anchor,
   relatedRects,
 }: {
   position: number;
+  gapValue: number;
   rect: StageRect;
   anchor: SnapCandidate["anchor"];
   relatedRects: StageRect[];
@@ -228,6 +274,7 @@ function createSpacingTarget({
     role: "end",
     anchor,
     priority: 1,
+    spacingPriority: gapValue,
     elementId: null,
     relatedRects,
   };

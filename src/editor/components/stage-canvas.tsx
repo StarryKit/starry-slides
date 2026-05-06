@@ -1,7 +1,7 @@
 import type { CSSProperties, MouseEvent as ReactMouseEvent, RefObject } from "react";
 import type { StageRect } from "../../core";
 import type { CssPropertyRow } from "../lib/collect-css-properties";
-import type { ElementToolMode } from "../lib/element-tool-model";
+
 import { cn } from "../lib/utils";
 import { BlockManipulationOverlay } from "./block-manipulation-overlay";
 import { ContextMenu } from "./context-menu";
@@ -35,7 +35,7 @@ interface StageCanvasProps {
     }>;
     rotationHandle: { x: number; y: number };
   } | null;
-  elementToolMode: ElementToolMode;
+
   attributeValues: {
     locked: string;
     altText: string;
@@ -58,7 +58,6 @@ interface StageCanvasProps {
   onAttributeChange: (attributeName: string, nextValue: string) => void;
   onAlignToSlide: (action: string) => void;
   onLayerOrder: (action: string) => void;
-  onModeChange: () => void;
   contextMenu: {
     onCut: () => void;
     onCopy: () => void;
@@ -82,7 +81,7 @@ function StageCanvas({
   isSelectionOverlayInteractive,
   isEditingText,
   manipulationOverlay,
-  elementToolMode,
+
   attributeValues,
   iframeRef,
   stageViewportRef,
@@ -97,7 +96,6 @@ function StageCanvas({
   onAttributeChange,
   onAlignToSlide,
   onLayerOrder,
-  onModeChange,
   contextMenu,
 }: StageCanvasProps) {
   const clearSelectionIfBackground = (
@@ -126,7 +124,7 @@ function StageCanvas({
         }
       }}
     >
-      {selectionOverlay && !isManipulating && !isEditingText && elementToolMode === "floating" ? (
+      {selectionOverlay && !isManipulating && !isEditingText ? (
         <div
           className="pointer-events-none absolute z-40 w-max max-[1200px]:static max-[1200px]:mb-4 max-[1200px]:pointer-events-auto"
           style={toolbarStyle}
@@ -140,7 +138,7 @@ function StageCanvas({
             onAttributeChange={onAttributeChange}
             onAlignToSlide={onAlignToSlide}
             onLayerOrder={onLayerOrder}
-            onModeChange={onModeChange}
+
           />
         </div>
       ) : null}

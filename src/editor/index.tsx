@@ -8,7 +8,7 @@ import {
   parseTransformParts,
 } from "../core";
 import { EditorHeader } from "./components/editor-header";
-import { SidebarToolPanel } from "./components/sidebar-tool-panel";
+
 import { SlideSidebar } from "./components/slide-sidebar";
 import { StageCanvas } from "./components/stage-canvas";
 import { TooltipProvider } from "./components/ui/tooltip";
@@ -25,7 +25,7 @@ import { useSlideHistory } from "./hooks/use-slide-history";
 import { useSlideInspector } from "./hooks/use-slide-inspector";
 import { useSlideThumbnails } from "./hooks/use-slide-thumbnails";
 import { useStageViewport } from "./hooks/use-stage-viewport";
-import type { ElementToolMode } from "./lib/element-tool-model";
+
 
 function dispatchClipboardShortcut(
   iframeRef: RefObject<HTMLIFrameElement | null>,
@@ -60,8 +60,7 @@ function SlidesEditor({
   isSaving = false,
   onSlidesChange,
 }: SlidesEditorProps) {
-  const [isInspectorOpen, setIsInspectorOpen] = useState(true);
-  const [elementToolMode, setElementToolMode] = useState<ElementToolMode>("floating");
+
   const {
     slides,
     activeSlide,
@@ -144,7 +143,7 @@ function SlidesEditor({
     ? selectedElement?.type || selectionLabel
     : selectionLabel;
   const isSelectionOverlayInteractive = Boolean(manipulationOverlay);
-  const hasEditableSelection = Boolean(selectedElementId);
+
   const selectedTargetElementId = selectedElementId ?? "slide-root";
   const attributeValues = {
     locked: activeSlide
@@ -315,7 +314,7 @@ function SlidesEditor({
               isSelectionOverlayInteractive={isSelectionOverlayInteractive}
               isEditingText={isEditingText}
               manipulationOverlay={manipulationOverlay}
-              elementToolMode={elementToolMode}
+
               iframeRef={iframeRef}
               stageViewportRef={stageViewportRef}
               selectionOverlayRef={selectionOverlayRef}
@@ -374,7 +373,7 @@ function SlidesEditor({
               onAttributeChange={commitAttributeChange}
               onAlignToSlide={commitArrangeAction}
               onLayerOrder={commitLayerAction}
-              onModeChange={() => setElementToolMode("panel")}
+
               attributeValues={attributeValues}
               contextMenu={{
                 onCut: () => dispatchClipboardShortcut(iframeRef, "x"),
@@ -392,23 +391,6 @@ function SlidesEditor({
                 },
               }}
             />
-            {elementToolMode === "panel" && hasEditableSelection ? (
-              <SidebarToolPanel
-                inspectedStyles={inspectedStyles}
-                isEditingText={isEditingText}
-                isOpen={isInspectorOpen}
-                canEditStyles={Boolean(activeSlide)}
-                selectedElementType={selectedElement?.type ?? "block"}
-                selectedElementLabel={selectedElementId ? unifiedSelectionLabel : "slide"}
-                attributeValues={attributeValues}
-                selectedElementId={selectedElementId}
-                onStyleChange={commitStyleChange}
-                onAttributeChange={commitAttributeChange}
-                onAlignToSlide={commitArrangeAction}
-                onLayerOrder={commitLayerAction}
-                onModeChange={() => setElementToolMode("floating")}
-              />
-            ) : null}
           </main>
         </div>
       </div>

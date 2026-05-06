@@ -1,4 +1,4 @@
-import { PanelLeftOpen } from "lucide-react";
+
 import type { MouseEvent as ReactMouseEvent } from "react";
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import type { CssPropertyRow } from "../lib/collect-css-properties";
@@ -35,7 +35,7 @@ interface FloatingToolbarProps {
   onAttributeChange: (attributeName: string, nextValue: string) => void;
   onAlignToSlide: (action: string) => void;
   onLayerOrder: (action: string) => void;
-  onModeChange: () => void;
+
 }
 
 interface AttributeValues {
@@ -54,7 +54,7 @@ function FloatingToolbar({
   onAttributeChange,
   onAlignToSlide,
   onLayerOrder,
-  onModeChange,
+
 }: FloatingToolbarProps) {
   const toolbarRef = useRef<HTMLDivElement>(null);
   const [activeSubgroupId, setActiveSubgroupId] = useState<string | null>(null);
@@ -200,10 +200,7 @@ function FloatingToolbar({
             </div>
           </div>
         ))}
-        <Divider />
-        <IconButton label="Use tool panel mode" onClick={onModeChange}>
-          <ToolbarIcon icon={PanelLeftOpen} />
-        </IconButton>
+
       </div>
 
       {ELEMENT_TOOL_GROUPS.flatMap((group) => group.subgroups).map((subgroup) =>
