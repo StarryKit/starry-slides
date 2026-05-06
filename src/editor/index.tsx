@@ -1,4 +1,5 @@
 import { useRef, useState } from "react";
+import type { RefObject } from "react";
 import {
   DEFAULT_SLIDE_HEIGHT,
   DEFAULT_SLIDE_WIDTH,
@@ -25,6 +26,24 @@ import { useSlideInspector } from "./hooks/use-slide-inspector";
 import { useSlideThumbnails } from "./hooks/use-slide-thumbnails";
 import { useStageViewport } from "./hooks/use-stage-viewport";
 import type { ElementToolMode } from "./lib/element-tool-model";
+
+function dispatchClipboardShortcut(
+  iframeRef: RefObject<HTMLIFrameElement | null>,
+  key: string,
+  withModifier = true
+) {
+  const target = iframeRef.current?.contentWindow ?? window;
+  const eventInit: KeyboardEventInit = {
+    key,
+    bubbles: true,
+    cancelable: true,
+  };
+  if (withModifier) {
+    eventInit.ctrlKey = true;
+    eventInit.metaKey = true;
+  }
+  target.dispatchEvent(new KeyboardEvent("keydown", eventInit));
+}
 
 export interface SlidesEditorProps {
   slides: SlideModel[];
@@ -357,6 +376,21 @@ function SlidesEditor({
               onLayerOrder={commitLayerAction}
               onModeChange={() => setElementToolMode("panel")}
               attributeValues={attributeValues}
+              contextMenu={{
+                onCut: () => dispatchClipboardShortcut(iframeRef, "x"),
+                onCopy: () => dispatchClipboardShortcut(iframeRef, "c"),
+                onPaste: () => dispatchClipboardShortcut(iframeRef, "v"),
+                onDelete: () => dispatchClipboardShortcut(iframeRef, "Backspace", false),
+                onDuplicate: () => dispatchClipboardShortcut(iframeRef, "d"),
+                onSelectAll: () => {
+                  if (activeSlide) {
+                    setSelectedElementIds(activeSlide.elements.map((el) => el.id));
+                  }
+                },
+                onGroup: () => {
+                  // Placeholder — will be wired later
+                },
+              }}
             />
             {elementToolMode === "panel" && hasEditableSelection ? (
               <SidebarToolPanel

@@ -4,6 +4,7 @@ import type { CssPropertyRow } from "../lib/collect-css-properties";
 import type { ElementToolMode } from "../lib/element-tool-model";
 import { cn } from "../lib/utils";
 import { BlockManipulationOverlay } from "./block-manipulation-overlay";
+import { ContextMenu } from "./context-menu";
 import { FloatingToolbar } from "./floating-toolbar";
 
 type ResizeHandleCorner = "top-left" | "top-right" | "bottom-right" | "bottom-left";
@@ -58,6 +59,15 @@ interface StageCanvasProps {
   onAlignToSlide: (action: string) => void;
   onLayerOrder: (action: string) => void;
   onModeChange: () => void;
+  contextMenu: {
+    onCut: () => void;
+    onCopy: () => void;
+    onPaste: () => void;
+    onDelete: () => void;
+    onDuplicate: () => void;
+    onSelectAll: () => void;
+    onGroup: () => void;
+  };
 }
 
 function StageCanvas({
@@ -88,6 +98,7 @@ function StageCanvas({
   onAlignToSlide,
   onLayerOrder,
   onModeChange,
+  contextMenu,
 }: StageCanvasProps) {
   const clearSelectionIfBackground = (
     target: EventTarget | null,
@@ -188,6 +199,21 @@ function StageCanvas({
           onRotateHandleMouseDown={onRotateHandleMouseDown}
         />
       ) : null}
+      <ContextMenu
+        stageViewportRef={stageViewportRef}
+        iframeRef={iframeRef}
+        hasSelection={Boolean(selectionOverlay)}
+        hasMultipleSelection={false}
+        isEditingText={isEditingText}
+        onCut={contextMenu.onCut}
+        onCopy={contextMenu.onCopy}
+        onPaste={contextMenu.onPaste}
+        onDelete={contextMenu.onDelete}
+        onDuplicate={contextMenu.onDuplicate}
+        onSelectAll={contextMenu.onSelectAll}
+        onLayerOrder={onLayerOrder}
+        onGroup={contextMenu.onGroup}
+      />
     </section>
   );
 }
