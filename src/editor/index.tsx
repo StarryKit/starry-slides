@@ -379,13 +379,11 @@ function SlidesEditor({
     }
   }
 
-  function addSlideAfterActive() {
-    if (!activeSlide) {
+  function addSlideAtIndex(insertIndex: number) {
+    if (!activeSlide || slides.length === 0) {
       return;
     }
 
-    const activeIndex = slides.findIndex((slide) => slide.id === activeSlide.id);
-    const insertIndex = activeIndex >= 0 ? activeIndex + 1 : slides.length;
     const slide = createBlankSlide(slides, insertIndex);
 
     commitOperation({
@@ -396,6 +394,34 @@ function SlidesEditor({
     });
     setActiveSlideId(slide.id);
     clearSelection();
+  }
+
+  function addSlideAfterActive() {
+    if (!activeSlide) {
+      return;
+    }
+
+    const activeIndex = slides.findIndex((slide) => slide.id === activeSlide.id);
+    const insertIndex = activeIndex >= 0 ? activeIndex + 1 : slides.length;
+    addSlideAtIndex(insertIndex);
+  }
+
+  function addSlideAbove(slideId: string) {
+    const index = slides.findIndex((slide) => slide.id === slideId);
+    if (index < 0) {
+      return;
+    }
+
+    addSlideAtIndex(index);
+  }
+
+  function addSlideBelow(slideId: string) {
+    const index = slides.findIndex((slide) => slide.id === slideId);
+    if (index < 0) {
+      return;
+    }
+
+    addSlideAtIndex(index + 1);
   }
 
   function duplicateSlide(slideId: string) {
@@ -725,6 +751,8 @@ function SlidesEditor({
               setSelectedElementId(null);
             }}
             onAdd={addSlideAfterActive}
+            onAddSlideAbove={addSlideAbove}
+            onAddSlideBelow={addSlideBelow}
             onDuplicate={duplicateSlide}
             onDelete={deleteSlide}
             onToggleHidden={toggleSlideHidden}

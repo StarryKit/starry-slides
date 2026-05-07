@@ -4,7 +4,6 @@ import {
   HERO_SUMMARY,
   HERO_TITLE,
   MODIFIER,
-  SOURCE_LABEL,
   coverFrame,
   getHistoryControls,
   gotoEditor,
@@ -58,7 +57,7 @@ test("text editing supports keyboard undo/redo after commit", async ({ page }) =
   const { editingHint } = getHistoryControls(page);
   const nextText = "Edited by Playwright";
 
-  await expect(page.getByText(SOURCE_LABEL)).toBeVisible();
+  await expect(page.locator("header input").first()).toHaveValue(HERO_TITLE);
   await expect(page.getByTestId("slide-iframe")).toBeVisible();
   await expect(editableHeading).toHaveText(HERO_KICKER);
 

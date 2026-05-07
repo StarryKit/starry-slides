@@ -1,8 +1,8 @@
 import { expect, test } from "@playwright/test";
 import {
   HERO_KICKER,
+  HERO_TITLE,
   MODIFIER,
-  SOURCE_LABEL,
   coverFrame,
   getHeaderControls,
   getHistoryControls,
@@ -29,7 +29,7 @@ test("text editing persists after refresh because the generated html file is rew
   await expect(savingBadge).toBeHidden();
 
   await page.reload();
-  await expect(page.getByText(SOURCE_LABEL)).toBeVisible();
+  await expect(page.locator("header input").first()).toHaveValue(HERO_TITLE);
   const reloadedFrame = coverFrame(page);
   await expect(reloadedFrame.locator('[data-editor-id="text-1"]')).toHaveText(nextText);
 });

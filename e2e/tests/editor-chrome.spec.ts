@@ -78,6 +78,13 @@ test("sidebar renders fixed thumbnail list chrome and slide actions", async ({ p
   await slideTwoButton.click();
   await expect(slideTwoButton).toHaveAttribute("aria-current", "true");
 
+  const inactiveSlideButton = page.getByRole("button", { name: "Slide 1", exact: true });
+  await expect
+    .poll(async () => {
+      return inactiveSlideButton.evaluate((node) => window.getComputedStyle(node).boxShadow);
+    })
+    .not.toBe("none");
+
   const activeThumb = slideTwoButton.getByTestId("slide-thumbnail");
   await expect
     .poll(async () => {
@@ -96,11 +103,18 @@ test("sidebar renders fixed thumbnail list chrome and slide actions", async ({ p
 
   const slideTwoCard = page.getByTestId("slide-card").nth(1);
   await slideTwoCard.hover();
-  await expect(slideTwoCard.getByRole("button", { name: "Drag to reorder" })).toBeVisible();
-  await slideTwoCard.locator('button[aria-haspopup="menu"]').click();
-  await expect(page.getByRole("button", { name: "Duplicate" })).toBeVisible();
-  await expect(page.getByRole("button", { name: "Hide" })).toBeVisible();
-  await expect(page.getByRole("button", { name: "Delete" })).toBeVisible();
+  await expect(slideTwoCard.getByRole("button", { name: "Drag to reorder" })).toHaveCount(0);
+  await expect(slideTwoCard.locator('button[aria-haspopup="menu"]')).toHaveCount(0);
+
+  await slideTwoCard.click({ button: "right" });
+  const slideMenu = page.getByRole("menu", { name: "Slide actions" });
+  await expect(slideMenu).toBeVisible();
+  await expect(slideMenu.getByRole("menuitem", { name: "Add Slide Above" })).toBeVisible();
+  await expect(slideMenu.getByRole("menuitem", { name: "Add Slide Below" })).toBeVisible();
+  await expect(slideMenu.getByRole("menuitem", { name: "Duplicate" })).toBeVisible();
+  await expect(slideMenu.getByRole("menuitem", { name: "Hide" })).toBeVisible();
+  await expect(slideMenu.getByRole("menuitem", { name: "Delete" })).toBeVisible();
+  await page.keyboard.press("Escape");
 
   if (overflowState.scrollHeight > overflowState.clientHeight) {
     await page.getByLabel("Slide 8").click();
@@ -127,6 +141,24 @@ test("sidebar renders fixed thumbnail list chrome and slide actions", async ({ p
   }
 });
 
+test("sidebar context menu adds slides above and below the clicked slide", async ({ page }) => {
+  await gotoEditor(page);
+
+  await page.getByTestId("slide-card").nth(1).click({ button: "right" });
+  await page.getByRole("menu", { name: "Slide actions" }).getByText("Add Slide Above").click();
+
+  await expect(page.getByText("15 slides")).toBeVisible();
+  await expect(page.getByLabel("Slide 2")).toHaveAttribute("aria-current", "true");
+  await expect(coverFrame(page).locator('[data-editor-id="text-1"]')).toHaveText("Untitled Slide");
+
+  await page.getByTestId("slide-card").nth(3).click({ button: "right" });
+  await page.getByRole("menu", { name: "Slide actions" }).getByText("Add Slide Below").click();
+
+  await expect(page.getByText("16 slides")).toBeVisible();
+  await expect(page.getByLabel("Slide 5")).toHaveAttribute("aria-current", "true");
+  await expect(coverFrame(page).locator('[data-editor-id="text-1"]')).toHaveText("Untitled Slide");
+});
+
 test("sidebar slide actions add duplicate hide and delete slides", async ({ page }) => {
   await gotoEditor(page);
 
@@ -138,27 +170,23 @@ test("sidebar slide actions add duplicate hide and delete slides", async ({ page
   await expect(coverFrame(page).locator('[data-editor-id="text-1"]')).toHaveText("Untitled Slide");
 
   const newSlideCard = page.getByTestId("slide-card").nth(2);
-  await newSlideCard.hover();
-  await newSlideCard.locator('button[aria-haspopup="menu"]').click();
-  await page.getByRole("button", { name: "Duplicate" }).click();
+  await newSlideCard.click({ button: "right" });
+  await page.getByRole("menu", { name: "Slide actions" }).getByText("Duplicate").click();
 
   await expect(page.getByText("16 slides")).toBeVisible();
   await expect(page.getByLabel("Slide 4")).toHaveAttribute("aria-current", "true");
 
   const duplicateCard = page.getByTestId("slide-card").nth(3);
-  await duplicateCard.hover();
-  await duplicateCard.locator('button[aria-haspopup="menu"]').click();
-  await page.getByRole("button", { name: "Hide" }).click();
+  await duplicateCard.click({ button: "right" });
+  await page.getByRole("menu", { name: "Slide actions" }).getByText("Hide").click();
   await expect(duplicateCard.getByTestId("slide-hidden-indicator")).toBeVisible();
 
-  await duplicateCard.hover();
-  await duplicateCard.locator('button[aria-haspopup="menu"]').click();
-  await page.getByRole("button", { name: "Show" }).click();
+  await duplicateCard.click({ button: "right" });
+  await page.getByRole("menu", { name: "Slide actions" }).getByText("Show").click();
   await expect(duplicateCard.getByTestId("slide-hidden-indicator")).toBeHidden();
 
-  await duplicateCard.hover();
-  await duplicateCard.locator('button[aria-haspopup="menu"]').click();
-  await page.getByRole("button", { name: "Delete" }).click();
+  await duplicateCard.click({ button: "right" });
+  await page.getByRole("menu", { name: "Slide actions" }).getByText("Delete").click();
 
   await expect(page.getByText("15 slides")).toBeVisible();
   await expect(page.getByRole("button", { name: "Slide 4", exact: true })).toHaveAttribute(
@@ -191,6 +219,42 @@ test("sidebar drag reorder persists slide order after refresh", async ({ page })
   await expect(page.getByRole("button", { name: "Slide 3", exact: true })).toContainText(
     firstTitle?.trim() ?? ""
   );
+});
+
+test("sidebar drag shows an insertion marker between slide cards", async ({ page }) => {
+  await gotoEditor(page);
+
+  const firstCard = page.getByTestId("slide-card").nth(0);
+  const secondCard = page.getByTestId("slide-card").nth(1);
+  const firstBox = await firstCard.boundingBox();
+  const secondBox = await secondCard.boundingBox();
+
+  expect(firstBox).not.toBeNull();
+  expect(secondBox).not.toBeNull();
+  if (!firstBox || !secondBox) {
+    throw new Error("Expected sidebar slide cards to have bounds.");
+  }
+
+  await page.mouse.move(firstBox.x + firstBox.width / 2, firstBox.y + firstBox.height / 2);
+  await page.mouse.down();
+  await page.mouse.move(secondBox.x + secondBox.width / 2, secondBox.y + secondBox.height / 2, {
+    steps: 8,
+  });
+
+  const marker = page.getByTestId("slide-insertion-marker");
+  await expect(marker).toBeVisible();
+  await expect(secondCard).not.toHaveCSS("background-color", "rgba(0, 0, 0, 0.04)");
+
+  const markerBox = await marker.boundingBox();
+  expect(markerBox).not.toBeNull();
+  if (!markerBox) {
+    throw new Error("Expected insertion marker to have bounds.");
+  }
+
+  expect(markerBox.y).toBeGreaterThan(firstBox.y + firstBox.height - 16);
+  expect(markerBox.y).toBeLessThan(secondBox.y + secondBox.height);
+
+  await page.mouse.up();
 });
 
 test("export PDF opens a scope dialog and exports selected or all slides", async ({ page }) => {
