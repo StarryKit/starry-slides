@@ -5,6 +5,7 @@ import {
   DEFAULT_SLIDE_WIDTH,
   type ElementInsertOperation,
   type ElementLayoutUpdateOperation,
+  type ElementPresentationStyleMap,
   type ElementRemoveOperation,
   type GroupElementRectMap,
   type PdfExportSelection,
@@ -111,7 +112,14 @@ function SlidesEditor({
     : [];
   const selectionCommandAvailability = {
     group: selectedElementIds.length >= 2 && selectedElements.length === selectedElementIds.length,
-    ungroup: selectedElementIds.length === 1 && selectedElement?.type === "group",
+    ungroup:
+      selectedElementIds.length === 1 &&
+      Boolean(
+        selectedElement?.type === "group" ||
+          (activeSlide && selectedElementId
+            ? hasDirectEditableChildren(activeSlide.htmlSource, selectedElementId)
+            : false)
+      ),
   };
   const groupScopeOverlayPassive =
     Boolean(activeGroupScopeId) &&
@@ -483,7 +491,7 @@ function SlidesEditor({
     }
   }
 
-  function createGroupElementRectMap(): GroupElementRectMap {
+  function createGroupElementRectMap(flattenRootElementId?: string): GroupElementRectMap {
     const doc = iframeRef.current?.contentDocument;
     const root = doc?.querySelector<HTMLElement>(activeSlide?.rootSelector ?? "");
     if (!doc || !root) {
@@ -494,8 +502,13 @@ function SlidesEditor({
     const scaleX = activeSlide ? activeSlide.width / rootRect.width : 1;
     const scaleY = activeSlide ? activeSlide.height / rootRect.height : 1;
     const rects: GroupElementRectMap = {};
-    for (const node of doc.querySelectorAll<HTMLElement>(`[data-editable][${SELECTOR_ATTR}]`)) {
-      const elementId = node.getAttribute(SELECTOR_ATTR);
+    const structuralListIds = createStructuralListIdMap(doc, flattenRootElementId);
+    const rectNodes = [
+      ...Array.from(doc.querySelectorAll<HTMLElement>(`[data-editable][${SELECTOR_ATTR}]`)),
+      ...Array.from(structuralListIds.keys()),
+    ];
+    for (const node of rectNodes) {
+      const elementId = node.getAttribute(SELECTOR_ATTR) || structuralListIds.get(node);
       if (!elementId) {
         continue;
       }
@@ -530,13 +543,77 @@ function SlidesEditor({
       html: activeSlide.htmlSource,
       slideId: activeSlide.id,
       groupElementId: selectedElementId,
-      elementRects: createGroupElementRectMap(),
+      elementRects: createGroupElementRectMap(selectedElementId),
+      elementPresentationStyles: createElementPresentationStyleMap(selectedElementId),
     });
 
     if (operation) {
       commitOperation(operation);
       setSelectedElementIds(operation.childElementIds);
     }
+  }
+
+  function createElementPresentationStyleMap(elementId: string): ElementPresentationStyleMap {
+    const doc = iframeRef.current?.contentDocument;
+    if (!doc) {
+      return {};
+    }
+
+    const selectedNode = querySlideElement<HTMLElement>(doc, elementId);
+    if (!selectedNode || selectedNode.getAttribute("data-group") === "true") {
+      return {};
+    }
+
+    const result: ElementPresentationStyleMap = {};
+    const structuralListIds = createStructuralListIdMap(doc, elementId);
+    for (const child of Array.from(selectedNode.children)) {
+      if (!child.hasAttribute("data-editable") && !isListWrapperWithEditableItems(child)) {
+        continue;
+      }
+
+      const childElementId = child.getAttribute(SELECTOR_ATTR) || structuralListIds.get(child);
+      const computedStyle = child.ownerDocument.defaultView?.getComputedStyle(child);
+      if (!childElementId || !computedStyle) {
+        continue;
+      }
+
+      result[childElementId] = {
+        color: computedStyle.color,
+        fontSize: computedStyle.fontSize,
+        fontWeight: computedStyle.fontWeight,
+        fontStyle: computedStyle.fontStyle,
+        lineHeight: computedStyle.lineHeight,
+        textAlign: computedStyle.textAlign,
+        paddingTop: computedStyle.paddingTop,
+        paddingRight: computedStyle.paddingRight,
+        paddingBottom: computedStyle.paddingBottom,
+        paddingLeft: computedStyle.paddingLeft,
+        listStylePosition: computedStyle.listStylePosition,
+        listStyleType: computedStyle.listStyleType,
+      };
+
+      for (const descendant of Array.from(
+        child.querySelectorAll<HTMLElement>(`[data-editable][${SELECTOR_ATTR}]`)
+      )) {
+        const descendantElementId = descendant.getAttribute(SELECTOR_ATTR);
+        const descendantComputedStyle =
+          descendant.ownerDocument.defaultView?.getComputedStyle(descendant);
+        if (!descendantElementId || !descendantComputedStyle) {
+          continue;
+        }
+
+        result[descendantElementId] = {
+          color: descendantComputedStyle.color,
+          fontSize: descendantComputedStyle.fontSize,
+          fontWeight: descendantComputedStyle.fontWeight,
+          fontStyle: descendantComputedStyle.fontStyle,
+          lineHeight: descendantComputedStyle.lineHeight,
+          textAlign: descendantComputedStyle.textAlign,
+        };
+      }
+    }
+
+    return result;
   }
 
   function commitArrangeAction(action: string) {
@@ -855,6 +932,82 @@ function SlidesEditor({
         </div>
       </div>
     </TooltipProvider>
+  );
+}
+
+function hasDirectEditableChildren(html: string, elementId: string): boolean {
+  if (typeof DOMParser === "undefined") {
+    return false;
+  }
+
+  const doc = new DOMParser().parseFromString(html, "text/html");
+  const node = querySlideElement<HTMLElement>(doc, elementId);
+  if (!node || node.getAttribute("data-editable") !== "block") {
+    return false;
+  }
+
+  return Array.from(node.children).some(
+    (child) =>
+      child instanceof HTMLElement &&
+      (child.hasAttribute("data-editable") || isListWrapperWithEditableItems(child))
+  );
+}
+
+function createStructuralListIdMap(
+  doc: Document,
+  flattenRootElementId: string | undefined
+): Map<Element, string> {
+  const result = new Map<Element, string>();
+  if (!flattenRootElementId) {
+    return result;
+  }
+
+  const flattenRoot = querySlideElement<HTMLElement>(doc, flattenRootElementId);
+  if (!flattenRoot || flattenRoot.getAttribute("data-group") === "true") {
+    return result;
+  }
+
+  const existingIds = new Set(
+    Array.from(doc.querySelectorAll<HTMLElement>(`[${SELECTOR_ATTR}]`))
+      .map((node) => node.getAttribute(SELECTOR_ATTR))
+      .filter((value): value is string => Boolean(value))
+  );
+  const nextUniqueId = (preferredId: string) => {
+    if (!existingIds.has(preferredId)) {
+      existingIds.add(preferredId);
+      return preferredId;
+    }
+
+    const match = preferredId.match(/^(.*?)(?:-(\d+))?$/);
+    const base = match?.[1] || preferredId;
+    let index = Number.parseInt(match?.[2] || "1", 10) + 1;
+
+    while (existingIds.has(`${base}-${index}`)) {
+      index += 1;
+    }
+
+    const elementId = `${base}-${index}`;
+    existingIds.add(elementId);
+    return elementId;
+  };
+
+  for (const child of Array.from(flattenRoot.children)) {
+    if (isListWrapperWithEditableItems(child)) {
+      result.set(child, child.getAttribute(SELECTOR_ATTR) || nextUniqueId("block-1"));
+    }
+  }
+
+  return result;
+}
+
+function isListWrapperWithEditableItems(node: Element): node is HTMLElement {
+  const tagName = node.tagName.toLowerCase();
+  if (tagName !== "ul" && tagName !== "ol") {
+    return false;
+  }
+
+  return Array.from(node.children).some(
+    (child) => child.tagName.toLowerCase() === "li" && child.hasAttribute("data-editable")
   );
 }
 

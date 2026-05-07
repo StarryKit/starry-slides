@@ -76,6 +76,12 @@ The grouping behavior that expands selected groups before creating one new
 group.
 _Avoid_: nested group, group nesting
 
+**Block Flatten**:
+The `group.ungroup` operation behavior for a normal Block with direct child
+editable elements. It promotes those direct children to the Block's parent layer
+and keeps the original Block in place.
+_Avoid_: recursive flatten, group conversion
+
 **Block**:
 A content object represented by `data-editable="block"`.
 _Avoid_: group, wrapper
@@ -92,7 +98,9 @@ _Avoid_: group, wrapper
   relative to that container.
 - A normal **Block** may contain child editable elements without becoming a
   **Group**.
-- Only a **Group Container** marked with `data-group="true"` can be ungrouped.
+- A normal **Block** with direct child editable elements can be flattened by
+  Ungroup without removing the Block itself.
+- A normal **Block** without direct child editable elements cannot be ungrouped.
 - Starry Slides does not use a flat `groupId` relationship model for grouping.
 - **Group** and **Ungroup** are explicit core operations, not opaque batches of
   generic element operations.
@@ -111,9 +119,10 @@ _Avoid_: group, wrapper
 > **Domain expert:** "No. A Group is a nested DOM container in `htmlSource`; the
 > child elements live inside that container."
 
-> **Dev:** "This card is a div with editable text inside. Can Ungroup split it?"
-> **Domain expert:** "No. A normal Block is content structure, not a Group. Only
-> a container marked with `data-group=\"true\"` can be ungrouped."
+> **Dev:** "This card is a div with direct editable text inside. Can Ungroup
+> split it?"
+> **Domain expert:** "Yes, as Block Flatten. Promote the direct editable
+> children and keep the original Block in place."
 
 > **Dev:** "Can Group be represented in history as a batch of insert/remove
 > operations?"

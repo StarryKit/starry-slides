@@ -232,13 +232,29 @@ Known gaps:
 Required behavior coverage:
 
 - group and ungroup selected elements
-- disabled or absent Ungroup behavior for a normal block
+- disabled or absent Ungroup behavior for a normal block without direct
+  editable children
+- Block Flatten behavior for a normal block with direct editable children
+- Block Flatten behavior for a normal block with a direct `ul` or `ol` child
+  containing editable `li` items; the list wrapper must be promoted as one
+  block and the bullet items must keep their rendered positions
 - group-specific selection, focus, toolbar, and manipulation state
 - group-specific layout and rotation operations where supported
 - Group then Ungroup on slide 12's Snap sibling fixture: after grouping Card A
   and Card B, then ungrouping, each promoted card must return to the parent
   layer with the same rendered bounding-box width and height it had before
   grouping, within normal browser subpixel tolerance
+- Block Flatten on a normal block fixture with direct child editables: after
+  invoking Ungroup on the block, direct child editables must return to the
+  parent layer with the same rendered bounding-box width and height they had
+  before flattening, within normal browser subpixel tolerance, while the block
+  itself remains in place
+- Block Flatten is one layer at a time: a three-layer fixture must preserve
+  nested descendants under the promoted child block until that child block is
+  flattened in a second Ungroup step
+- Block Flatten preserves list grouping: on a realistic card fixture with a
+  direct list wrapper, Ungroup must keep the list as one promoted block and the
+  `li` items must not jump when sibling text leaves the card
 - Flatten and Group on slide 12's Snap sibling fixture: after creating two
   separate groups and grouping those groups into a new group, the cards inside
   the resulting group must keep their pre-flatten rendered bounding-box width
@@ -400,6 +416,13 @@ Affected paths:
       E2E behavior tests, not only visibility tests.
 - [ ] Group then Ungroup preserves each child card's rendered width and height
       on the slide 12 Snap sibling fixture.
+- [ ] Block Flatten preserves each promoted child element's rendered width and
+      height on a normal authored block fixture while keeping the block in
+      place.
+- [ ] Block Flatten preserves child positions and supports one-layer-at-a-time
+      flattening on a three-layer normal block fixture.
+- [ ] Block Flatten promotes direct list wrappers as one block and preserves
+      `li` positions on the slide 3 problem-card fixture.
 - [ ] Flatten and Group preserves each card's rendered width and height when
       two existing groups are grouped into one new group.
 - [ ] Duplicate, remove, Object Clipboard, and keyboard-first commands have

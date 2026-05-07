@@ -243,3 +243,90 @@ export function buildGroupGeometrySlide() {
     `
   );
 }
+
+export function buildBlockFlattenSlide() {
+  return wrapHtml(
+    `${baseStyles("linear-gradient(135deg, #f8fafc 0%, #f7f1e8 52%, #edf7f4 100%)", "#172033")}
+    .stage-label {
+      position: absolute;
+      left: 96px;
+      top: 72px;
+      display: grid;
+      gap: 14px;
+    }
+    .stage-label .kicker {
+      width: fit-content;
+      background: rgba(15, 118, 110, 0.12);
+      color: #0f766e;
+    }
+    .stage-label h1 {
+      max-width: 960px;
+      font-size: 62px;
+      line-height: 1;
+      letter-spacing: -0.03em;
+    }
+    .flatten-outer {
+      position: absolute;
+      left: 360px;
+      top: 360px;
+      width: 880px;
+      height: 500px;
+      border-radius: 32px;
+      padding: 38px;
+      background: rgba(15, 23, 42, 0.94);
+      color: #f8fafc;
+      box-shadow: 0 28px 70px rgba(15, 23, 42, 0.18);
+    }
+    .flatten-middle {
+      position: absolute;
+      left: 150px;
+      top: 122px;
+      width: 520px;
+      height: 260px;
+      border-radius: 24px;
+      padding: 30px;
+      background: rgba(20, 184, 166, 0.14);
+      border: 2px solid rgba(94, 234, 212, 0.42);
+    }
+    .flatten-inner {
+      position: absolute;
+      left: 92px;
+      top: 86px;
+      width: 300px;
+      height: 116px;
+      border-radius: 18px;
+      padding: 20px;
+      background: rgba(248, 250, 252, 0.94);
+      color: #134e4a;
+      box-shadow: 0 18px 34px rgba(15, 23, 42, 0.16);
+    }
+    .flatten-middle strong {
+      display: block;
+      margin-bottom: 14px;
+      font-size: 30px;
+      line-height: 1.12;
+      color: #ccfbf1;
+    }
+    .flatten-inner span {
+      display: block;
+      font-size: 24px;
+      line-height: 1.34;
+      font-weight: 700;
+      color: #0f766e;
+    }`,
+    `
+      <section class="stage-label">
+        <div class="kicker" data-editable="text">Block flatten fixture</div>
+        <h1 data-editable="text">Three nested editable layers for one-step flatten tests</h1>
+      </section>
+      <article class="flatten-outer" data-editable="block" data-editor-id="flatten-outer">
+        <section class="flatten-middle" data-editable="block" data-editor-id="flatten-middle">
+          <strong data-editable="text" data-editor-id="flatten-middle-title">Middle layer title</strong>
+          <div class="flatten-inner" data-editable="block" data-editor-id="flatten-inner">
+            <span data-editable="text" data-editor-id="flatten-inner-label">Inner layer label</span>
+          </div>
+        </section>
+      </article>
+    `
+  );
+}

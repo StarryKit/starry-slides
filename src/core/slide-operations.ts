@@ -38,6 +38,27 @@ export type GroupElementRectMap = Record<
   { x: number; y: number; width: number; height: number }
 >;
 
+export type ElementPresentationStyleMap = Record<
+  string,
+  Partial<
+    Record<
+      | "color"
+      | "fontSize"
+      | "fontWeight"
+      | "fontStyle"
+      | "lineHeight"
+      | "textAlign"
+      | "paddingTop"
+      | "paddingRight"
+      | "paddingBottom"
+      | "paddingLeft"
+      | "listStylePosition"
+      | "listStyleType",
+      string
+    >
+  >
+>;
+
 function numericStyleValue(value: string | null | undefined): number {
   const parsed = Number.parseFloat(value || "");
   return Number.isFinite(parsed) ? parsed : 0;
@@ -119,6 +140,52 @@ function setNodeRect(
   }
 }
 
+function applyPresentationStyleSnapshot(
+  node: HTMLElement,
+  snapshot: ElementPresentationStyleMap[string] | undefined
+) {
+  if (!snapshot) {
+    return;
+  }
+
+  if (snapshot.color) {
+    node.style.color = snapshot.color;
+  }
+  if (snapshot.fontSize) {
+    node.style.fontSize = snapshot.fontSize;
+  }
+  if (snapshot.fontWeight) {
+    node.style.fontWeight = snapshot.fontWeight;
+  }
+  if (snapshot.fontStyle) {
+    node.style.fontStyle = snapshot.fontStyle;
+  }
+  if (snapshot.lineHeight) {
+    node.style.lineHeight = snapshot.lineHeight;
+  }
+  if (snapshot.textAlign) {
+    node.style.textAlign = snapshot.textAlign;
+  }
+  if (snapshot.paddingTop) {
+    node.style.paddingTop = snapshot.paddingTop;
+  }
+  if (snapshot.paddingRight) {
+    node.style.paddingRight = snapshot.paddingRight;
+  }
+  if (snapshot.paddingBottom) {
+    node.style.paddingBottom = snapshot.paddingBottom;
+  }
+  if (snapshot.paddingLeft) {
+    node.style.paddingLeft = snapshot.paddingLeft;
+  }
+  if (snapshot.listStylePosition) {
+    node.style.listStylePosition = snapshot.listStylePosition;
+  }
+  if (snapshot.listStyleType) {
+    node.style.listStyleType = snapshot.listStyleType;
+  }
+}
+
 function getDirectEditableOwner(node: HTMLElement): HTMLElement | null {
   const parent = node.parentElement;
   if (!parent) {
@@ -137,6 +204,61 @@ function childEditableElements(node: HTMLElement): HTMLElement[] {
     (child): child is HTMLElement =>
       child instanceof HTMLElement && child.hasAttribute("data-editable")
   );
+}
+
+function isListWrapperWithEditableItems(node: Element): node is HTMLElement {
+  const tagName = node.tagName.toLowerCase();
+  if (tagName !== "ul" && tagName !== "ol") {
+    return false;
+  }
+
+  return Array.from(node.children).some(
+    (child) => child.tagName.toLowerCase() === "li" && child.hasAttribute("data-editable")
+  );
+}
+
+function createUniqueElementIdInDocument(doc: Document, preferredId: string): string {
+  const existingIds = new Set(
+    Array.from(doc.querySelectorAll<HTMLElement>(`[${SELECTOR_ATTR}]`))
+      .map((node) => node.getAttribute(SELECTOR_ATTR))
+      .filter((value): value is string => Boolean(value))
+  );
+
+  if (!existingIds.has(preferredId)) {
+    return preferredId;
+  }
+
+  const match = preferredId.match(/^(.*?)(?:-(\d+))?$/);
+  const base = match?.[1] || preferredId;
+  let index = Number.parseInt(match?.[2] || "1", 10) + 1;
+
+  while (existingIds.has(`${base}-${index}`)) {
+    index += 1;
+  }
+
+  return `${base}-${index}`;
+}
+
+function flattenableBlockChildElements(node: HTMLElement, doc: Document): HTMLElement[] {
+  return Array.from(node.children).filter((child): child is HTMLElement => {
+    if (!(child instanceof HTMLElement)) {
+      return false;
+    }
+
+    if (child.hasAttribute("data-editable")) {
+      return true;
+    }
+
+    if (!isListWrapperWithEditableItems(child)) {
+      return false;
+    }
+
+    child.setAttribute("data-editable", "block");
+    if (!child.getAttribute(SELECTOR_ATTR)) {
+      child.setAttribute(SELECTOR_ATTR, createUniqueElementIdInDocument(doc, "block-1"));
+    }
+    return true;
+  });
 }
 
 export function updateSlideText(html: string, elementId: string, value: string): string {
@@ -316,26 +438,7 @@ export function createUniqueElementId(html: string, preferredId: string): string
   if (!doc) {
     return preferredId;
   }
-
-  const existingIds = new Set(
-    Array.from(doc.querySelectorAll<HTMLElement>(`[${SELECTOR_ATTR}]`))
-      .map((node) => node.getAttribute(SELECTOR_ATTR))
-      .filter((value): value is string => Boolean(value))
-  );
-
-  if (!existingIds.has(preferredId)) {
-    return preferredId;
-  }
-
-  const match = preferredId.match(/^(.*?)(?:-(\d+))?$/);
-  const base = match?.[1] || preferredId;
-  let index = Number.parseInt(match?.[2] || "1", 10) + 1;
-
-  while (existingIds.has(`${base}-${index}`)) {
-    index += 1;
-  }
-
-  return `${base}-${index}`;
+  return createUniqueElementIdInDocument(doc, preferredId);
 }
 
 export function insertSlideElement(
@@ -540,12 +643,14 @@ export function createGroupUngroupOperation({
   slideId,
   groupElementId,
   elementRects = {},
+  elementPresentationStyles = {},
   timestamp = Date.now(),
 }: {
   html: string;
   slideId: string;
   groupElementId: string;
   elementRects?: GroupElementRectMap;
+  elementPresentationStyles?: ElementPresentationStyleMap;
   timestamp?: number;
 }): GroupUngroupOperation | null {
   const doc = parseHtmlDocument(html);
@@ -554,16 +659,21 @@ export function createGroupUngroupOperation({
   }
 
   const groupNode = querySlideElement<HTMLElement>(doc, groupElementId);
-  if (!groupNode || groupNode.getAttribute("data-group") !== "true" || !groupNode.parentElement) {
+  if (!groupNode || !groupNode.parentElement) {
     return null;
   }
 
   const parent = groupNode.parentElement;
   const parentRect = getEditableAncestorRect(groupNode, elementRects);
-  const children = childEditableElements(groupNode);
+  const isGroup = groupNode.getAttribute("data-group") === "true";
+  const children = isGroup
+    ? childEditableElements(groupNode)
+    : flattenableBlockChildElements(groupNode, doc);
   if (!children.length) {
     return null;
   }
+  const selectedElementId = groupNode.getAttribute(SELECTOR_ATTR);
+  const insertionAnchor = isGroup ? groupNode : groupNode.nextSibling;
 
   const childElementIds = children
     .map((child) => child.getAttribute(SELECTOR_ATTR))
@@ -577,9 +687,25 @@ export function createGroupUngroupOperation({
       width: rect.width,
       height: rect.height,
     });
-    parent.insertBefore(child, groupNode);
+    if (!isGroup) {
+      const childElementId = child.getAttribute(SELECTOR_ATTR) ?? "";
+      applyPresentationStyleSnapshot(child, elementPresentationStyles[childElementId]);
+      if (isListWrapperWithEditableItems(child)) {
+        child.style.margin = "0px";
+      }
+      for (const descendant of Array.from(
+        child.querySelectorAll<HTMLElement>(`[data-editable][${SELECTOR_ATTR}]`)
+      )) {
+        const descendantElementId = descendant.getAttribute(SELECTOR_ATTR) ?? "";
+        applyPresentationStyleSnapshot(descendant, elementPresentationStyles[descendantElementId]);
+      }
+    }
+    parent.insertBefore(child, insertionAnchor);
   }
-  groupNode.remove();
+
+  if (isGroup) {
+    groupNode.remove();
+  }
 
   const nextHtmlSource = serializeHtmlDocument(doc);
   if (nextHtmlSource === html) {
@@ -590,7 +716,8 @@ export function createGroupUngroupOperation({
     type: "group.ungroup",
     slideId,
     groupElementId,
-    childElementIds,
+    childElementIds:
+      isGroup || !selectedElementId ? childElementIds : [selectedElementId, ...childElementIds],
     previousHtmlSource: html,
     nextHtmlSource,
     timestamp,

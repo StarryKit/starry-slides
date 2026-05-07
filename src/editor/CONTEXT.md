@@ -72,8 +72,9 @@ object while containing child editable elements.
 _Avoid_: groupId selection, linked selection
 
 **Block**:
-A normal content object that may contain editable content but is not ungrouped
-unless it is explicitly marked as a group.
+A normal content object that may contain editable content. A Block with direct
+child editable elements can be flattened through Ungroup, but it does not become
+a Group and the Block itself is preserved.
 _Avoid_: group, wrapper
 
 **Group Editing Scope**:
@@ -85,6 +86,12 @@ _Avoid_: unlocked group, penetrate mode
 The user-facing grouping behavior where selected groups are expanded before a
 new group is created.
 _Avoid_: nested group
+
+**Block Flatten**:
+The Ungroup behavior for a normal Block with direct child editable elements:
+promote those children to the Block's parent layer while keeping the Block in
+place.
+_Avoid_: recursive flatten, group conversion
 
 **Group Focus Overlay**:
 The visual treatment that de-emphasizes content outside the active group while
@@ -110,6 +117,10 @@ _Avoid_: full visual scaling, font scaling
 - Grouping selected groups uses **Flatten and Group** rather than creating a
   true nested group.
 - **Flatten and Group** always creates a new group id.
+- **Block Flatten** uses the **Ungroup** command for a selected normal
+  **Block** with direct child editable elements.
+- **Block Flatten** promotes only direct child editable elements and keeps the
+  original **Block** in place.
 - A **Group** is not edited as a visual **Block**. Users who need a fill,
   border, shadow, or other visual container should insert and style a normal
   **Block**.
@@ -148,9 +159,10 @@ _Avoid_: full visual scaling, font scaling
 > **Domain expert:** "No. Grouping is represented by a nested DOM container, and
 > the editor selects that container as the group."
 
-> **Dev:** "This block contains editable text. Should the toolbar show Ungroup?"
-> **Domain expert:** "No. Ungroup only applies to a Group, not to an ordinary
-> content Block."
+> **Dev:** "This block contains directly editable child elements. Should the
+> toolbar show Ungroup?"
+> **Domain expert:** "Yes, when Ungroup can perform Block Flatten. It should
+> promote the direct editable children without removing or moving the Block."
 
 > **Dev:** "Should a selected Group show fill and border controls?"
 > **Domain expert:** "No. Group is organization structure; visual containers are

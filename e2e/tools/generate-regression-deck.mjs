@@ -12,6 +12,7 @@ import {
 import { buildArchitectureSlide, buildProblemSlide } from "./regression-deck/pipeline-slides.mjs";
 import { copyDirectory, resetDirectory, slugify, splitPoints } from "./regression-deck/shared.mjs";
 import {
+  buildBlockFlattenSlide,
   buildGroupGeometrySlide,
   buildSnapCenterSlide,
   buildSnapSiblingSlide,
@@ -111,6 +112,11 @@ const slides = [
     file: "14-closing.html",
     title: "Closing and next steps",
     html: buildClosingSlide(),
+  },
+  {
+    file: "15-block-flatten.html",
+    title: "Block flatten fixture",
+    html: buildBlockFlattenSlide(),
   },
 ];
 

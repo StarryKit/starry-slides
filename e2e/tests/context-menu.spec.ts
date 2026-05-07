@@ -3,6 +3,7 @@ import {
   HERO_KICKER,
   MODIFIER,
   coverFrame,
+  getComputedStyleValue,
   getHistoryControls,
   getInlineStyle,
   getRequiredBoundingBox,
@@ -118,6 +119,182 @@ test("context menu groups, ungroups, and preserves snap card dimensions", async 
   await expect(group).toBeHidden();
 });
 
+test("context menu ungroups a normal block by flattening direct editable children", async ({
+  page,
+}) => {
+  await gotoEditor(page);
+  await page.getByLabel("Slide 15").click();
+
+  const frame = coverFrame(page);
+  const outerBlock = frame.locator('[data-editor-id="flatten-outer"]');
+  const middleBlock = frame.locator('[data-editor-id="flatten-middle"]');
+  const middleTitle = frame.locator('[data-editor-id="flatten-middle-title"]');
+  const innerBlock = frame.locator('[data-editor-id="flatten-inner"]');
+  const innerLabel = frame.locator('[data-editor-id="flatten-inner-label"]');
+  await expect(outerBlock).toBeVisible();
+  await expect(middleBlock).toBeVisible();
+  await expect(innerBlock).toBeVisible();
+
+  const outerBefore = await getSlideElementRect(outerBlock);
+  const middleBefore = await getSlideElementRect(middleBlock);
+  const middleTitleBefore = await getSlideElementRect(middleTitle);
+  const innerBefore = await getSlideElementRect(innerBlock);
+  const innerLabelBefore = await getSlideElementRect(innerLabel);
+  const middleTitleStyleBefore = await getVisualStyle(middleTitle);
+  const innerLabelStyleBefore = await getVisualStyle(innerLabel);
+
+  await outerBlock.click({ position: { x: 12, y: 12 } });
+  const menu = await openSelectionContextMenu(page);
+  await expect(menu.getByRole("menuitem", { name: "Ungroup", exact: true })).not.toHaveAttribute(
+    "data-disabled",
+    ""
+  );
+  await menu.getByRole("menuitem", { name: "Ungroup", exact: true }).click();
+
+  await expect
+    .poll(async () =>
+      middleBlock.evaluate(
+        (node) =>
+          node.parentElement ===
+          node.ownerDocument.querySelector('[data-editor-id="flatten-outer"]')?.parentElement
+      )
+    )
+    .toBe(true);
+  await expect
+    .poll(async () =>
+      innerBlock.evaluate((node) => node.parentElement?.getAttribute("data-editor-id"))
+    )
+    .toBe("flatten-middle");
+  await expect.poll(async () => outerBlock.evaluate((node) => node.children.length)).toBe(0);
+
+  await expectSameRect(outerBlock, outerBefore);
+  await expectSameRect(middleBlock, middleBefore);
+  await expectSameRect(middleTitle, middleTitleBefore);
+  await expectSameRect(innerBlock, innerBefore);
+  await expectSameRect(innerLabel, innerLabelBefore);
+  expect(await getVisualStyle(middleTitle)).toEqual(middleTitleStyleBefore);
+  expect(await getVisualStyle(innerLabel)).toEqual(innerLabelStyleBefore);
+
+  await page.getByTestId("stage-panel").click({ position: { x: 12, y: 12 } });
+  await expect(page.getByTestId("selection-overlay")).toBeHidden();
+  await middleBlock.click({ position: { x: 12, y: 12 } });
+  await expect(page.getByTestId("selection-overlay")).toBeVisible();
+  const secondMenu = await openSelectionContextMenu(page);
+  await expect(
+    secondMenu.getByRole("menuitem", { name: "Ungroup", exact: true })
+  ).not.toHaveAttribute("data-disabled", "");
+  await secondMenu.getByRole("menuitem", { name: "Ungroup", exact: true }).click();
+
+  await expect
+    .poll(async () =>
+      innerBlock.evaluate(
+        (node) =>
+          node.parentElement ===
+          node.ownerDocument.querySelector('[data-editor-id="flatten-middle"]')?.parentElement
+      )
+    )
+    .toBe(true);
+  await expect
+    .poll(async () =>
+      innerLabel.evaluate((node) => node.parentElement?.getAttribute("data-editor-id"))
+    )
+    .toBe("flatten-inner");
+
+  await expectSameRect(outerBlock, outerBefore);
+  await expectSameRect(middleBlock, middleBefore);
+  await expectSameRect(middleTitle, middleTitleBefore);
+  await expectSameRect(innerBlock, innerBefore);
+  await expectSameRect(innerLabel, innerLabelBefore);
+  expect(await getVisualStyle(middleTitle)).toEqual(middleTitleStyleBefore);
+  expect(await getVisualStyle(innerLabel)).toEqual(innerLabelStyleBefore);
+
+  await page.keyboard.press(`${MODIFIER}+Z`);
+  await expect
+    .poll(async () =>
+      innerBlock.evaluate((node) => node.parentElement?.getAttribute("data-editor-id"))
+    )
+    .toBe("flatten-middle");
+  await page.keyboard.press(`${MODIFIER}+Z`);
+  await expect
+    .poll(async () =>
+      middleBlock.evaluate((node) => node.parentElement?.getAttribute("data-editor-id"))
+    )
+    .toBe("flatten-outer");
+});
+
+test("context menu ungroups a card with list bullets without moving the list", async ({ page }) => {
+  await gotoEditor(page);
+  await page.getByLabel("Slide 3").click();
+
+  const frame = coverFrame(page);
+  const card = frame.locator(".problem-card").first();
+  const title = card.locator("strong");
+  const body = card.locator("p");
+  const list = card.locator("ul");
+  const firstItem = list.locator("li").nth(0);
+  const secondItem = list.locator("li").nth(1);
+  const thirdItem = list.locator("li").nth(2);
+  await expect(card).toBeVisible();
+  await expect(list).toBeVisible();
+  const cardId = await card.getAttribute("data-editor-id");
+  const titleId = await title.getAttribute("data-editor-id");
+  const bodyId = await body.getAttribute("data-editor-id");
+  if (!cardId || !titleId || !bodyId) {
+    throw new Error("Expected problem card and text children to have editor ids.");
+  }
+
+  const cardBefore = await getSlideElementRect(card);
+  const titleBefore = await getSlideElementRect(title);
+  const bodyBefore = await getSlideElementRect(body);
+  const listBefore = await getSlideElementRect(list);
+  const firstItemBefore = await getSlideElementRect(firstItem);
+  const secondItemBefore = await getSlideElementRect(secondItem);
+  const thirdItemBefore = await getSlideElementRect(thirdItem);
+  const firstItemStyleBefore = await getVisualStyle(firstItem);
+
+  await card.click({ position: { x: 12, y: 12 } });
+  const menu = await openSelectionContextMenu(page);
+  await expect(menu.getByRole("menuitem", { name: "Ungroup", exact: true })).not.toHaveAttribute(
+    "data-disabled",
+    ""
+  );
+  await menu.getByRole("menuitem", { name: "Ungroup", exact: true }).click();
+
+  const slideList = frame.locator('ul[data-editable="block"]').first();
+  const slideFirstItem = slideList.locator("li").nth(0);
+  const slideSecondItem = slideList.locator("li").nth(1);
+  const slideThirdItem = slideList.locator("li").nth(2);
+  await expect(slideList).toBeVisible();
+  await expect
+    .poll(async () =>
+      slideList.evaluate(
+        (node) =>
+          node.parentElement === node.ownerDocument.querySelector(".problem-card")?.parentElement
+      )
+    )
+    .toBe(true);
+  await expect
+    .poll(async () => slideFirstItem.evaluate((node) => node.parentElement?.tagName))
+    .toBe("UL");
+
+  const promotedCard = frame.locator(`[data-editor-id="${cardId}"]`);
+  const promotedTitle = frame.locator(`[data-editor-id="${titleId}"]`);
+  const promotedBody = frame.locator(`[data-editor-id="${bodyId}"]`);
+  await expectSameRect(promotedCard, cardBefore);
+  await expectSameRect(promotedTitle, titleBefore);
+  await expectSameRect(promotedBody, bodyBefore);
+  await expectSameRect(slideList, listBefore);
+  await expectSameRect(slideFirstItem, firstItemBefore);
+  await expectSameRect(slideSecondItem, secondItemBefore);
+  await expectSameRect(slideThirdItem, thirdItemBefore);
+  expect(await getVisualStyle(slideFirstItem)).toEqual(firstItemStyleBefore);
+
+  await page.keyboard.press(`${MODIFIER}+Z`);
+  await expect
+    .poll(async () => list.evaluate((node) => node.parentElement?.className))
+    .toContain("problem-card");
+});
+
 test("context menu distributes three selected snap cards horizontally", async ({ page }) => {
   await gotoEditor(page);
   await page.getByLabel("Slide 12").click();
@@ -154,9 +331,10 @@ test("context menu disables irrelevant group commands for a normal single block"
   page,
 }) => {
   await gotoEditor(page);
+  await page.getByLabel("Slide 5").click();
 
   const frame = coverFrame(page);
-  const blockCard = frame.locator('[data-editor-id="block-4"]');
+  const blockCard = frame.locator('table[data-editable="block"]');
   const { selectionOverlay } = getHistoryControls(page);
 
   await blockCard.click({ position: { x: 12, y: 12 } });
@@ -181,4 +359,26 @@ async function expectInlineStyleValue(
   await expect
     .poll(async () => getInlineStyle(locator, propertyName), { timeout: 2500 })
     .toBe(expectedValue);
+}
+
+async function getVisualStyle(locator: Locator) {
+  const [color, fontSize, fontWeight, lineHeight] = await Promise.all([
+    getComputedStyleValue(locator, "color"),
+    getComputedStyleValue(locator, "font-size"),
+    getComputedStyleValue(locator, "font-weight"),
+    getComputedStyleValue(locator, "line-height"),
+  ]);
+
+  return { color, fontSize, fontWeight, lineHeight };
+}
+
+async function expectSameRect(
+  locator: Locator,
+  expectedRect: Awaited<ReturnType<typeof getSlideElementRect>>
+) {
+  const actualRect = await getSlideElementRect(locator);
+  expect(actualRect.x).toBeCloseTo(expectedRect.x, 0);
+  expect(actualRect.y).toBeCloseTo(expectedRect.y, 0);
+  expect(actualRect.width).toBeCloseTo(expectedRect.width, 0);
+  expect(actualRect.height).toBeCloseTo(expectedRect.height, 0);
 }

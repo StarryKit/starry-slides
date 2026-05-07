@@ -2,6 +2,7 @@
 
 - Status: accepted
 - Date: 2026-05-06
+- Amended by: [ADR-0018](./0018-adopt-block-flatten-through-ungroup.md)
 
 ## Context
 
@@ -27,8 +28,10 @@ In the HTML contract, a Group is represented as a specialized Block:
 
 The editor model still treats it as a distinct editable type because its
 interaction semantics differ from an ordinary Block. A normal Block may contain
-child editable elements without becoming a Group. Only a container explicitly
-marked with `data-group="true"` can be ungrouped.
+child editable elements without becoming a Group. ADR-0018 amends the original
+Ungroup boundary: containers explicitly marked with `data-group="true"` are
+removed by Ungroup, while normal Blocks with direct child editable elements can
+be flattened by Ungroup without removing the Block itself.
 
 ### Group editing interaction
 
@@ -76,7 +79,9 @@ ambiguous.
 
 Ungroup replaces the group container in its original parent with the group's
 child editable elements, preserving child DOM order and converting child
-coordinates back to the parent coordinate space.
+coordinates back to the parent coordinate space. ADR-0018 defines the related
+normal Block flatten behavior for authored Blocks that contain direct editable
+children.
 
 ### Resize behavior
 
@@ -105,9 +110,10 @@ the container while preserving child-relative positions. Group and Ungroup
 operations must update the DOM structure, convert child coordinates correctly,
 and keep undo/redo as single user-level history steps.
 
-The Block/Group distinction prevents ungroup from destructively splitting
-ordinary content structures such as cards, buttons, or callouts that happen to
-contain child editable elements.
+The Block/Group distinction still prevents normal Blocks from being treated as
+Groups. ADR-0018 allows an intentional flatten of direct child editable elements
+from a normal Block, but keeps the Block itself and does not recursively split
+arbitrary authored content.
 
 Because Groups are not visual Blocks, editor tooling should not encourage using
 Group containers as designed card/frame objects.
