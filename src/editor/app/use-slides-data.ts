@@ -14,11 +14,13 @@ interface SlidesDataResult {
   isSaving: boolean;
   saveSlides: (slides: SlideModel[]) => void;
   exportPdf: (selection: PdfExportSelection) => Promise<void>;
+  exportHtml: () => Promise<void>;
 }
 
 const GENERATED_MANIFEST_URL = "/deck/manifest.json";
 const GENERATED_SAVE_URL = "/__editor/save-generated-deck";
 const GENERATED_EXPORT_PDF_URL = "/__editor/export-pdf";
+const GENERATED_EXPORT_HTML_URL = "/__editor/export-html";
 const SAVE_DEBOUNCE_MS = 800;
 
 interface SavePayloadSlide {
@@ -232,5 +234,42 @@ export function useSlidesData(): SlidesDataResult {
     URL.revokeObjectURL(url);
   };
 
-  return { deckTitle, slides, errorMessage, isLoading, isSaving, saveSlides, exportPdf };
+  const exportHtml = async () => {
+    if (saveTimerRef.current) {
+      window.clearTimeout(saveTimerRef.current);
+      saveTimerRef.current = null;
+    }
+
+    await flushSave();
+
+    const response = await fetch(GENERATED_EXPORT_HTML_URL, {
+      method: "POST",
+    });
+
+    if (!response.ok) {
+      throw new Error(await response.text());
+    }
+
+    const blob = await response.blob();
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    const safeTitle = deckTitle.trim().replace(/[^a-zA-Z0-9._-]+/g, "-") || "starry-slides";
+    link.href = url;
+    link.download = `${safeTitle}.html`;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    URL.revokeObjectURL(url);
+  };
+
+  return {
+    deckTitle,
+    slides,
+    errorMessage,
+    isLoading,
+    isSaving,
+    saveSlides,
+    exportPdf,
+    exportHtml,
+  };
 }

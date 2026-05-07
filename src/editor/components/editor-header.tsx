@@ -17,6 +17,7 @@ interface EditorHeaderProps {
   onTitleChange?: (t: string) => void;
   onPresent?: () => void;
   onExportPdf?: (mode: "all" | "current" | "selected") => void;
+  onExportHtml?: () => void;
   isSaving: boolean;
 }
 
@@ -51,6 +52,7 @@ export function EditorHeader({
   onTitleChange,
   onPresent,
   onExportPdf,
+  onExportHtml,
   isSaving,
 }: EditorHeaderProps) {
   const [open, setOpen] = useState(false);
@@ -87,6 +89,11 @@ export function EditorHeader({
 
     if (e.id === "pdf") {
       onExportPdf?.("all");
+      return;
+    }
+
+    if (e.id === "html") {
+      onExportHtml?.();
       return;
     }
 

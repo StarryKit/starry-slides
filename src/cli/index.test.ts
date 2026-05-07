@@ -229,6 +229,29 @@ describe("source starry-slides cli", () => {
     );
   });
 
+  test("export html writes one standalone presenter file", () => {
+    const deck = writeValidDeck();
+    const outFile = path.join(deck, "deck.html");
+
+    const result = runCli(["export", "html", deck, "--out", outFile]);
+
+    expect(result.status).toBe(0);
+    expect(result.stderr).toBe("");
+    const parsed = parseJson(result.stdout);
+    expect(parsed).toMatchObject({
+      deck,
+      mode: "all",
+      outFile,
+      path: outFile,
+    });
+    expect((parsed.slides as Array<{ slideFile: string }>).map((slide) => slide.slideFile)).toEqual(
+      ["slides/01.html"]
+    );
+    const html = fs.readFileSync(outFile, "utf8");
+    expect(html).toContain('data-starry-presenter="true"');
+    expect(html).toContain("starryPresenterDeck");
+  });
+
   test("view slide plus all follows last parser option wins semantics", () => {
     const deck = createDeck();
     writeDeck(deck, [
@@ -332,6 +355,7 @@ describe("source starry-slides cli", () => {
       expect(result.stdout).toContain("starry-slides view [deck] --slide <manifest-file>");
       expect(result.stdout).toContain("starry-slides view [deck] --all --out-dir <directory>");
       expect(result.stdout).toContain("starry-slides export pdf [deck] --out <file>");
+      expect(result.stdout).toContain("starry-slides export html [deck] --out <file>");
       expect(result.stdout).toContain(
         "starry-slides export pdf [deck] --slides <manifest-file>[,<manifest-file>...] --out <file>"
       );

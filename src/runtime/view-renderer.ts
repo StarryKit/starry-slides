@@ -11,6 +11,7 @@ export interface RenderedSlide {
   index: number;
   file: string;
   title?: string;
+  hidden?: boolean;
   filePath: string;
 }
 
@@ -43,13 +44,17 @@ export function getManifestSlides(deckPath: string): RenderedSlide[] {
   const source = loadVerifyDeckSource(deckPath);
   const slidesByFile = new Map(
     source.manifest?.slides
-      ?.filter((slide): slide is { file: string; title?: string } => typeof slide.file === "string")
+      ?.filter(
+        (slide): slide is { file: string; title?: string; hidden?: boolean } =>
+          typeof slide.file === "string"
+      )
       .map((slide, index) => [
         slide.file,
         {
           index,
           file: slide.file,
           title: typeof slide.title === "string" ? slide.title : undefined,
+          hidden: slide.hidden === true,
           filePath: path.resolve(source.deck, slide.file),
         },
       ]) ?? []
