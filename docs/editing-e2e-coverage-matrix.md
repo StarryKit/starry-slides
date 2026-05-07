@@ -57,7 +57,7 @@ supported editor-facing command or state route to browser-level coverage.
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | Width, height, opacity, rotation, clear rotation preserving translate | Floating Toolbar Size/Visibility/Rotation | Regression deck slide 1 | Layout inline styles update | Selection retained | Undo/redo covered | Refresh persistence covered | `floating-toolbar.spec.ts`; `keyboard-and-multiselect.spec.ts` |
 | Drag, resize, rotate handles | Manipulation handles | Regression deck slides 1, 12, 13 | Rendered element geometry changes | Toolbar suppressed during manipulation | Undo/redo covered | Representative persistence covered | `block-manipulation.spec.ts` |
-| Snap guides during drag and resize | Manipulation handles | Regression deck slide 12 | Alignment/spacing guides appear and snapped geometry improves | Selection retained | Undo restores | N/A | `block-manipulation.spec.ts`; `keyboard-and-multiselect.spec.ts` |
+| Snap guides during drag and resize | Manipulation handles | Regression deck slide 12 | Alignment guides appear for sibling targets anywhere on the slide, nearest eligible element target wins, alignment guides are high-contrast non-black, and spacing guides render capped distance references | Selection retained | Undo restores | N/A | `block-manipulation.spec.ts`; `keyboard-and-multiselect.spec.ts` |
 | Arrow movement normal, Shift, Alt | Keyboard | Regression deck slide 1 | Transform translate changes by documented step | Selection retained | Undo/redo covered | N/A | `keyboard-and-multiselect.spec.ts` |
 
 ## Layering, Alignment, And Distribution

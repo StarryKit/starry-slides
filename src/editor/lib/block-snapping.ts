@@ -1,6 +1,5 @@
 import type { StageRect } from "../../core";
 import {
-  SNAP_AXIS_PROXIMITY_PX,
   SNAP_THRESHOLD_PX,
   SPACING_ALIGNMENT_TOLERANCE_PX,
   SPACING_SNAP_DISTANCE_BONUS_PX,
@@ -144,14 +143,17 @@ function findSnapCandidate(
         continue;
       }
 
-      const effectiveDistance =
-        target.kind === "spacing"
-          ? Math.max(0, distance - SPACING_SNAP_DISTANCE_BONUS_PX)
-          : distance;
-      const anchorPriority = getSnapAnchorPriority(anchor.anchor, target);
-      const candidatePriority = effectiveDistance * 100 + target.priority + anchorPriority;
+      const candidatePriority = getSnapCandidatePriority(
+        {
+          anchor: anchor.anchor,
+          delta,
+          target,
+        },
+        rect,
+        orientation
+      );
       const bestPriority = bestCandidate
-        ? getSnapCandidatePriority(bestCandidate)
+        ? getSnapCandidatePriority(bestCandidate, rect, orientation)
         : Number.POSITIVE_INFINITY;
       if (candidatePriority >= bestPriority) {
         continue;
@@ -168,17 +170,35 @@ function findSnapCandidate(
   return bestCandidate;
 }
 
-function getSnapCandidatePriority(candidate: SnapCandidate): number {
+function getSnapCandidatePriority(
+  candidate: SnapCandidate,
+  rect: StageRect,
+  orientation: SnapGuide["orientation"]
+): number {
   const distance = Math.abs(candidate.delta);
   const effectiveDistance =
     candidate.target.kind === "spacing"
       ? Math.max(0, distance - SPACING_SNAP_DISTANCE_BONUS_PX)
       : distance;
+  const kindPriority = getSnapKindPriority(candidate.target);
+
   return (
-    effectiveDistance * 100 +
+    effectiveDistance * 1000 +
+    kindPriority +
     candidate.target.priority +
-    getSnapAnchorPriority(candidate.anchor, candidate.target)
+    getSnapAnchorPriority(candidate.anchor, candidate.target) +
+    getOrthogonalTargetDistance(rect, candidate.target, orientation) / 100
   );
+}
+
+function getSnapKindPriority(target: SnapTarget): number {
+  if (target.kind === "element") {
+    return 0;
+  }
+  if (target.kind === "spacing") {
+    return 8;
+  }
+  return 16;
 }
 
 function getSnapAnchorPriority(anchor: SnapCandidate["anchor"], target: SnapTarget): number {
@@ -186,6 +206,42 @@ function getSnapAnchorPriority(anchor: SnapCandidate["anchor"], target: SnapTarg
     return 25;
   }
 
+  return 0;
+}
+
+function getOrthogonalTargetDistance(
+  rect: StageRect,
+  target: SnapTarget,
+  orientation: SnapGuide["orientation"]
+): number {
+  if (target.kind === "slide") {
+    return 0;
+  }
+
+  if (orientation === "vertical") {
+    return getRangeDistance(
+      rect.y,
+      rect.y + rect.height,
+      target.rect.y,
+      target.rect.y + target.rect.height
+    );
+  }
+
+  return getRangeDistance(
+    rect.x,
+    rect.x + rect.width,
+    target.rect.x,
+    target.rect.x + target.rect.width
+  );
+}
+
+function getRangeDistance(startA: number, endA: number, startB: number, endB: number): number {
+  if (endA < startB) {
+    return startB - endA;
+  }
+  if (endB < startA) {
+    return startA - endB;
+  }
   return 0;
 }
 
@@ -202,23 +258,7 @@ function isRelevantSnapTarget(
     return isRelevantSpacingTarget(rect, target, orientation);
   }
 
-  if (orientation === "vertical") {
-    return rangesOverlapOrNear(
-      rect.y,
-      rect.y + rect.height,
-      target.rect.y,
-      target.rect.y + target.rect.height,
-      SNAP_AXIS_PROXIMITY_PX
-    );
-  }
-
-  return rangesOverlapOrNear(
-    rect.x,
-    rect.x + rect.width,
-    target.rect.x,
-    target.rect.x + target.rect.width,
-    SNAP_AXIS_PROXIMITY_PX
-  );
+  return true;
 }
 
 function isRelevantSpacingTarget(
