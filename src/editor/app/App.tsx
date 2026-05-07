@@ -32,8 +32,16 @@ function StatusScreen({ title, body }: { title: string; body: string }) {
 }
 
 function App() {
-  const { deckTitle, slides, errorMessage, isLoading, isSaving, saveSlides, exportPdf } =
-    useSlidesData();
+  const {
+    deckTitle,
+    slides,
+    errorMessage,
+    isLoading,
+    isSaving,
+    saveSlides,
+    exportPdf,
+    exportHtml,
+  } = useSlidesData();
 
   if (isLoading) {
     return (
@@ -64,6 +72,19 @@ function App() {
             })
             .catch((error) => {
               toast.error("PDF export failed.", {
+                id: toastId,
+                description: error instanceof Error ? error.message : String(error),
+              });
+            });
+        }}
+        onExportHtml={() => {
+          const toastId = toast.loading("Exporting HTML...");
+          void exportHtml()
+            .then(() => {
+              toast.success("HTML export is ready.", { id: toastId });
+            })
+            .catch((error) => {
+              toast.error("HTML export failed.", {
                 id: toastId,
                 description: error instanceof Error ? error.message : String(error),
               });

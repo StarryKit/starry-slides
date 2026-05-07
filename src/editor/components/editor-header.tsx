@@ -27,6 +27,7 @@ interface EditorHeaderProps {
   onTitleChange?: (t: string) => void;
   onPresent?: () => void;
   onExportPdf?: (selection: PdfExportSelection) => void;
+  onExportHtml?: () => void;
   pdfSlides?: PdfExportSlideOption[];
   pdfThumbnails?: Record<string, string>;
   isSaving: boolean;
@@ -63,6 +64,7 @@ export function EditorHeader({
   onTitleChange,
   onPresent,
   onExportPdf,
+  onExportHtml,
   pdfSlides = [],
   pdfThumbnails = {},
   isSaving,
@@ -102,6 +104,11 @@ export function EditorHeader({
 
     if (e.id === "pdf") {
       setPdfDialogOpen(true);
+      return;
+    }
+
+    if (e.id === "html") {
+      onExportHtml?.();
       return;
     }
 

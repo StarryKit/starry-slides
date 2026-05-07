@@ -1,6 +1,7 @@
 import { expect, test } from "@playwright/test";
 import {
   AGENDA_PARAGRAPH,
+  REGRESSION_DECK_SLIDE_COUNT,
   coverFrame,
   getHeaderControls,
   getHistoryControls,
@@ -45,7 +46,7 @@ test("sidebar renders fixed thumbnail list chrome and slide actions", async ({ p
 
   await expect(sidebar).toBeVisible();
   await expect(sidebarPanel).toBeVisible();
-  await expect(page.getByText("14 slides")).toBeVisible();
+  await expect(page.getByText(`${REGRESSION_DECK_SLIDE_COUNT} slides`)).toBeVisible();
   await expect(page.getByRole("button", { name: "Add slide" })).toBeVisible();
 
   const sidebarWidth = await sidebar.evaluate((node) => node.getBoundingClientRect().width);
@@ -295,7 +296,7 @@ test("export PDF opens a scope dialog and exports selected or all slides", async
 
   await dialog.getByRole("radio", { name: "Selected slides" }).check();
   await expect(dialog.getByTestId("pdf-slide-picker")).toBeVisible();
-  await expect(dialog.getByTestId("pdf-slide-option")).toHaveCount(14);
+  await expect(dialog.getByTestId("pdf-slide-option")).toHaveCount(REGRESSION_DECK_SLIDE_COUNT);
   await expect(dialog.getByTestId("pdf-slide-option").first()).toContainText("1");
   await expect(dialog.getByTestId("pdf-slide-option").first()).toContainText("Starry Slides");
   await expect(dialog.getByTestId("pdf-slide-option").first().locator("img")).toBeVisible();

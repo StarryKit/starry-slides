@@ -3,6 +3,7 @@
 import { spawn } from "node:child_process";
 import { type VerifyResult, createVerifyResult, verifyDeck } from "../core/verify-deck";
 import { resolveDeckPath } from "../runtime/deck-source";
+import { exportHtml } from "../runtime/html-export";
 import { openBrowser } from "../runtime/open-browser";
 import { exportPdf } from "../runtime/pdf-export";
 import { findAvailablePort } from "../runtime/ports";
@@ -16,7 +17,7 @@ interface ParsedArgs {
   deckPath?: string;
   staticVerify: boolean;
   viewMode?: "slide" | "all";
-  exportFormat?: "pdf";
+  exportFormat?: "pdf" | "html";
   exportMode?: PdfExportMode;
   slideFile?: string;
   slideFiles?: string[];
@@ -39,6 +40,7 @@ function usage(): string {
   starry-slides export pdf [deck] --all --out <file>
   starry-slides export pdf [deck] --slide <manifest-file> --out <file>
   starry-slides export pdf [deck] --slides <manifest-file>[,<manifest-file>...] --out <file>
+  starry-slides export html [deck] --out <file>
   starry-slides add-skill`;
 }
 
@@ -58,10 +60,10 @@ function parseArgs(argv: string[]): ParsedArgs {
 
   if (command === "export") {
     const format = remaining.shift();
-    if (format !== "pdf") {
-      throw new Error("export requires a format: pdf");
+    if (format !== "pdf" && format !== "html") {
+      throw new Error("export requires a format: pdf or html");
     }
-    exportFormat = "pdf";
+    exportFormat = format;
   }
 
   for (let index = 0; index < remaining.length; index += 1) {
@@ -233,20 +235,34 @@ async function runView(deckPath: string, parsed: ParsedArgs) {
 }
 
 async function runExport(deckPath: string, parsed: ParsedArgs) {
-  if (parsed.exportFormat !== "pdf") {
-    throw new Error("export requires a format: pdf");
+  if (parsed.exportFormat !== "pdf" && parsed.exportFormat !== "html") {
+    throw new Error("export requires a format: pdf or html");
   }
   if (parsed.staticVerify) {
-    throw new Error("export pdf runs Static Verify internally; do not pass --static");
+    throw new Error(
+      `export ${parsed.exportFormat} runs Static Verify internally; do not pass --static`
+    );
   }
   if (!parsed.outFile) {
-    throw new Error("export pdf requires --out <file>");
+    throw new Error(`export ${parsed.exportFormat} requires --out <file>`);
   }
 
   const staticResult = await runStaticVerify(deckPath);
   if (!staticResult.ok) {
     writeJson(staticResult);
     process.exitCode = 1;
+    return;
+  }
+
+  if (parsed.exportFormat === "html") {
+    if (parsed.exportMode && parsed.exportMode !== "all") {
+      throw new Error("export html currently supports full-deck export only");
+    }
+    const result = await exportHtml({
+      deckPath,
+      outFile: parsed.outFile,
+    });
+    writeJson(result);
     return;
   }
 

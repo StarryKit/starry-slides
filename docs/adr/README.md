@@ -49,4 +49,5 @@ Update this directory whenever a change affects:
 | [0017](./0017-adopt-deck-level-slide-operations-for-thumbnail-sidebar.md)       | Adopt deck-level slide operations for the thumbnail sidebar                     | proposed              |
 | [0018](./0018-adopt-pointer-depth-selection-and-hover-preselection.md)          | Adopt pointer-depth selection and hover preselection                            | accepted              |
 | [0019](./0019-adopt-progressive-pdf-export-dialog.md)                           | Adopt a progressive PDF export dialog in the editor                             | accepted              |
-| [0020](./0018-adopt-block-flatten-through-ungroup.md)                           | Adopt block flatten through Ungroup                                             | accepted              |
+| [0020](./0020-adopt-block-flatten-through-ungroup.md)                           | Adopt block flatten through Ungroup                                             | accepted              |
+| [0021](./0021-adopt-reusable-present-mode-and-single-html-export.md)            | Adopt reusable Present mode and single HTML export                              | accepted              |

@@ -8,3 +8,4 @@ export * from "./deck-slide-operations";
 export * from "./history";
 export * from "./generated-deck";
 export * from "./pdf-export";
+export * from "./html-export";

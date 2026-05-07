@@ -4,11 +4,13 @@ import { fileURLToPath } from "node:url";
 import tailwindcss from "@tailwindcss/vite";
 import react from "@vitejs/plugin-react";
 import { defineConfig } from "vite";
+import { exportHtml } from "./src/runtime/html-export";
 import { exportPdf } from "./src/runtime/pdf-export";
 
 const SAVE_ROUTE = "/__editor/save-generated-deck";
 const RESET_ROUTE = "/__editor/reset-generated-deck";
 const EXPORT_PDF_ROUTE = "/__editor/export-pdf";
+const EXPORT_HTML_ROUTE = "/__editor/export-html";
 const DECK_ROUTE_PREFIX = "/deck/";
 const configDir = path.dirname(fileURLToPath(import.meta.url));
 const workspaceRoot = configDir;
@@ -240,6 +242,20 @@ function createSaveGeneratedDeckPlugin() {
     response.end(contents);
   }
 
+  async function handleExportHtmlRequest(response: import("node:http").ServerResponse) {
+    const outFile = path.join(GENERATED_RUNTIME_DIR, ".starry-slides", "export", "deck.html");
+    const result = await exportHtml({
+      deckPath: GENERATED_RUNTIME_DIR,
+      outFile,
+    });
+    const contents = await fs.readFile(result.path);
+
+    response.statusCode = 200;
+    response.setHeader("Content-Type", "text/html; charset=utf-8");
+    response.setHeader("Content-Disposition", 'attachment; filename="starry-slides.html"');
+    response.end(contents);
+  }
+
   async function handleGeneratedAssetRequest(
     request: import("node:http").IncomingMessage,
     response: import("node:http").ServerResponse,
@@ -348,6 +364,21 @@ function createSaveGeneratedDeckPlugin() {
           return;
         }
 
+        if (request.method === "POST" && request.url === EXPORT_HTML_ROUTE) {
+          try {
+            await runDeckOperation(() => handleExportHtmlRequest(response));
+          } catch (error) {
+            response.statusCode = 500;
+            response.setHeader("Content-Type", "application/json");
+            response.end(
+              JSON.stringify({
+                error: error instanceof Error ? error.message : "Failed to export HTML.",
+              })
+            );
+          }
+          return;
+        }
+
         if (request.method !== "POST" || request.url !== SAVE_ROUTE) {
           next();
           return;
@@ -408,6 +439,21 @@ function createSaveGeneratedDeckPlugin() {
             response.end(
               JSON.stringify({
                 error: error instanceof Error ? error.message : "Failed to export PDF.",
+              })
+            );
+          }
+          return;
+        }
+
+        if (request.method === "POST" && request.url === EXPORT_HTML_ROUTE) {
+          try {
+            await runDeckOperation(() => handleExportHtmlRequest(response));
+          } catch (error) {
+            response.statusCode = 500;
+            response.setHeader("Content-Type", "application/json");
+            response.end(
+              JSON.stringify({
+                error: error instanceof Error ? error.message : "Failed to export HTML.",
               })
             );
           }

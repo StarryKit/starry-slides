@@ -1,4 +1,4 @@
-import { useRef } from "react";
+import { useRef, useState } from "react";
 import {
   type AtomicSlideOperation,
   DEFAULT_SLIDE_HEIGHT,
@@ -27,6 +27,7 @@ import {
   updateSlideElementHtmlIds,
 } from "../core";
 import { EditorHeader } from "./components/editor-header";
+import { PresenterView } from "./components/presenter-view";
 import { SlideSidebar } from "./components/slide-sidebar";
 import { StageCanvas } from "./components/stage-canvas";
 import { TooltipProvider } from "./components/ui/tooltip";
@@ -55,6 +56,7 @@ export interface SlidesEditorProps {
   isSaving?: boolean;
   onSlidesChange?: (slides: SlideModel[]) => void;
   onExportPdf?: (selection: PdfExportSelection) => void;
+  onExportHtml?: () => void;
 }
 
 function SlidesEditor({
@@ -63,6 +65,7 @@ function SlidesEditor({
   isSaving = false,
   onSlidesChange,
   onExportPdf,
+  onExportHtml,
 }: SlidesEditorProps) {
   const {
     slides,
@@ -86,6 +89,7 @@ function SlidesEditor({
     additive: boolean;
     targetElementId: string | null;
   } | null>(null);
+  const [isPresenting, setIsPresenting] = useState(false);
   const thumbnails = useSlideThumbnails(slides);
   const {
     selectedElementId,
@@ -805,211 +809,229 @@ function SlidesEditor({
   return (
     <TooltipProvider>
       <div className="flex h-screen flex-col overflow-hidden bg-background text-foreground">
-        <EditorHeader
-          title={resolvedDeckTitle}
-          isSaving={isSaving}
-          pdfSlides={slides.map((slide) => ({
-            id: slide.id,
-            title: slide.title,
-            file: slide.sourceFile,
-          }))}
-          pdfThumbnails={thumbnails}
-          onExportPdf={onExportPdf}
-        />
-
-        <div className="flex min-h-0 flex-auto gap-3 overflow-hidden max-[1200px]:block">
-          <SlideSidebar
-            slides={slides}
-            activeSlideId={activeSlide.id}
-            slideCount={slides.length}
-            thumbnails={thumbnails}
-            onSelectSlide={(slideId) => {
-              setActiveSlideId(slideId);
-              setSelectedElementId(null);
+        <div
+          className={`flex min-h-0 flex-auto flex-col ${
+            isPresenting ? "invisible pointer-events-none absolute inset-0" : ""
+          }`}
+        >
+          <EditorHeader
+            title={resolvedDeckTitle}
+            isSaving={isSaving}
+            onPresent={() => {
+              clearSelection();
+              setIsPresenting(true);
             }}
-            onAdd={addSlideAfterActive}
-            onAddSlideAbove={addSlideAbove}
-            onAddSlideBelow={addSlideBelow}
-            onDuplicate={duplicateSlide}
-            onDelete={deleteSlide}
-            onToggleHidden={toggleSlideHidden}
-            onReorder={reorderSlide}
+            onExportHtml={onExportHtml}
+            pdfSlides={slides.map((slide) => ({
+              id: slide.id,
+              title: slide.title,
+              file: slide.sourceFile,
+            }))}
+            pdfThumbnails={thumbnails}
+            onExportPdf={onExportPdf}
           />
 
-          <main className="flex min-h-0 min-w-0 flex-auto overflow-visible max-[1200px]:block">
-            <StageCanvas
-              slideWidth={slideWidth}
-              slideHeight={slideHeight}
-              offsetX={offsetX}
-              offsetY={offsetY}
-              scale={scale}
-              preselectionOverlay={preselectionOverlay}
-              selectionOverlay={unifiedSelectionOverlay}
-              toolbarKey={
-                selectedElementIds.length
-                  ? `${activeSlide.id}:${selectedElementIds.join(",")}`
-                  : null
-              }
-              inspectedStyles={inspectedStyles}
-              selectedElementType={selectedElementType}
-              selectionCommandAvailability={selectionCommandAvailability}
-              groupScopeOverlayPassive={groupScopeOverlayPassive}
-              isEditingText={isEditingText}
-              manipulationOverlay={manipulationOverlay}
-              iframeRef={iframeRef}
-              stageViewportRef={stageViewportRef}
-              selectionOverlayRef={selectionOverlayRef}
-              isManipulating={isManipulating}
-              onSelectionOverlayMouseDown={(event) => {
-                if (!selectedElementIds.length) {
-                  return;
-                }
-
-                const additive = event.shiftKey || event.metaKey || event.ctrlKey;
-                const targetElementId = updatePointerPreselection(event.clientX, event.clientY);
-
-                overlayPointerDownRef.current = {
-                  clientX: event.clientX,
-                  clientY: event.clientY,
-                  additive,
-                  targetElementId,
-                };
-
-                if (targetElementId && targetElementId !== selectedElementId) {
-                  event.stopPropagation();
-                  return;
-                }
-
-                if (targetElementId && targetElementId === selectedElementId) {
-                  event.stopPropagation();
-                }
-
-                beginMove({
-                  clientX: event.clientX,
-                  clientY: event.clientY,
-                  preventDefault: () => event.preventDefault(),
-                  stopPropagation: () => event.stopPropagation(),
-                });
+          <div className="flex min-h-0 flex-auto gap-3 overflow-hidden max-[1200px]:block">
+            <SlideSidebar
+              slides={slides}
+              activeSlideId={activeSlide.id}
+              slideCount={slides.length}
+              thumbnails={thumbnails}
+              onSelectSlide={(slideId) => {
+                setActiveSlideId(slideId);
+                setSelectedElementId(null);
               }}
-              onSelectionOverlayMouseMove={(event) => {
-                const pointerDown = overlayPointerDownRef.current;
-                updatePointerPreselection(event.clientX, event.clientY);
+              onAdd={addSlideAfterActive}
+              onAddSlideAbove={addSlideAbove}
+              onAddSlideBelow={addSlideBelow}
+              onDuplicate={duplicateSlide}
+              onDelete={deleteSlide}
+              onToggleHidden={toggleSlideHidden}
+              onReorder={reorderSlide}
+            />
 
-                if (!pointerDown || pointerDown.targetElementId === selectedElementId) {
-                  return;
+            <main className="flex min-h-0 min-w-0 flex-auto overflow-visible max-[1200px]:block">
+              <StageCanvas
+                slideWidth={slideWidth}
+                slideHeight={slideHeight}
+                offsetX={offsetX}
+                offsetY={offsetY}
+                scale={scale}
+                preselectionOverlay={preselectionOverlay}
+                selectionOverlay={unifiedSelectionOverlay}
+                toolbarKey={
+                  selectedElementIds.length
+                    ? `${activeSlide.id}:${selectedElementIds.join(",")}`
+                    : null
                 }
+                inspectedStyles={inspectedStyles}
+                selectedElementType={selectedElementType}
+                selectionCommandAvailability={selectionCommandAvailability}
+                groupScopeOverlayPassive={groupScopeOverlayPassive}
+                isEditingText={isEditingText}
+                manipulationOverlay={manipulationOverlay}
+                iframeRef={iframeRef}
+                stageViewportRef={stageViewportRef}
+                selectionOverlayRef={selectionOverlayRef}
+                isManipulating={isManipulating}
+                onSelectionOverlayMouseDown={(event) => {
+                  if (!selectedElementIds.length) {
+                    return;
+                  }
 
-                const deltaX = event.clientX - pointerDown.clientX;
-                const deltaY = event.clientY - pointerDown.clientY;
-                if (Math.hypot(deltaX, deltaY) <= 4) {
-                  return;
-                }
+                  const additive = event.shiftKey || event.metaKey || event.ctrlKey;
+                  const targetElementId = updatePointerPreselection(event.clientX, event.clientY);
 
-                overlayPointerDownRef.current = null;
-                beginMove({
-                  clientX: pointerDown.clientX,
-                  clientY: pointerDown.clientY,
-                  preventDefault: () => event.preventDefault(),
-                  stopPropagation: () => event.stopPropagation(),
-                });
-              }}
-              onSelectionOverlayMouseUp={(event) => {
-                const pointerDown = overlayPointerDownRef.current;
-                overlayPointerDownRef.current = null;
+                  overlayPointerDownRef.current = {
+                    clientX: event.clientX,
+                    clientY: event.clientY,
+                    additive,
+                    targetElementId,
+                  };
 
-                if (!pointerDown) {
-                  return;
-                }
+                  if (targetElementId && targetElementId !== selectedElementId) {
+                    event.stopPropagation();
+                    return;
+                  }
 
-                const deltaX = event.clientX - pointerDown.clientX;
-                const deltaY = event.clientY - pointerDown.clientY;
-                if (Math.hypot(deltaX, deltaY) > 4) {
-                  return;
-                }
+                  if (targetElementId && targetElementId === selectedElementId) {
+                    event.stopPropagation();
+                  }
 
-                retargetPointerSelection(event.clientX, event.clientY, pointerDown.additive);
-              }}
-              onStageMouseLeave={clearPreselection}
-              onResizeHandleMouseDown={(corner, event) => {
-                if (!selectedElementIds.length) {
-                  return;
-                }
+                  beginMove({
+                    clientX: event.clientX,
+                    clientY: event.clientY,
+                    preventDefault: () => event.preventDefault(),
+                    stopPropagation: () => event.stopPropagation(),
+                  });
+                }}
+                onSelectionOverlayMouseMove={(event) => {
+                  const pointerDown = overlayPointerDownRef.current;
+                  updatePointerPreselection(event.clientX, event.clientY);
 
-                beginResize(corner, {
-                  clientX: event.clientX,
-                  clientY: event.clientY,
-                  preventDefault: () => event.preventDefault(),
-                  stopPropagation: () => event.stopPropagation(),
-                });
-              }}
-              onRotateHandleMouseDown={(event) => {
-                if (selectedElementIds.length !== 1) {
-                  return;
-                }
+                  if (!pointerDown || pointerDown.targetElementId === selectedElementId) {
+                    return;
+                  }
 
-                beginRotate({
-                  clientX: event.clientX,
-                  clientY: event.clientY,
-                  preventDefault: () => event.preventDefault(),
-                  stopPropagation: () => event.stopPropagation(),
-                });
-              }}
-              onSelectionOverlayDoubleClick={(event) => {
-                if (activeGroupScopeId && iframeRef.current?.contentDocument) {
-                  const iframeRect = iframeRef.current.getBoundingClientRect();
-                  const doc = iframeRef.current.contentDocument;
-                  const scopedTarget = doc.elementFromPoint(
-                    event.clientX - iframeRect.left,
-                    event.clientY - iframeRect.top
-                  );
-                  const scopedEditable = scopedTarget?.closest<HTMLElement>(
-                    `[data-editable][${SELECTOR_ATTR}]`
-                  );
+                  const deltaX = event.clientX - pointerDown.clientX;
+                  const deltaY = event.clientY - pointerDown.clientY;
+                  if (Math.hypot(deltaX, deltaY) <= 4) {
+                    return;
+                  }
 
-                  if (scopedEditable?.getAttribute("data-editable") === "text") {
-                    const scopedElementId = scopedEditable.getAttribute(SELECTOR_ATTR);
-                    if (scopedElementId) {
-                      beginTextEditing(scopedElementId);
-                      return;
+                  overlayPointerDownRef.current = null;
+                  beginMove({
+                    clientX: pointerDown.clientX,
+                    clientY: pointerDown.clientY,
+                    preventDefault: () => event.preventDefault(),
+                    stopPropagation: () => event.stopPropagation(),
+                  });
+                }}
+                onSelectionOverlayMouseUp={(event) => {
+                  const pointerDown = overlayPointerDownRef.current;
+                  overlayPointerDownRef.current = null;
+
+                  if (!pointerDown) {
+                    return;
+                  }
+
+                  const deltaX = event.clientX - pointerDown.clientX;
+                  const deltaY = event.clientY - pointerDown.clientY;
+                  if (Math.hypot(deltaX, deltaY) > 4) {
+                    return;
+                  }
+
+                  retargetPointerSelection(event.clientX, event.clientY, pointerDown.additive);
+                }}
+                onStageMouseLeave={clearPreselection}
+                onResizeHandleMouseDown={(corner, event) => {
+                  if (!selectedElementIds.length) {
+                    return;
+                  }
+
+                  beginResize(corner, {
+                    clientX: event.clientX,
+                    clientY: event.clientY,
+                    preventDefault: () => event.preventDefault(),
+                    stopPropagation: () => event.stopPropagation(),
+                  });
+                }}
+                onRotateHandleMouseDown={(event) => {
+                  if (selectedElementIds.length !== 1) {
+                    return;
+                  }
+
+                  beginRotate({
+                    clientX: event.clientX,
+                    clientY: event.clientY,
+                    preventDefault: () => event.preventDefault(),
+                    stopPropagation: () => event.stopPropagation(),
+                  });
+                }}
+                onSelectionOverlayDoubleClick={(event) => {
+                  if (activeGroupScopeId && iframeRef.current?.contentDocument) {
+                    const iframeRect = iframeRef.current.getBoundingClientRect();
+                    const doc = iframeRef.current.contentDocument;
+                    const scopedTarget = doc.elementFromPoint(
+                      event.clientX - iframeRect.left,
+                      event.clientY - iframeRect.top
+                    );
+                    const scopedEditable = scopedTarget?.closest<HTMLElement>(
+                      `[data-editable][${SELECTOR_ATTR}]`
+                    );
+
+                    if (scopedEditable?.getAttribute("data-editable") === "text") {
+                      const scopedElementId = scopedEditable.getAttribute(SELECTOR_ATTR);
+                      if (scopedElementId) {
+                        beginTextEditing(scopedElementId);
+                        return;
+                      }
                     }
                   }
-                }
 
-                if (
-                  selectedElementIds.length === 1 &&
-                  selectedElement?.type === "text" &&
-                  selectedElementId
-                ) {
-                  beginTextEditing(selectedElementId);
-                  return;
-                }
+                  if (
+                    selectedElementIds.length === 1 &&
+                    selectedElement?.type === "text" &&
+                    selectedElementId
+                  ) {
+                    beginTextEditing(selectedElementId);
+                    return;
+                  }
 
-                if (
-                  selectedElementIds.length === 1 &&
-                  selectedElement?.type === "group" &&
-                  selectedElementId
-                ) {
-                  beginGroupEditingScope(selectedElementId);
-                }
-              }}
-              onBackgroundClick={() => {
-                if (!suppressBackgroundClear) {
-                  clearSelection();
-                }
-              }}
-              onStyleChange={commitStyleChange}
-              onAttributeChange={commitAttributeChange}
-              onAlignToSlide={commitArrangeAction}
-              onDistribute={distributeSelection}
-              onGroup={groupSelection}
-              onLayerOrder={commitLayerAction}
-              onUngroup={ungroupSelection}
-              onDuplicate={duplicateSelection}
-              onDelete={deleteSelection}
-              attributeValues={attributeValues}
-            />
-          </main>
+                  if (
+                    selectedElementIds.length === 1 &&
+                    selectedElement?.type === "group" &&
+                    selectedElementId
+                  ) {
+                    beginGroupEditingScope(selectedElementId);
+                  }
+                }}
+                onBackgroundClick={() => {
+                  if (!suppressBackgroundClear) {
+                    clearSelection();
+                  }
+                }}
+                onStyleChange={commitStyleChange}
+                onAttributeChange={commitAttributeChange}
+                onAlignToSlide={commitArrangeAction}
+                onDistribute={distributeSelection}
+                onGroup={groupSelection}
+                onLayerOrder={commitLayerAction}
+                onUngroup={ungroupSelection}
+                onDuplicate={duplicateSelection}
+                onDelete={deleteSelection}
+                attributeValues={attributeValues}
+              />
+            </main>
+          </div>
         </div>
+        {isPresenting ? (
+          <PresenterView
+            slides={slides}
+            startSlideId={activeSlide.id}
+            onExit={() => setIsPresenting(false)}
+          />
+        ) : null}
       </div>
     </TooltipProvider>
   );
