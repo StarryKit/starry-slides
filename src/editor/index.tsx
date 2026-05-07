@@ -693,32 +693,13 @@ function SlidesEditor({
         <EditorHeader
           title={resolvedDeckTitle}
           isSaving={isSaving}
-          onExportPdf={(mode) => {
-            if (mode === "all") {
-              onExportPdf?.({ mode: "all" });
-              return;
-            }
-
-            if (mode === "current") {
-              const currentFile = activeSlide.sourceFile;
-              if (currentFile) {
-                onExportPdf?.({ mode: "slide", slideFile: currentFile });
-              }
-              return;
-            }
-
-            const rawValue = window.prompt(
-              "Manifest slide files to export, separated by commas",
-              activeSlide.sourceFile ?? ""
-            );
-            const slideFiles = rawValue
-              ?.split(",")
-              .map((item) => item.trim())
-              .filter(Boolean);
-            if (slideFiles?.length) {
-              onExportPdf?.({ mode: "slides", slideFiles });
-            }
-          }}
+          pdfSlides={slides.map((slide) => ({
+            id: slide.id,
+            title: slide.title,
+            file: slide.sourceFile,
+          }))}
+          pdfThumbnails={thumbnails}
+          onExportPdf={onExportPdf}
         />
 
         <div className="flex min-h-0 flex-auto gap-3 overflow-hidden max-[1200px]:block">

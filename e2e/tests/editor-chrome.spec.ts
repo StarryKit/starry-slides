@@ -193,6 +193,73 @@ test("sidebar drag reorder persists slide order after refresh", async ({ page })
   );
 });
 
+test("export PDF opens a scope dialog and exports selected or all slides", async ({ page }) => {
+  await gotoEditor(page);
+
+  const exportRequests: unknown[] = [];
+  await page.route("**/__editor/export-pdf", async (route) => {
+    exportRequests.push(route.request().postDataJSON());
+    await route.fulfill({
+      status: 200,
+      contentType: "application/pdf",
+      body: "%PDF-1.4\n% e2e\n",
+    });
+  });
+
+  await page.getByRole("button", { name: "Export" }).click();
+  await expect(page.getByRole("button", { name: "PDF" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Current slide PDF" })).toHaveCount(0);
+  await expect(page.getByRole("button", { name: "Selected slides PDF" })).toHaveCount(0);
+
+  await page.getByRole("button", { name: "PDF" }).click();
+
+  const dialog = page.getByRole("dialog", { name: "Export PDF" });
+  await expect(dialog).toBeVisible();
+  await expect(dialog.getByRole("radio", { name: "All slides" })).toBeChecked();
+  await expect(dialog.getByRole("radio", { name: "Selected slides" })).toBeVisible();
+  await expect(dialog.getByRole("radio", { name: "Current slide" })).toHaveCount(0);
+
+  const dialogCenterDelta = await dialog.evaluate((node) => {
+    const rect = node.getBoundingClientRect();
+    return {
+      x: Math.abs(rect.left + rect.width / 2 - window.innerWidth / 2),
+      y: Math.abs(rect.top + rect.height / 2 - window.innerHeight / 2),
+    };
+  });
+  expect(dialogCenterDelta.x).toBeLessThanOrEqual(2);
+  expect(dialogCenterDelta.y).toBeLessThanOrEqual(2);
+
+  await dialog.getByRole("radio", { name: "Selected slides" }).check();
+  await expect(dialog.getByTestId("pdf-slide-picker")).toBeVisible();
+  await expect(dialog.getByTestId("pdf-slide-option")).toHaveCount(14);
+  await expect(dialog.getByTestId("pdf-slide-option").first()).toContainText("1");
+  await expect(dialog.getByTestId("pdf-slide-option").first()).toContainText("Starry Slides");
+  await expect(dialog.getByTestId("pdf-slide-option").first().locator("img")).toBeVisible();
+  await dialog.getByRole("checkbox", { name: "Select slide 1", exact: true }).check();
+  await dialog.getByRole("checkbox", { name: "Select slide 3", exact: true }).check();
+  await dialog.getByRole("button", { name: "Export PDF" }).click();
+
+  await expect(page.getByText("PDF export is ready.")).toBeVisible();
+  expect(exportRequests.at(-1)).toEqual({
+    selection: {
+      mode: "slides",
+      slideFiles: ["01-hero.html", "03-problem.html"],
+    },
+  });
+
+  await page.getByRole("button", { name: "Export" }).click();
+  await page.getByRole("button", { name: "PDF" }).click();
+  await expect(dialog).toBeVisible();
+  await dialog.getByRole("radio", { name: "All slides" }).check();
+  await dialog.getByRole("button", { name: "Export PDF" }).click();
+
+  expect(exportRequests.at(-1)).toEqual({
+    selection: {
+      mode: "all",
+    },
+  });
+});
+
 test("double clicking a text child enters editing on the correct element", async ({ page }) => {
   await gotoEditor(page);
 

@@ -47,3 +47,4 @@ Update this directory whenever a change affects:
 | [0015](./0015-adopt-minimal-mono-editor-chrome-direction.md)                    | Adopt Minimal Mono editor chrome direction                                      | implemented-reference |
 | [0016](./0016-adopt-pdf-export-pipeline-through-core-runtime-cli-and-editor.md) | Adopt a PDF export pipeline through core, runtime, CLI, and editor entry points | accepted              |
 | [0017](./0017-adopt-deck-level-slide-operations-for-thumbnail-sidebar.md)       | Adopt deck-level slide operations for the thumbnail sidebar                     | proposed              |
+| [0018](./0018-adopt-progressive-pdf-export-dialog.md)                           | Adopt a progressive PDF export dialog in the editor                             | accepted              |
