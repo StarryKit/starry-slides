@@ -1,4 +1,5 @@
-import type { MouseEvent as ReactMouseEvent } from "react";
+import type { CSSProperties, MouseEvent as ReactMouseEvent } from "react";
+import { SNAP_GUIDE_COLOR } from "../lib/block-snap-constants";
 
 interface Point {
   x: number;
@@ -52,34 +53,86 @@ function BlockManipulationOverlay({
     <>
       {snapGuides.map((guide, index) => {
         const lineWidth = guide.variant === "spacing" ? "2px" : "1px";
+        const capLength = 14;
+        const capThickness = guide.variant === "spacing" ? 2 : 1;
+        const isVertical = guide.orientation === "vertical";
+        const lineStyle: CSSProperties = isVertical
+          ? {
+              left: `${guide.start.x}px`,
+              top: `${Math.min(guide.start.y, guide.end.y)}px`,
+              width: "0",
+              height: `${Math.max(Math.abs(guide.end.y - guide.start.y), 32)}px`,
+              borderLeftWidth: lineWidth,
+              borderLeftStyle: "solid",
+              borderLeftColor: SNAP_GUIDE_COLOR,
+              opacity: guide.variant === "spacing" ? 0.9 : 0.82,
+            }
+          : {
+              left: `${Math.min(guide.start.x, guide.end.x)}px`,
+              top: `${guide.start.y}px`,
+              width: `${Math.max(Math.abs(guide.end.x - guide.start.x), 32)}px`,
+              height: "0",
+              borderTopWidth: lineWidth,
+              borderTopStyle: "solid",
+              borderTopColor: SNAP_GUIDE_COLOR,
+              opacity: guide.variant === "spacing" ? 0.9 : 0.82,
+            };
+        const capStyle: CSSProperties = isVertical
+          ? {
+              width: `${capLength}px`,
+              height: `${capThickness}px`,
+              left: `${-capLength / 2}px`,
+              backgroundColor: SNAP_GUIDE_COLOR,
+            }
+          : {
+              width: `${capThickness}px`,
+              height: `${capLength}px`,
+              top: `${-capLength / 2}px`,
+              backgroundColor: SNAP_GUIDE_COLOR,
+            };
         return (
           <div
             key={`${guide.orientation}-${guide.start.x}-${guide.start.y}-${guide.end.x}-${guide.end.y}-${guide.variant}-${index}`}
-            className="pointer-events-none absolute z-[4] border-foreground"
+            className="pointer-events-none absolute z-[4]"
             data-testid={`snap-guide-${guide.orientation}`}
             data-variant={guide.variant}
-            style={
-              guide.orientation === "vertical"
-                ? {
-                    left: `${guide.start.x}px`,
-                    top: `${Math.min(guide.start.y, guide.end.y)}px`,
-                    width: "0",
-                    height: `${Math.max(Math.abs(guide.end.y - guide.start.y), 32)}px`,
-                    borderLeftWidth: lineWidth,
-                    borderLeftStyle: "solid",
-                    opacity: guide.variant === "spacing" ? 0.9 : 0.82,
+            style={lineStyle}
+          >
+            {guide.variant === "spacing" ? (
+              <>
+                <span
+                  className="absolute"
+                  data-testid="snap-guide-cap"
+                  style={
+                    isVertical
+                      ? {
+                          ...capStyle,
+                          top: "0",
+                        }
+                      : {
+                          ...capStyle,
+                          left: "0",
+                        }
                   }
-                : {
-                    left: `${Math.min(guide.start.x, guide.end.x)}px`,
-                    top: `${guide.start.y}px`,
-                    width: `${Math.max(Math.abs(guide.end.x - guide.start.x), 32)}px`,
-                    height: "0",
-                    borderTopWidth: lineWidth,
-                    borderTopStyle: "solid",
-                    opacity: guide.variant === "spacing" ? 0.9 : 0.82,
+                />
+                <span
+                  className="absolute"
+                  data-testid="snap-guide-cap"
+                  style={
+                    isVertical
+                      ? {
+                          ...capStyle,
+                          bottom: "0",
+                        }
+                      : {
+                          ...capStyle,
+                          right: "0",
+                        }
                   }
-            }
-          />
+                />
+              </>
+            ) : null}
+          </div>
         );
       })}
       <button

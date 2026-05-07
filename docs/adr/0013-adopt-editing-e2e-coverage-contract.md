@@ -173,7 +173,16 @@ Required behavior coverage:
 - width, height, opacity, and rotation mutations
 - clearing rotation while preserving existing translate
 - drag, resize, and rotate manipulation handles
-- snap guide behavior during drag and resize where supported
+- snap guide behavior during drag and resize where supported, including sibling
+  element alignment targets anywhere on the current slide when the dragged edge
+  is within the main-axis snap threshold
+- snap candidate selection prefers the nearest eligible element target over
+  farther eligible element targets; spacing targets may keep their explicit
+  distance bonus, but slide-level targets must not override a nearer element
+  match when both are eligible
+- snap guide rendering uses a high-contrast non-black alignment color and
+  renders spacing guides with visible end caps at both measured ends so users
+  can distinguish distance references from normal alignment guides
 - arrow-key movement with normal, Shift, and Alt step sizes
 - layout and transform operations participate in undo and redo
 
