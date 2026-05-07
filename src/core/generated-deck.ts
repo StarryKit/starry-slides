@@ -55,6 +55,7 @@ export async function loadSlidesFromManifest({
 
       return {
         ...parsedSlide,
+        hidden: slide.hidden === true,
         sourceFile: slide.file,
         title: slide.title || parsedSlide.title,
       } satisfies SlideModel;

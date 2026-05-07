@@ -27,7 +27,7 @@ export async function gotoEditor(page: Page) {
   expect(resetResponse.ok()).toBeTruthy();
   editorVisitCounter += 1;
   await page.goto(`/?e2e=${Date.now()}-${editorVisitCounter}`);
-  await expect(page.getByText(SOURCE_LABEL)).toBeVisible();
+  await expect(page.locator("header input").first()).toHaveValue(HERO_TITLE);
   await expect(page.getByTestId("slide-iframe")).toBeVisible();
   await expect(coverFrame(page).locator('[data-editor-id="text-1"]')).toHaveText(HERO_KICKER);
 }

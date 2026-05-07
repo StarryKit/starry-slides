@@ -14,6 +14,13 @@ const GENERATED_MANIFEST_URL = "/deck/manifest.json";
 const GENERATED_SAVE_URL = "/__editor/save-generated-deck";
 const SAVE_DEBOUNCE_MS = 800;
 
+interface SavePayloadSlide {
+  file?: string;
+  htmlSource?: string;
+  title?: string;
+  hidden?: boolean;
+}
+
 export function useSlidesData(): SlidesDataResult {
   const [deckTitle, setDeckTitle] = useState("Generated deck");
   const [slides, setSlides] = useState<SlideModel[]>([]);
@@ -93,6 +100,18 @@ export function useSlidesData(): SlidesDataResult {
         slide.sourceFile ?? manifest.slides?.[index]?.file,
       ])
     );
+    const manifestSlides = nextSlides.flatMap((slide) => {
+      const file = slide.sourceFile ?? sourceFileBySlideId.get(slide.id);
+      return file
+        ? [
+            {
+              file,
+              title: slide.title,
+              hidden: slide.hidden === true ? true : undefined,
+            },
+          ]
+        : [];
+    });
 
     void fetch(GENERATED_SAVE_URL, {
       method: "POST",
@@ -101,10 +120,18 @@ export function useSlidesData(): SlidesDataResult {
       },
       body: JSON.stringify({
         clientLoadedAt: clientLoadedAtRef.current,
-        slides: nextSlides.map((slide) => ({
-          file: slide.sourceFile ?? sourceFileBySlideId.get(slide.id),
-          htmlSource: slide.htmlSource,
-        })),
+        manifest: {
+          ...manifest,
+          slides: manifestSlides,
+        },
+        slides: nextSlides.map(
+          (slide): SavePayloadSlide => ({
+            file: slide.sourceFile ?? sourceFileBySlideId.get(slide.id),
+            htmlSource: slide.htmlSource,
+            title: slide.title,
+            hidden: slide.hidden === true,
+          })
+        ),
       }),
     })
       .catch(() => {

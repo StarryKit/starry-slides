@@ -34,7 +34,7 @@ export interface VerifyDeckSourceResult {
   manifestPath: string;
   manifest: {
     topic?: string;
-    slides?: Array<{ file?: unknown; title?: unknown }>;
+    slides?: Array<{ file?: unknown; title?: unknown; hidden?: unknown }>;
   } | null;
   slideFiles: string[];
   issues: VerifyIssue[];
@@ -90,12 +90,12 @@ function collectHtmlFiles(targetPath: string): string[] {
 
 function parseManifest(manifestPath: string): {
   topic?: string;
-  slides?: Array<{ file?: unknown; title?: unknown }>;
+  slides?: Array<{ file?: unknown; title?: unknown; hidden?: unknown }>;
 } | null {
   try {
     return JSON.parse(fs.readFileSync(manifestPath, "utf8")) as {
       topic?: string;
-      slides?: Array<{ file?: unknown; title?: unknown }>;
+      slides?: Array<{ file?: unknown; title?: unknown; hidden?: unknown }>;
     };
   } catch (error) {
     throw new Error(
@@ -289,6 +289,20 @@ export function loadVerifyDeckSource(deckPath: string): VerifyDeckSourceResult {
     );
   } else {
     for (const [index, slide] of manifest.slides.entries()) {
+      if ("hidden" in slide && typeof slide.hidden !== "boolean") {
+        issues.push(
+          issue(
+            "error",
+            "structure.invalid-slide-hidden",
+            `manifest slide ${index + 1} hidden must be a boolean when present`,
+            {
+              slideIndex: index,
+              ...(typeof slide.file === "string" ? { slideFile: slide.file } : {}),
+            }
+          )
+        );
+      }
+
       if (typeof slide.file !== "string" || !slide.file.trim()) {
         issues.push(
           issue(

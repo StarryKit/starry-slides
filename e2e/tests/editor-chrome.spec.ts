@@ -127,6 +127,72 @@ test("sidebar renders fixed thumbnail list chrome and slide actions", async ({ p
   }
 });
 
+test("sidebar slide actions add duplicate hide and delete slides", async ({ page }) => {
+  await gotoEditor(page);
+
+  await page.getByLabel("Slide 2").click();
+  await page.getByRole("button", { name: "Add slide" }).click();
+
+  await expect(page.getByText("15 slides")).toBeVisible();
+  await expect(page.getByLabel("Slide 3")).toHaveAttribute("aria-current", "true");
+  await expect(coverFrame(page).locator('[data-editor-id="text-1"]')).toHaveText("Untitled Slide");
+
+  const newSlideCard = page.getByTestId("slide-card").nth(2);
+  await newSlideCard.hover();
+  await newSlideCard.locator('button[aria-haspopup="menu"]').click();
+  await page.getByRole("button", { name: "Duplicate" }).click();
+
+  await expect(page.getByText("16 slides")).toBeVisible();
+  await expect(page.getByLabel("Slide 4")).toHaveAttribute("aria-current", "true");
+
+  const duplicateCard = page.getByTestId("slide-card").nth(3);
+  await duplicateCard.hover();
+  await duplicateCard.locator('button[aria-haspopup="menu"]').click();
+  await page.getByRole("button", { name: "Hide" }).click();
+  await expect(duplicateCard.getByTestId("slide-hidden-indicator")).toBeVisible();
+
+  await duplicateCard.hover();
+  await duplicateCard.locator('button[aria-haspopup="menu"]').click();
+  await page.getByRole("button", { name: "Show" }).click();
+  await expect(duplicateCard.getByTestId("slide-hidden-indicator")).toBeHidden();
+
+  await duplicateCard.hover();
+  await duplicateCard.locator('button[aria-haspopup="menu"]').click();
+  await page.getByRole("button", { name: "Delete" }).click();
+
+  await expect(page.getByText("15 slides")).toBeVisible();
+  await expect(page.getByRole("button", { name: "Slide 4", exact: true })).toHaveAttribute(
+    "aria-current",
+    "true"
+  );
+});
+
+test("sidebar drag reorder persists slide order after refresh", async ({ page }) => {
+  await gotoEditor(page);
+
+  const firstCard = page.getByTestId("slide-card").nth(0);
+  const thirdCard = page.getByTestId("slide-card").nth(2);
+  const firstTitle = (
+    await page.getByRole("button", { name: "Slide 1", exact: true }).textContent()
+  )
+    ?.replace(/^Slide\s*1/, "")
+    .trim();
+
+  await firstCard.dragTo(thirdCard);
+
+  await expect(page.getByRole("button", { name: "Slide 3", exact: true })).toContainText(
+    firstTitle?.trim() ?? ""
+  );
+  await expect(page.getByText("saving...")).toBeVisible();
+  await expect(page.getByText("saving...")).toBeHidden();
+
+  await page.reload();
+  await expect(page.locator("header input").first()).toHaveValue("Starry Slides Project Overview");
+  await expect(page.getByRole("button", { name: "Slide 3", exact: true })).toContainText(
+    firstTitle?.trim() ?? ""
+  );
+});
+
 test("double clicking a text child enters editing on the correct element", async ({ page }) => {
   await gotoEditor(page);
 

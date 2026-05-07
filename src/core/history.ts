@@ -23,8 +23,37 @@ export type HistoryAction =
       type: "history.redo";
     };
 
+function clampInsertIndex(index: number, length: number): number {
+  return Math.min(Math.max(index, 0), length);
+}
+
 function applyOperationToSlides(slides: SlideModel[], operation: SlideOperation): SlideModel[] {
-  return slides.map((slide) => applySlideOperation(slide, operation));
+  switch (operation.type) {
+    case "slide.create":
+    case "slide.duplicate": {
+      const index = clampInsertIndex(operation.index, slides.length);
+      return [...slides.slice(0, index), operation.slide, ...slides.slice(index)];
+    }
+    case "slide.delete":
+      return slides.filter((slide) => slide.id !== operation.slide.id);
+    case "slide.reorder": {
+      const fromIndex = slides.findIndex((slide) => slide.id === operation.slideId);
+      if (fromIndex < 0) {
+        return slides;
+      }
+
+      const nextSlides = [...slides];
+      const [slide] = nextSlides.splice(fromIndex, 1);
+      if (!slide) {
+        return slides;
+      }
+
+      nextSlides.splice(clampInsertIndex(operation.toIndex, nextSlides.length), 0, slide);
+      return nextSlides;
+    }
+    default:
+      return slides.map((slide) => applySlideOperation(slide, operation));
+  }
 }
 
 export function createHistoryState(slides: SlideModel[]): HistoryState {

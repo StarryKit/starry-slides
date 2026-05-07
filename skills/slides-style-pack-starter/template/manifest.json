@@ -19,7 +19,8 @@
       "file": "03-thesis.html",
       "title": "Source-native decks are easier to trust",
       "archetype": "thesis",
-      "stylePack": "starter-minimal"
+      "stylePack": "starter-minimal",
+      "hidden": false
     },
     {
       "file": "04-concept.html",

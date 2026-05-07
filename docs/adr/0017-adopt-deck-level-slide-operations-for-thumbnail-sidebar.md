@@ -7,8 +7,7 @@
 
 The editor sidebar has been restyled as a fixed thumbnail list with controls for
 adding slides, duplicating slides, deleting slides, hiding slides, and drag
-reordering. The first implementation intentionally ships the UI affordances
-without enabling the new deck-level behavior.
+reordering. Those UI affordances now need to become real deck-level behavior.
 
 The current editor operation pipeline is element-scoped:
 
@@ -37,8 +36,8 @@ Related constraints:
 
 ## Decision
 
-Adopt deck-level slide operations before wiring the new sidebar controls to real
-behavior.
+Adopt deck-level slide operations and wire the sidebar controls through those
+operations.
 
 Deck-level operations will live alongside element operations but operate on the
 slide collection:
@@ -59,6 +58,24 @@ The operation model must keep these concerns explicit:
    element edits.
 5. **Active slide behavior**: deleting, duplicating, or reordering slides must
    leave `activeSlideId` pointing at a valid slide.
+
+The first sidebar behavior contract is:
+
+1. **Add slide** creates a blank slide immediately after the currently selected
+   slide, selects the new slide, gives it a deterministic `sourceFile`, and
+   persists a new manifest entry.
+2. **Duplicate slide** creates a copy immediately after the source slide,
+   selects the duplicate, preserves the source slide title and HTML, gives the
+   duplicate a unique `id` and `sourceFile`, and persists it.
+3. **Delete slide** removes the slide from editor state and the saved manifest.
+   When the deleted slide is active, selection moves to the next slide if one
+   exists, otherwise the previous slide. Deleting the last remaining slide is
+   disabled.
+4. **Hide slide** toggles `SlideModel.hidden` and
+   `manifest.slides[].hidden`. Hidden slides stay visible/editable in the
+   sidebar and stage, but render dimmed in the sidebar with an `EyeOff` marker.
+5. **Drag reorder** changes slide order by dragging a sidebar thumbnail/grip and
+   persists the new manifest order.
 
 Slide visibility will be stored as manifest metadata, not only in memory. The
 manifest entry should grow an optional `hidden?: boolean` field, and
@@ -107,44 +124,44 @@ operation exists.
   - keep missing or legacy `hidden` values equivalent to `false`
 
 - **Sidebar wiring**:
-  - `onAdd` dispatches `slide.create`
-  - `onDuplicate` dispatches `slide.duplicate`
-  - `onDelete` dispatches `slide.delete`
+  - `onAdd` dispatches `slide.create` at `activeSlideIndex + 1`
+  - `onDuplicate` dispatches `slide.duplicate` at `sourceSlideIndex + 1`
+  - `onDelete` dispatches `slide.delete` and moves active selection to the next
+    valid slide
   - `onToggleHidden` dispatches `slide.visibility.update`
-  - drag-and-drop dispatches `slide.reorder`
+  - thumbnail/grip drag-and-drop dispatches `slide.reorder`
   - destructive delete should be disabled or guarded when only one slide remains
 
 - **Tests**:
   - core tests cover create, duplicate, delete, reorder, visibility, undo, and
     redo
   - generated deck tests cover manifest import/export of `hidden`
-  - editor tests cover sidebar controls, active slide fallback after delete,
-    scroll-to-active behavior, and no-op behavior while controls are still
-    intentionally unwired
+  - editor tests cover sidebar add, duplicate, delete, hide/show, reorder,
+    active slide fallback after delete, scroll-to-active behavior, and manifest
+    persistence after reload
   - runtime/CLI tests cover presentation/export behavior for hidden slides once
     those consumers adopt visibility semantics
 
 ## Verification
 
-- [ ] Adding a slide creates a new `SlideModel`, a deterministic `sourceFile`,
-      and a manifest entry on save.
+- [ ] Adding a slide after the active slide creates a new `SlideModel`, selects
+      it, assigns a deterministic `sourceFile`, and saves a manifest entry.
 - [ ] Duplicating a slide creates a new slide with copied HTML, unique editor
-      ids where needed, and a unique `sourceFile`.
+      `id`, and a unique `sourceFile` immediately after the source slide.
 - [ ] Deleting a slide removes it from editor state and from the saved
       manifest, while leaving at least one active slide.
-- [ ] Reordering slides updates editor order, saved manifest order, and undo/redo
-      state.
+- [ ] Reordering slides through sidebar drag updates editor order, saved
+      manifest order, and undo/redo state.
 - [ ] Toggling hidden updates `SlideModel.hidden` and `manifest.slides[].hidden`.
+- [ ] Hidden slides are dimmed in the sidebar and can be shown again from the
+      same menu.
 - [ ] Legacy manifests without `hidden` continue to load as visible slides.
-- [ ] Sidebar controls call real deck operations only after the core operation
-      model exists.
 - [ ] `pnpm lint`, `pnpm test`, `pnpm build`, and relevant e2e tests pass after
       implementation.
 
 ## Consequences
 
-The sidebar UI can ship before these capabilities are implemented, but future
-agents have a precise contract for wiring the controls.
+The sidebar UI becomes a real deck editing surface, not only visual chrome.
 
 The history reducer becomes responsible for both element-level and deck-level
 operations. That raises the importance of keeping operation types explicit and

@@ -17,11 +17,13 @@ export interface SlideModel {
   height: number;
   elements: EditableElement[];
   sourceFile?: string;
+  hidden?: boolean;
 }
 
 export interface SlideDeckManifestEntry {
   file: string;
   title?: string;
+  hidden?: boolean;
 }
 
 export interface SlideDeckManifest {

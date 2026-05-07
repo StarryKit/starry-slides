@@ -22,6 +22,7 @@ interface SlideSidebarProps {
   onDuplicate?: (slideId: string) => void;
   onDelete?: (slideId: string) => void;
   onToggleHidden?: (slideId: string) => void;
+  onReorder?: (slideId: string, targetIndex: number) => void;
 }
 
 interface MenuItemProps {
@@ -29,6 +30,7 @@ interface MenuItemProps {
   label: string;
   onClick: () => void;
   danger?: boolean;
+  disabled?: boolean;
 }
 
 function SlideSidebar({
@@ -41,9 +43,12 @@ function SlideSidebar({
   onDuplicate,
   onDelete,
   onToggleHidden,
+  onReorder,
 }: SlideSidebarProps) {
   const [menuId, setMenuId] = useState<string | null>(null);
   const [hoverId, setHoverId] = useState<string | null>(null);
+  const [draggingId, setDraggingId] = useState<string | null>(null);
+  const [dropIndex, setDropIndex] = useState<number | null>(null);
 
   const activeSlideRef = useCallback((node: HTMLButtonElement | null) => {
     node?.scrollIntoView({
@@ -80,16 +85,40 @@ function SlideSidebar({
         </div>
 
         <div
-          className="min-h-0 flex-1 space-y-2.5 overflow-y-auto px-2 py-2.5"
+          className="min-h-0 flex-1 space-y-2.5 overflow-y-auto px-2 py-2.5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
           data-testid="slide-list"
         >
           {slides.map((slide, index) => {
             const active = slide.id === activeSlideId;
-            const hidden = false;
+            const hidden = slide.hidden === true;
 
             return (
               <div
                 key={slide.id}
+                draggable
+                onDragStart={(event) => {
+                  setDraggingId(slide.id);
+                  event.dataTransfer.effectAllowed = "move";
+                  event.dataTransfer.setData("text/plain", slide.id);
+                }}
+                onDragOver={(event) => {
+                  event.preventDefault();
+                  event.dataTransfer.dropEffect = "move";
+                  setDropIndex(index);
+                }}
+                onDrop={(event) => {
+                  event.preventDefault();
+                  const draggedSlideId = event.dataTransfer.getData("text/plain") || draggingId;
+                  if (draggedSlideId && draggedSlideId !== slide.id) {
+                    onReorder?.(draggedSlideId, index);
+                  }
+                  setDraggingId(null);
+                  setDropIndex(null);
+                }}
+                onDragEnd={() => {
+                  setDraggingId(null);
+                  setDropIndex(null);
+                }}
                 onMouseEnter={() => setHoverId(slide.id)}
                 onMouseLeave={() => {
                   setHoverId(null);
@@ -97,7 +126,10 @@ function SlideSidebar({
                     setMenuId(null);
                   }
                 }}
-                className="group flex items-stretch gap-1.5"
+                className={cn(
+                  "group flex items-stretch gap-1.5 rounded-lg",
+                  dropIndex === index && draggingId !== slide.id && "bg-foreground/[0.04]"
+                )}
                 data-testid="slide-card"
               >
                 <div
@@ -140,7 +172,10 @@ function SlideSidebar({
                     )}
 
                     {hidden ? (
-                      <div className="absolute left-1 top-1 flex size-4 items-center justify-center rounded bg-foreground/80 text-background">
+                      <div
+                        className="absolute left-1 top-1 flex size-4 items-center justify-center rounded bg-foreground/80 text-background"
+                        data-testid="slide-hidden-indicator"
+                      >
                         <EyeOff className="size-2.5" />
                       </div>
                     ) : null}
@@ -163,6 +198,12 @@ function SlideSidebar({
                     className="flex size-5 cursor-grab items-center justify-center rounded text-foreground/40 hover:bg-foreground/[0.06] hover:text-foreground/80"
                     title="Drag to reorder"
                     type="button"
+                    draggable
+                    onDragStart={(event) => {
+                      setDraggingId(slide.id);
+                      event.dataTransfer.effectAllowed = "move";
+                      event.dataTransfer.setData("text/plain", slide.id);
+                    }}
                   >
                     <GripVertical className="size-3" />
                   </button>
@@ -202,6 +243,7 @@ function SlideSidebar({
                           icon={Trash2}
                           label="Delete"
                           danger
+                          disabled={slides.length <= 1}
                           onClick={() => {
                             onDelete?.(slide.id);
                             setMenuId(null);
@@ -220,7 +262,7 @@ function SlideSidebar({
   );
 }
 
-function MenuItem({ icon: Icon, label, onClick, danger }: MenuItemProps) {
+function MenuItem({ icon: Icon, label, onClick, danger, disabled }: MenuItemProps) {
   return (
     <button
       onClick={onClick}
@@ -228,8 +270,10 @@ function MenuItem({ icon: Icon, label, onClick, danger }: MenuItemProps) {
         "flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-[12px] transition-colors",
         danger
           ? "text-foreground/70 hover:bg-destructive/10 hover:text-destructive"
-          : "text-foreground/70 hover:bg-foreground/[0.04] hover:text-foreground"
+          : "text-foreground/70 hover:bg-foreground/[0.04] hover:text-foreground",
+        disabled && "pointer-events-none opacity-40"
       )}
+      disabled={disabled}
       type="button"
     >
       <Icon className="size-3" />

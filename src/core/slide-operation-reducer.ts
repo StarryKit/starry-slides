@@ -13,11 +13,24 @@ import {
 function preserveSlideSource(sourceSlide: SlideModel, nextSlide: SlideModel): SlideModel {
   return {
     ...nextSlide,
+    hidden: sourceSlide.hidden,
     sourceFile: sourceSlide.sourceFile,
   };
 }
 
 export function applySlideOperation(slide: SlideModel, operation: SlideOperation): SlideModel {
+  if (operation.type === "slide.visibility.update") {
+    if (slide.id !== operation.slideId) {
+      return slide;
+    }
+
+    return { ...slide, hidden: operation.nextHidden };
+  }
+
+  if (!("slideId" in operation) || operation.type === "slide.reorder") {
+    return slide;
+  }
+
   if (slide.id !== operation.slideId) {
     return slide;
   }
@@ -162,6 +175,39 @@ export function invertSlideOperation(operation: SlideOperation): SlideOperation 
         previousHtmlSource: operation.nextHtmlSource,
         nextHtmlSource: operation.previousHtmlSource,
         timestamp: operation.timestamp,
+      };
+    case "slide.create":
+      return {
+        type: "slide.delete",
+        slide: operation.slide,
+        index: operation.index,
+        timestamp: operation.timestamp,
+      };
+    case "slide.delete":
+      return {
+        type: "slide.create",
+        slide: operation.slide,
+        index: operation.index,
+        timestamp: operation.timestamp,
+      };
+    case "slide.duplicate":
+      return {
+        type: "slide.delete",
+        slide: operation.slide,
+        index: operation.index,
+        timestamp: operation.timestamp,
+      };
+    case "slide.reorder":
+      return {
+        ...operation,
+        fromIndex: operation.toIndex,
+        toIndex: operation.fromIndex,
+      };
+    case "slide.visibility.update":
+      return {
+        ...operation,
+        previousHidden: operation.nextHidden,
+        nextHidden: operation.previousHidden,
       };
   }
 }

@@ -92,6 +92,38 @@ describe("verifyDeck core verifier", () => {
     expect(issueCodes(result.issues)).toContain("structure.slide-escape");
   });
 
+  test("manifest slide hidden accepts booleans and rejects other values", () => {
+    const deck = createDeck();
+    writeDeck(deck, [
+      { file: "slides/01.html", title: "Visible" },
+      { file: "slides/02.html", title: "Hidden" },
+    ]);
+    fs.writeFileSync(
+      path.join(deck, "manifest.json"),
+      JSON.stringify({
+        slides: [
+          { file: "slides/01.html", title: "Visible", hidden: false },
+          { file: "slides/02.html", title: "Hidden", hidden: true },
+        ],
+      })
+    );
+
+    const validResult = verifyDeck(deck);
+    expect(validResult.ok).toBe(true);
+    expect(issueCodes(validResult.issues)).not.toContain("structure.invalid-slide-hidden");
+
+    fs.writeFileSync(
+      path.join(deck, "manifest.json"),
+      JSON.stringify({
+        slides: [{ file: "slides/01.html", title: "Visible", hidden: "yes" }],
+      })
+    );
+
+    const invalidResult = verifyDeck(deck);
+    expect(invalidResult.ok).toBe(false);
+    expect(issueCodes(invalidResult.issues)).toContain("structure.invalid-slide-hidden");
+  });
+
   test("missing slide root returns structure.missing-root", () => {
     const deck = createDeck();
     writeDeck(deck, [

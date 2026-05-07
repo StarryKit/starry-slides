@@ -1,4 +1,5 @@
 import type { ElementLayoutStyleSnapshot } from "./layout";
+import type { SlideModel } from "./slide-contract";
 
 export interface TextUpdateOperation {
   type: "text.update";
@@ -97,4 +98,49 @@ export interface SlideBatchOperation {
   timestamp: number;
 }
 
-export type SlideOperation = AtomicSlideOperation | SlideBatchOperation;
+export interface SlideCreateOperation {
+  type: "slide.create";
+  slide: SlideModel;
+  index: number;
+  timestamp: number;
+}
+
+export interface SlideDeleteOperation {
+  type: "slide.delete";
+  slide: SlideModel;
+  index: number;
+  timestamp: number;
+}
+
+export interface SlideDuplicateOperation {
+  type: "slide.duplicate";
+  sourceSlideId: string;
+  slide: SlideModel;
+  index: number;
+  timestamp: number;
+}
+
+export interface SlideReorderOperation {
+  type: "slide.reorder";
+  slideId: string;
+  fromIndex: number;
+  toIndex: number;
+  timestamp: number;
+}
+
+export interface SlideVisibilityUpdateOperation {
+  type: "slide.visibility.update";
+  slideId: string;
+  previousHidden: boolean;
+  nextHidden: boolean;
+  timestamp: number;
+}
+
+export type DeckSlideOperation =
+  | SlideCreateOperation
+  | SlideDeleteOperation
+  | SlideDuplicateOperation
+  | SlideReorderOperation
+  | SlideVisibilityUpdateOperation;
+
+export type SlideOperation = AtomicSlideOperation | SlideBatchOperation | DeckSlideOperation;
