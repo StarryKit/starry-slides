@@ -3,20 +3,32 @@ import {
   ChevronDown,
   Cloud,
   Download,
+  FileCheck2,
   FileCode2,
   FileText,
+  Layers3,
   Play,
   Presentation,
+  X,
 } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
+import type { PdfExportSelection } from "../../core";
 import { cn } from "../lib/utils";
+
+export interface PdfExportSlideOption {
+  id: string;
+  title: string;
+  file?: string;
+}
 
 interface EditorHeaderProps {
   title: string;
   onTitleChange?: (t: string) => void;
   onPresent?: () => void;
-  onExportPdf?: (mode: "all" | "current" | "selected") => void;
+  onExportPdf?: (selection: PdfExportSelection) => void;
+  pdfSlides?: PdfExportSlideOption[];
+  pdfThumbnails?: Record<string, string>;
   isSaving: boolean;
 }
 
@@ -51,9 +63,12 @@ export function EditorHeader({
   onTitleChange,
   onPresent,
   onExportPdf,
+  pdfSlides = [],
+  pdfThumbnails = {},
   isSaving,
 }: EditorHeaderProps) {
   const [open, setOpen] = useState(false);
+  const [pdfDialogOpen, setPdfDialogOpen] = useState(false);
   const [titleWidth, setTitleWidth] = useState(0);
   const ref = useRef<HTMLDivElement>(null);
   const titleDisplay = title || "Untitled presentation";
@@ -86,7 +101,7 @@ export function EditorHeader({
     }
 
     if (e.id === "pdf") {
-      onExportPdf?.("all");
+      setPdfDialogOpen(true);
       return;
     }
 
@@ -180,27 +195,6 @@ export function EditorHeader({
                   </button>
                 );
               })}
-              <div className="my-1 h-px bg-foreground/[0.08]" />
-              <button
-                type="button"
-                onClick={() => {
-                  setOpen(false);
-                  onExportPdf?.("current");
-                }}
-                className="w-full rounded-md px-2.5 py-2 text-left text-[12px] font-medium text-foreground/70 transition-colors hover:bg-foreground/[0.04] hover:text-foreground"
-              >
-                Current slide PDF
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  setOpen(false);
-                  onExportPdf?.("selected");
-                }}
-                className="w-full rounded-md px-2.5 py-2 text-left text-[12px] font-medium text-foreground/70 transition-colors hover:bg-foreground/[0.04] hover:text-foreground"
-              >
-                Selected slides PDF
-              </button>
             </div>
           )}
         </div>
@@ -214,6 +208,259 @@ export function EditorHeader({
           <span>Present</span>
         </button>
       </div>
+      {pdfDialogOpen ? (
+        <PdfExportDialog
+          slides={pdfSlides}
+          thumbnails={pdfThumbnails}
+          onClose={() => setPdfDialogOpen(false)}
+          onExport={(selection) => {
+            setPdfDialogOpen(false);
+            onExportPdf?.(selection);
+          }}
+        />
+      ) : null}
     </header>
+  );
+}
+
+type PdfScope = "all" | "selected";
+
+function PdfExportDialog({
+  slides,
+  thumbnails,
+  onClose,
+  onExport,
+}: {
+  slides: PdfExportSlideOption[];
+  thumbnails: Record<string, string>;
+  onClose: () => void;
+  onExport: (selection: PdfExportSelection) => void;
+}) {
+  const exportableSlides = slides.filter((slide) => slide.file);
+  const [scope, setScope] = useState<PdfScope>("all");
+  const [selectedSlideFiles, setSelectedSlideFiles] = useState<string[]>([]);
+  const selectedSet = new Set(selectedSlideFiles);
+  const selectedCount = selectedSlideFiles.length;
+  const canExport = scope === "all" || (scope === "selected" && selectedCount > 0);
+
+  useEffect(() => {
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        onClose();
+      }
+    };
+
+    document.addEventListener("keydown", onKeyDown);
+    return () => document.removeEventListener("keydown", onKeyDown);
+  }, [onClose]);
+
+  const toggleSelectedSlide = (file: string, checked: boolean) => {
+    setSelectedSlideFiles((current) => {
+      if (checked) {
+        return current.includes(file) ? current : [...current, file];
+      }
+
+      return current.filter((item) => item !== file);
+    });
+  };
+
+  const submitExport = () => {
+    if (scope === "selected") {
+      if (selectedSlideFiles.length > 0) {
+        onExport({ mode: "slides", slideFiles: selectedSlideFiles });
+      }
+      return;
+    }
+
+    onExport({ mode: "all" });
+  };
+
+  return (
+    <div
+      className="fixed inset-0 z-[80] flex items-center justify-center bg-foreground/20 px-4"
+      onMouseDown={(event) => {
+        if (event.target === event.currentTarget) {
+          onClose();
+        }
+      }}
+    >
+      <dialog
+        open
+        aria-modal="true"
+        aria-labelledby="pdf-export-title"
+        className="relative m-0 flex max-h-[86vh] w-full max-w-[680px] flex-col overflow-hidden rounded-lg border border-foreground/[0.08] bg-white p-0 shadow-[0_24px_80px_rgba(0,0,0,0.18)]"
+      >
+        <div className="flex items-center justify-between border-b border-foreground/[0.08] px-4 py-3">
+          <div className="flex min-w-0 items-center gap-2.5">
+            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-foreground/[0.05]">
+              <FileText className="h-4 w-4 text-foreground/70" />
+            </div>
+            <div className="min-w-0">
+              <h2 id="pdf-export-title" className="text-[14px] font-semibold text-foreground">
+                Export PDF
+              </h2>
+              <p className="mt-0.5 text-[11px] text-foreground/50">
+                Choose which slides to include.
+              </p>
+            </div>
+          </div>
+          <button
+            type="button"
+            aria-label="Close PDF export dialog"
+            onClick={onClose}
+            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md text-foreground/55 transition-colors hover:bg-foreground/[0.05] hover:text-foreground"
+          >
+            <X className="h-4 w-4" />
+          </button>
+        </div>
+
+        <div className="min-h-0 flex-1 overflow-auto px-4 py-4">
+          <fieldset className="space-y-2">
+            <legend className="mb-2 text-[10px] font-medium uppercase tracking-wider text-foreground/45">
+              PDF range
+            </legend>
+            <ScopeOption
+              checked={scope === "all"}
+              icon={Layers3}
+              label="All slides"
+              detail={`${exportableSlides.length} slides`}
+              onChange={() => setScope("all")}
+            />
+            <ScopeOption
+              checked={scope === "selected"}
+              icon={FileCheck2}
+              label="Selected slides"
+              detail={selectedCount === 1 ? "1 slide selected" : `${selectedCount} slides selected`}
+              onChange={() => setScope("selected")}
+            />
+          </fieldset>
+
+          {scope === "selected" ? (
+            <div className="mt-4 rounded-md border border-foreground/[0.08]">
+              <div className="border-b border-foreground/[0.08] px-3 py-2 text-[11px] font-medium text-foreground/55">
+                Slides
+              </div>
+              <div
+                className="grid max-h-[360px] grid-cols-2 gap-2 overflow-auto p-2 max-[620px]:grid-cols-1"
+                data-testid="pdf-slide-picker"
+              >
+                {exportableSlides.map((slide, index) => {
+                  const file = slide.file;
+                  if (!file) {
+                    return null;
+                  }
+
+                  return (
+                    <label
+                      key={slide.id}
+                      data-testid="pdf-slide-option"
+                      className={cn(
+                        "grid cursor-pointer grid-cols-[104px_1fr] gap-2 rounded-md border border-foreground/[0.08] bg-white p-2 text-[12px] transition-colors hover:border-foreground/20 hover:bg-foreground/[0.025]",
+                        selectedSet.has(file) && "border-foreground/35 bg-foreground/[0.035]"
+                      )}
+                    >
+                      <div className="relative aspect-[16/9] overflow-hidden rounded border border-foreground/[0.08] bg-white">
+                        {thumbnails[slide.id] ? (
+                          <img
+                            alt={`Slide ${index + 1} thumbnail`}
+                            className="absolute inset-0 block size-full object-cover"
+                            src={thumbnails[slide.id]}
+                          />
+                        ) : (
+                          <div className="absolute inset-0 flex items-center justify-center text-[10px] text-foreground/25">
+                            Slide {index + 1}
+                          </div>
+                        )}
+                      </div>
+                      <div className="flex min-w-0 flex-col justify-between gap-2">
+                        <div className="flex items-start gap-2">
+                          <input
+                            type="checkbox"
+                            aria-label={`Select slide ${index + 1}`}
+                            checked={selectedSet.has(file)}
+                            onChange={(event) => toggleSelectedSlide(file, event.target.checked)}
+                            className="mt-0.5 h-3.5 w-3.5 shrink-0 accent-foreground"
+                          />
+                          <div className="min-w-0">
+                            <div className="font-mono text-[11px] text-foreground/45">
+                              {index + 1}
+                            </div>
+                            <div className="mt-0.5 line-clamp-2 text-[12px] font-medium leading-snug text-foreground/75">
+                              {slide.title}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </label>
+                  );
+                })}
+              </div>
+            </div>
+          ) : null}
+        </div>
+
+        <div className="flex items-center justify-end gap-2 border-t border-foreground/[0.08] px-4 py-3">
+          <button
+            type="button"
+            onClick={onClose}
+            className="h-8 rounded-md px-3 text-[12px] font-medium text-foreground/60 transition-colors hover:bg-foreground/[0.05] hover:text-foreground"
+          >
+            Cancel
+          </button>
+          <button
+            type="button"
+            onClick={submitExport}
+            disabled={!canExport}
+            className="h-8 rounded-md bg-foreground px-3.5 text-[12px] font-medium text-background transition-colors hover:bg-foreground/90 disabled:cursor-not-allowed disabled:opacity-40"
+          >
+            Export PDF
+          </button>
+        </div>
+      </dialog>
+    </div>
+  );
+}
+
+function ScopeOption({
+  checked,
+  disabled,
+  icon: Icon,
+  label,
+  detail,
+  onChange,
+}: {
+  checked: boolean;
+  disabled?: boolean;
+  icon: typeof FileText;
+  label: string;
+  detail: string;
+  onChange: () => void;
+}) {
+  return (
+    <label
+      className={cn(
+        "flex cursor-pointer items-center gap-3 rounded-md border border-foreground/[0.08] px-3 py-2.5 transition-colors",
+        checked && "border-foreground/30 bg-foreground/[0.035]",
+        disabled
+          ? "cursor-not-allowed opacity-45"
+          : "hover:border-foreground/20 hover:bg-foreground/[0.03]"
+      )}
+    >
+      <input
+        type="radio"
+        name="pdf-export-scope"
+        checked={checked}
+        disabled={disabled}
+        onChange={onChange}
+        className="h-3.5 w-3.5 accent-foreground"
+      />
+      <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-foreground/[0.05]">
+        <Icon className="h-4 w-4 text-foreground/65" />
+      </div>
+      <div className="min-w-0 flex-1">
+        <div className="text-[13px] font-medium text-foreground">{label}</div>
+        <div className="mt-0.5 truncate text-[11px] text-foreground/50">{detail}</div>
+      </div>
+    </label>
   );
 }

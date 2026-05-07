@@ -122,7 +122,7 @@ for (const slide of slides) {
 
 fs.writeFileSync(
   path.join(outputRoot, "manifest.json"),
-  JSON.stringify(
+  `${JSON.stringify(
     {
       topic,
       generatedAt: new Date().toISOString(),
@@ -133,7 +133,7 @@ fs.writeFileSync(
     },
     null,
     2
-  ),
+  )}\n`,
   "utf8"
 );
 

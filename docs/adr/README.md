@@ -48,3 +48,4 @@ Update this directory whenever a change affects:
 | [0016](./0016-adopt-pdf-export-pipeline-through-core-runtime-cli-and-editor.md) | Adopt a PDF export pipeline through core, runtime, CLI, and editor entry points | accepted              |
 | [0017](./0017-adopt-deck-level-slide-operations-for-thumbnail-sidebar.md)       | Adopt deck-level slide operations for the thumbnail sidebar                     | proposed              |
 | [0018](./0018-adopt-pointer-depth-selection-and-hover-preselection.md)          | Adopt pointer-depth selection and hover preselection                            | accepted              |
+| [0019](./0019-adopt-progressive-pdf-export-dialog.md)                           | Adopt a progressive PDF export dialog in the editor                             | accepted              |
