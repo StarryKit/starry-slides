@@ -43,7 +43,7 @@ function SlideSidebar({
           </span>
         </div>
         <ScrollArea
-          className="min-h-0 flex-1 overflow-hidden pt-2 [mask-image:linear-gradient(to_bottom,transparent_0,black_18px,black_calc(100%_-_18px),transparent_100%)]"
+          className="min-h-0 flex-1 overflow-hidden pt-2 [mask-image:linear-gradient(to_bottom,transparent_0,black_18px,black_calc(100%_-_18px),transparent_100%)] [&_[data-slot=scroll-area-scrollbar]]:hidden"
           data-testid="slide-list"
         >
           <div className="grid content-start gap-2.5 pr-2 transition-[gap] duration-150 group-[:not(:hover):not(:focus-within)]/sidebar:gap-2">

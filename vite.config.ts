@@ -4,9 +4,11 @@ import { fileURLToPath } from "node:url";
 import tailwindcss from "@tailwindcss/vite";
 import react from "@vitejs/plugin-react";
 import { defineConfig } from "vite";
+import { exportPdf } from "./src/runtime/pdf-export";
 
 const SAVE_ROUTE = "/__editor/save-generated-deck";
 const RESET_ROUTE = "/__editor/reset-generated-deck";
+const EXPORT_PDF_ROUTE = "/__editor/export-pdf";
 const DECK_ROUTE_PREFIX = "/deck/";
 const configDir = path.dirname(fileURLToPath(import.meta.url));
 const workspaceRoot = configDir;
@@ -34,6 +36,14 @@ interface SaveGeneratedDeckPayload {
     file?: string;
     htmlSource?: string;
   }>;
+}
+
+interface ExportPdfPayload {
+  selection?: {
+    mode?: "all" | "slide" | "slides";
+    slideFile?: string;
+    slideFiles?: string[];
+  };
 }
 
 interface DeckFileSnapshot {
@@ -164,6 +174,32 @@ function createSaveGeneratedDeckPlugin() {
     response.end(JSON.stringify({ ok: true }));
   }
 
+  async function handleExportPdfRequest(
+    request: import("node:http").IncomingMessage,
+    response: import("node:http").ServerResponse
+  ) {
+    const chunks: Uint8Array[] = [];
+
+    for await (const chunk of request) {
+      chunks.push(typeof chunk === "string" ? Buffer.from(chunk) : chunk);
+    }
+
+    const body = Buffer.concat(chunks).toString("utf8");
+    const payload = body ? (JSON.parse(body) as ExportPdfPayload) : {};
+    const outFile = path.join(GENERATED_RUNTIME_DIR, ".starry-slides", "export", "deck.pdf");
+    const result = await exportPdf({
+      deckPath: GENERATED_RUNTIME_DIR,
+      outFile,
+      selection: payload.selection,
+    });
+    const contents = await fs.readFile(result.path);
+
+    response.statusCode = 200;
+    response.setHeader("Content-Type", "application/pdf");
+    response.setHeader("Content-Disposition", 'attachment; filename="starry-slides.pdf"');
+    response.end(contents);
+  }
+
   async function handleGeneratedAssetRequest(
     request: import("node:http").IncomingMessage,
     response: import("node:http").ServerResponse,
@@ -257,6 +293,21 @@ function createSaveGeneratedDeckPlugin() {
           return;
         }
 
+        if (request.method === "POST" && request.url === EXPORT_PDF_ROUTE) {
+          try {
+            await runDeckOperation(() => handleExportPdfRequest(request, response));
+          } catch (error) {
+            response.statusCode = 500;
+            response.setHeader("Content-Type", "application/json");
+            response.end(
+              JSON.stringify({
+                error: error instanceof Error ? error.message : "Failed to export PDF.",
+              })
+            );
+          }
+          return;
+        }
+
         if (request.method !== "POST" || request.url !== SAVE_ROUTE) {
           next();
           return;
@@ -302,6 +353,21 @@ function createSaveGeneratedDeckPlugin() {
             response.end(
               JSON.stringify({
                 error: error instanceof Error ? error.message : "Failed to reset generated deck.",
+              })
+            );
+          }
+          return;
+        }
+
+        if (request.method === "POST" && request.url === EXPORT_PDF_ROUTE) {
+          try {
+            await runDeckOperation(() => handleExportPdfRequest(request, response));
+          } catch (error) {
+            response.statusCode = 500;
+            response.setHeader("Content-Type", "application/json");
+            response.end(
+              JSON.stringify({
+                error: error instanceof Error ? error.message : "Failed to export PDF.",
               })
             );
           }

@@ -16,6 +16,7 @@ interface EditorHeaderProps {
   title: string;
   onTitleChange?: (t: string) => void;
   onPresent?: () => void;
+  onExportPdf?: (mode: "all" | "current" | "selected") => void;
   isSaving: boolean;
 }
 
@@ -45,7 +46,13 @@ const EXPORTS: ExportItem[] = [
   { id: "gslides", label: "Google Slides", desc: "Sync to Google Slides", icon: Cloud, soon: true },
 ];
 
-export function EditorHeader({ title, onTitleChange, onPresent, isSaving }: EditorHeaderProps) {
+export function EditorHeader({
+  title,
+  onTitleChange,
+  onPresent,
+  onExportPdf,
+  isSaving,
+}: EditorHeaderProps) {
   const [open, setOpen] = useState(false);
   const [titleWidth, setTitleWidth] = useState(0);
   const ref = useRef<HTMLDivElement>(null);
@@ -75,6 +82,11 @@ export function EditorHeader({ title, onTitleChange, onPresent, isSaving }: Edit
       toast(`${e.label} is not available yet.`, {
         description: "We are still building this export option.",
       });
+      return;
+    }
+
+    if (e.id === "pdf") {
+      onExportPdf?.("all");
       return;
     }
 
@@ -168,6 +180,27 @@ export function EditorHeader({ title, onTitleChange, onPresent, isSaving }: Edit
                   </button>
                 );
               })}
+              <div className="my-1 h-px bg-foreground/[0.08]" />
+              <button
+                type="button"
+                onClick={() => {
+                  setOpen(false);
+                  onExportPdf?.("current");
+                }}
+                className="w-full rounded-md px-2.5 py-2 text-left text-[12px] font-medium text-foreground/70 transition-colors hover:bg-foreground/[0.04] hover:text-foreground"
+              >
+                Current slide PDF
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setOpen(false);
+                  onExportPdf?.("selected");
+                }}
+                className="w-full rounded-md px-2.5 py-2 text-left text-[12px] font-medium text-foreground/70 transition-colors hover:bg-foreground/[0.04] hover:text-foreground"
+              >
+                Selected slides PDF
+              </button>
             </div>
           )}
         </div>

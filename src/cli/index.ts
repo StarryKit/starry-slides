@@ -4,21 +4,27 @@ import { spawn } from "node:child_process";
 import { type VerifyResult, createVerifyResult, verifyDeck } from "../core/verify-deck";
 import { resolveDeckPath } from "../runtime/deck-source";
 import { openBrowser } from "../runtime/open-browser";
+import { exportPdf } from "../runtime/pdf-export";
 import { findAvailablePort } from "../runtime/ports";
 import { renderPreviewManifest, verifyRenderedOverflow } from "../runtime/view-renderer";
 
-type Command = "open" | "verify" | "view" | "add-skill" | "help";
+type Command = "open" | "verify" | "view" | "export" | "add-skill" | "help";
+type PdfExportMode = "all" | "slide" | "slides";
 
 interface ParsedArgs {
   command: Command;
   deckPath?: string;
   staticVerify: boolean;
   viewMode?: "slide" | "all";
+  exportFormat?: "pdf";
+  exportMode?: PdfExportMode;
   slideFile?: string;
+  slideFiles?: string[];
   outDir?: string;
+  outFile?: string;
 }
 
-const COMMANDS = new Set(["open", "verify", "view", "add-skill", "help", "--help", "-h"]);
+const COMMANDS = new Set(["open", "verify", "view", "export", "add-skill", "help", "--help", "-h"]);
 
 function usage(): string {
   return `Usage:
@@ -29,6 +35,10 @@ function usage(): string {
   starry-slides view [deck] --slide <manifest-file>
   starry-slides view [deck] --all
   starry-slides view [deck] --all --out-dir <directory>
+  starry-slides export pdf [deck] --out <file>
+  starry-slides export pdf [deck] --all --out <file>
+  starry-slides export pdf [deck] --slide <manifest-file> --out <file>
+  starry-slides export pdf [deck] --slides <manifest-file>[,<manifest-file>...] --out <file>
   starry-slides add-skill`;
 }
 
@@ -39,8 +49,20 @@ function parseArgs(argv: string[]): ParsedArgs {
   let deckPath: string | undefined;
   let staticVerify = false;
   let viewMode: ParsedArgs["viewMode"];
+  let exportFormat: ParsedArgs["exportFormat"];
+  let exportMode: ParsedArgs["exportMode"];
   let slideFile: string | undefined;
+  let slideFiles: string[] | undefined;
   let outDir: string | undefined;
+  let outFile: string | undefined;
+
+  if (command === "export") {
+    const format = remaining.shift();
+    if (format !== "pdf") {
+      throw new Error("export requires a format: pdf");
+    }
+    exportFormat = "pdf";
+  }
 
   for (let index = 0; index < remaining.length; index += 1) {
     const arg = remaining[index];
@@ -55,6 +77,7 @@ function parseArgs(argv: string[]): ParsedArgs {
 
     if (arg === "--all") {
       viewMode = "all";
+      exportMode = "all";
       continue;
     }
 
@@ -64,7 +87,22 @@ function parseArgs(argv: string[]): ParsedArgs {
         throw new Error("--slide requires a manifest slide file value");
       }
       viewMode = "slide";
+      exportMode = "slide";
       slideFile = value;
+      index += 1;
+      continue;
+    }
+
+    if (arg === "--slides") {
+      const value = remaining[index + 1];
+      if (!value || value.startsWith("--")) {
+        throw new Error("--slides requires at least one manifest slide file value");
+      }
+      exportMode = "slides";
+      slideFiles = value
+        .split(",")
+        .map((item) => item.trim())
+        .filter(Boolean);
       index += 1;
       continue;
     }
@@ -79,6 +117,16 @@ function parseArgs(argv: string[]): ParsedArgs {
       continue;
     }
 
+    if (arg === "--out") {
+      const value = remaining[index + 1];
+      if (!value || value.startsWith("--")) {
+        throw new Error("--out requires a file path");
+      }
+      outFile = value;
+      index += 1;
+      continue;
+    }
+
     if (arg.startsWith("--")) {
       throw new Error(`Unknown option: ${arg}`);
     }
@@ -89,7 +137,18 @@ function parseArgs(argv: string[]): ParsedArgs {
     deckPath = arg;
   }
 
-  return { command, deckPath, staticVerify, viewMode, slideFile, outDir };
+  return {
+    command,
+    deckPath,
+    staticVerify,
+    viewMode,
+    exportFormat,
+    exportMode,
+    slideFile,
+    slideFiles,
+    outDir,
+    outFile,
+  };
 }
 
 function normalizeCommand(first: string | undefined): Command {
@@ -101,7 +160,13 @@ function normalizeCommand(first: string | undefined): Command {
     return "help";
   }
 
-  if (first === "open" || first === "verify" || first === "view" || first === "add-skill") {
+  if (
+    first === "open" ||
+    first === "verify" ||
+    first === "view" ||
+    first === "export" ||
+    first === "add-skill"
+  ) {
     return first;
   }
 
@@ -165,6 +230,37 @@ async function runView(deckPath: string, parsed: ParsedArgs) {
     outDir: parsed.outDir,
   });
   writeJson(manifest);
+}
+
+async function runExport(deckPath: string, parsed: ParsedArgs) {
+  if (parsed.exportFormat !== "pdf") {
+    throw new Error("export requires a format: pdf");
+  }
+  if (parsed.staticVerify) {
+    throw new Error("export pdf runs Static Verify internally; do not pass --static");
+  }
+  if (!parsed.outFile) {
+    throw new Error("export pdf requires --out <file>");
+  }
+
+  const staticResult = await runStaticVerify(deckPath);
+  if (!staticResult.ok) {
+    writeJson(staticResult);
+    process.exitCode = 1;
+    return;
+  }
+
+  const result = await exportPdf({
+    deckPath,
+    outFile: parsed.outFile,
+    selection:
+      parsed.exportMode === "slide"
+        ? { mode: "slide", slideFile: parsed.slideFile }
+        : parsed.exportMode === "slides"
+          ? { mode: "slides", slideFiles: parsed.slideFiles }
+          : { mode: "all" },
+  });
+  writeJson(result);
 }
 
 async function runOpen(deckPath: string) {
@@ -236,6 +332,11 @@ async function main() {
 
   if (parsed.command === "view") {
     await runView(deckPath, parsed);
+    return;
+  }
+
+  if (parsed.command === "export") {
+    await runExport(deckPath, parsed);
     return;
   }
 

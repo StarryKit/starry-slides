@@ -45,3 +45,4 @@ Update this directory whenever a change affects:
 | [0013](./0013-adopt-editing-e2e-coverage-contract.md)              | Adopt editing E2E coverage contract                                      | proposed   |
 | [0014](./0014-adopt-cli-and-core-verification-test-contract.md)     | Adopt CLI and core verification test contract                            | proposed   |
 | [0015](./0015-adopt-minimal-mono-editor-chrome-direction.md)        | Adopt Minimal Mono editor chrome direction                               | implemented-reference |
+| [0016](./0016-adopt-pdf-export-pipeline-through-core-runtime-cli-and-editor.md) | Adopt a PDF export pipeline through core, runtime, CLI, and editor entry points | accepted   |

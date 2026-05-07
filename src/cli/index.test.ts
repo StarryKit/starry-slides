@@ -331,6 +331,10 @@ describe("source starry-slides cli", () => {
       expect(result.stdout).toContain("starry-slides verify [deck] --static");
       expect(result.stdout).toContain("starry-slides view [deck] --slide <manifest-file>");
       expect(result.stdout).toContain("starry-slides view [deck] --all --out-dir <directory>");
+      expect(result.stdout).toContain("starry-slides export pdf [deck] --out <file>");
+      expect(result.stdout).toContain(
+        "starry-slides export pdf [deck] --slides <manifest-file>[,<manifest-file>...] --out <file>"
+      );
       expect(result.stdout).toContain("starry-slides add-skill");
     }
   });

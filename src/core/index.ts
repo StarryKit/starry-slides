@@ -6,3 +6,4 @@ export * from "./layout";
 export * from "./slide-operations";
 export * from "./history";
 export * from "./generated-deck";
+export * from "./pdf-export";

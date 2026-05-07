@@ -72,6 +72,19 @@ describe("packaged starry-slides CLI", () => {
     expect(fs.existsSync((parsed.slides as Array<{ path: string }>)[0].path)).toBe(true);
   });
 
+  test("built export pdf command writes a PDF and parseable export result", () => {
+    const deck = createDeck();
+    const outFile = path.join(deck, "deck.pdf");
+
+    const result = runBuiltCli(["export", "pdf", deck, "--out", outFile]);
+
+    expect(result.status).toBe(0);
+    expect(result.stderr).toBe("");
+    expect(parseJson(result.stdout)).toMatchObject({ mode: "all", outFile });
+    expect(fs.existsSync(outFile)).toBe(true);
+    expect(fs.readFileSync(outFile).subarray(0, 4).toString("utf8")).toBe("%PDF");
+  });
+
   test("built verify exits one for a broken fixture", () => {
     const deck = createBrokenDeck();
 
@@ -89,6 +102,7 @@ describe("packaged starry-slides CLI", () => {
     expect(result.stderr).toBe("");
     expect(result.stdout).toContain("starry-slides [deck]");
     expect(result.stdout).toContain("starry-slides view [deck] --all --out-dir <directory>");
+    expect(result.stdout).toContain("starry-slides export pdf [deck] --out <file>");
   });
 
   test("built add-skill preserves reserved stub behavior", () => {

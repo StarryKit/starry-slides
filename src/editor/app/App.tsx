@@ -1,4 +1,4 @@
-import { Toaster } from "sonner";
+import { Toaster, toast } from "sonner";
 import { SlidesEditor } from "../index";
 import { useSlidesData } from "./use-slides-data";
 
@@ -32,7 +32,8 @@ function StatusScreen({ title, body }: { title: string; body: string }) {
 }
 
 function App() {
-  const { deckTitle, slides, errorMessage, isLoading, isSaving, saveSlides } = useSlidesData();
+  const { deckTitle, slides, errorMessage, isLoading, isSaving, saveSlides, exportPdf } =
+    useSlidesData();
 
   if (isLoading) {
     return (
@@ -55,6 +56,19 @@ function App() {
         deckTitle={deckTitle}
         isSaving={isSaving}
         onSlidesChange={saveSlides}
+        onExportPdf={(request) => {
+          const toastId = toast.loading("Exporting PDF...");
+          void exportPdf(request)
+            .then(() => {
+              toast.success("PDF export is ready.", { id: toastId });
+            })
+            .catch((error) => {
+              toast.error("PDF export failed.", {
+                id: toastId,
+                description: error instanceof Error ? error.message : String(error),
+              });
+            });
+        }}
       />
     </>
   );

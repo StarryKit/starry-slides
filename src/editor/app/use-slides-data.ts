@@ -1,5 +1,10 @@
 import { useEffect, useRef, useState } from "react";
-import { type SlideDeckManifest, type SlideModel, loadSlidesFromManifest } from "../../core";
+import {
+  type PdfExportSelection,
+  type SlideDeckManifest,
+  type SlideModel,
+  loadSlidesFromManifest,
+} from "../../core";
 
 interface SlidesDataResult {
   deckTitle: string;
@@ -8,10 +13,12 @@ interface SlidesDataResult {
   isLoading: boolean;
   isSaving: boolean;
   saveSlides: (slides: SlideModel[]) => void;
+  exportPdf: (selection: PdfExportSelection) => Promise<void>;
 }
 
 const GENERATED_MANIFEST_URL = "/deck/manifest.json";
 const GENERATED_SAVE_URL = "/__editor/save-generated-deck";
+const GENERATED_EXPORT_PDF_URL = "/__editor/export-pdf";
 const SAVE_DEBOUNCE_MS = 800;
 
 export function useSlidesData(): SlidesDataResult {
@@ -26,6 +33,7 @@ export function useSlidesData(): SlidesDataResult {
   const saveTimerRef = useRef<number | null>(null);
   const saveRequestIdRef = useRef(0);
   const isSaveInFlightRef = useRef(false);
+  const savePromiseRef = useRef<Promise<void> | null>(null);
   const clientLoadedAtRef = useRef(Date.now());
 
   useEffect(() => {
@@ -72,7 +80,7 @@ export function useSlidesData(): SlidesDataResult {
     };
   }, []);
 
-  const flushSave = () => {
+  const flushSave = async (): Promise<void> => {
     const manifest = manifestRef.current;
     const nextSlides = latestSlidesRef.current;
     const saveRequestId = saveRequestIdRef.current;
@@ -82,6 +90,10 @@ export function useSlidesData(): SlidesDataResult {
     }
 
     if (isSaveInFlightRef.current) {
+      await savePromiseRef.current;
+      if (saveRequestIdRef.current !== saveRequestId) {
+        await flushSave();
+      }
       return;
     }
 
@@ -94,7 +106,7 @@ export function useSlidesData(): SlidesDataResult {
       ])
     );
 
-    void fetch(GENERATED_SAVE_URL, {
+    const savePromise = fetch(GENERATED_SAVE_URL, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -107,17 +119,24 @@ export function useSlidesData(): SlidesDataResult {
         })),
       }),
     })
-      .catch(() => {
+      .then((response) => {
+        if (!response.ok) {
+          throw new Error("The app could not write generated slides back to disk.");
+        }
+      })
+      .catch((error) => {
         setErrorMessage("The app could not write generated slides back to disk.");
+        throw error;
       })
       .finally(() => {
         isSaveInFlightRef.current = false;
+        savePromiseRef.current = null;
 
         if (saveRequestIdRef.current !== saveRequestId) {
           if (!saveTimerRef.current) {
             saveTimerRef.current = window.setTimeout(() => {
               saveTimerRef.current = null;
-              flushSave();
+              void flushSave();
             }, SAVE_DEBOUNCE_MS);
           }
           return;
@@ -125,6 +144,8 @@ export function useSlidesData(): SlidesDataResult {
 
         setIsSaving(false);
       });
+    savePromiseRef.current = savePromise;
+    await savePromise;
   };
 
   const saveSlides = (nextSlides: SlideModel[]) => {
@@ -148,9 +169,41 @@ export function useSlidesData(): SlidesDataResult {
 
     saveTimerRef.current = window.setTimeout(() => {
       saveTimerRef.current = null;
-      flushSave();
+      void flushSave();
     }, SAVE_DEBOUNCE_MS);
   };
 
-  return { deckTitle, slides, errorMessage, isLoading, isSaving, saveSlides };
+  const exportPdf = async (selection: PdfExportSelection) => {
+    if (saveTimerRef.current) {
+      window.clearTimeout(saveTimerRef.current);
+      saveTimerRef.current = null;
+    }
+
+    await flushSave();
+
+    const response = await fetch(GENERATED_EXPORT_PDF_URL, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ selection }),
+    });
+
+    if (!response.ok) {
+      throw new Error(await response.text());
+    }
+
+    const blob = await response.blob();
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    const safeTitle = deckTitle.trim().replace(/[^a-zA-Z0-9._-]+/g, "-") || "starry-slides";
+    link.href = url;
+    link.download = `${safeTitle}.pdf`;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    URL.revokeObjectURL(url);
+  };
+
+  return { deckTitle, slides, errorMessage, isLoading, isSaving, saveSlides, exportPdf };
 }

@@ -1,6 +1,6 @@
 import fs from "node:fs";
-import path from "node:path";
 import { createRequire } from "node:module";
+import path from "node:path";
 import { pathToFileURL } from "node:url";
 import { type VerifyIssue, createVerifyIssue, loadVerifyDeckSource } from "../core/verify-deck";
 
