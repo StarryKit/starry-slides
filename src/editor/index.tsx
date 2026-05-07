@@ -590,7 +590,7 @@ function SlidesEditor({
   return (
     <TooltipProvider>
       <div className="flex h-screen flex-col overflow-hidden bg-background text-foreground">
-        <EditorHeader deckTitle={resolvedDeckTitle} isSaving={isSaving} />
+        <EditorHeader title={resolvedDeckTitle} isSaving={isSaving} />
 
         <div className="flex min-h-0 flex-auto gap-3 overflow-hidden max-[1200px]:block">
           <SlideSidebar

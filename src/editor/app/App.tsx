@@ -1,3 +1,4 @@
+import { Toaster } from "sonner";
 import { SlidesEditor } from "../index";
 import { useSlidesData } from "./use-slides-data";
 
@@ -31,8 +32,7 @@ function StatusScreen({ title, body }: { title: string; body: string }) {
 }
 
 function App() {
-  const { deckTitle, slides, errorMessage, isLoading, isSaving, saveSlides } =
-    useSlidesData();
+  const { deckTitle, slides, errorMessage, isLoading, isSaving, saveSlides } = useSlidesData();
 
   if (isLoading) {
     return (
@@ -48,12 +48,15 @@ function App() {
   }
 
   return (
-    <SlidesEditor
-      slides={slides}
-      deckTitle={deckTitle}
-      isSaving={isSaving}
-      onSlidesChange={saveSlides}
-    />
+    <>
+      <Toaster position="top-center" richColors closeButton />
+      <SlidesEditor
+        slides={slides}
+        deckTitle={deckTitle}
+        isSaving={isSaving}
+        onSlidesChange={saveSlides}
+      />
+    </>
   );
 }
 
