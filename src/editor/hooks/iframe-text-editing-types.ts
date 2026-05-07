@@ -11,6 +11,7 @@ export interface UseIframeTextEditingOptions {
   activeSlide: SlideModel | undefined;
   iframeRef: RefObject<HTMLIFrameElement | null>;
   onCommitOperation: (operation: TextUpdateOperation) => void;
+  onStageWheel?: (event: WheelEvent) => void;
 }
 
 export interface UseIframeTextEditingResult {

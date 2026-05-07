@@ -40,6 +40,7 @@ function useEditorKeyboardShortcuts({
   canUndo,
   canRedo,
   onEscapeSelection,
+  onNavigateSlide,
   onCommitOperation,
   onSelectElementIds,
   onUndo,
@@ -52,6 +53,7 @@ function useEditorKeyboardShortcuts({
   const canRedoRef = useRef(canRedo);
   const isEditingTextRef = useRef(isEditingText);
   const onEscapeSelectionRef = useRef(onEscapeSelection);
+  const onNavigateSlideRef = useRef(onNavigateSlide);
 
   activeSlideRef.current = activeSlide;
   selectedElementIdsRef.current = selectedElementIds;
@@ -59,6 +61,7 @@ function useEditorKeyboardShortcuts({
   canRedoRef.current = canRedo;
   isEditingTextRef.current = isEditingText;
   onEscapeSelectionRef.current = onEscapeSelection;
+  onNavigateSlideRef.current = onNavigateSlide;
 
   useEffect(() => {
     const copySelection = () => {
@@ -325,7 +328,14 @@ function useEditorKeyboardShortcuts({
       } else if (event.key === "Escape") {
         handled = onEscapeSelectionRef.current();
       } else if (event.key in ARROW_DELTAS) {
-        handled = moveSelection(event);
+        const hasSelection = selectedElementIdsRef.current.length > 0;
+        if (hasSelection) {
+          handled = moveSelection(event);
+        } else if (!event.altKey && !event.shiftKey && !commandKey) {
+          handled = onNavigateSlideRef.current(
+            event.key === "ArrowUp" || event.key === "ArrowLeft" ? "previous" : "next"
+          );
+        }
       } else if (commandKey && event.key === "]") {
         handled = commitLayerAction(event.shiftKey ? "front" : "forward");
       } else if (commandKey && event.key === "[") {

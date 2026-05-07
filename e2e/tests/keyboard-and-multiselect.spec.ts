@@ -75,6 +75,60 @@ test("keyboard Alt arrows use the fine movement step", async ({ page }) => {
   await expectInlineStyleContains(editableHeading, "transform", "translate(1px, 0px)");
 });
 
+test("keyboard arrows switch slides when no element is selected", async ({ page }) => {
+  await gotoEditor(page);
+
+  const frame = coverFrame(page);
+  const editableHeading = frame.locator('[data-editor-id="text-1"]');
+  const stagePanel = page.getByTestId("stage-panel");
+  const { selectionOverlay } = getHistoryControls(page);
+
+  await expect(page.getByRole("button", { name: "Slide 1", exact: true })).toHaveAttribute(
+    "aria-current",
+    "true"
+  );
+  await page.keyboard.press("ArrowRight");
+  await expect(page.getByRole("button", { name: "Slide 2", exact: true })).toHaveAttribute(
+    "aria-current",
+    "true"
+  );
+
+  await page.keyboard.press("ArrowDown");
+  await expect(page.getByRole("button", { name: "Slide 3", exact: true })).toHaveAttribute(
+    "aria-current",
+    "true"
+  );
+
+  await page.keyboard.press("ArrowLeft");
+  await expect(page.getByRole("button", { name: "Slide 2", exact: true })).toHaveAttribute(
+    "aria-current",
+    "true"
+  );
+
+  await page.keyboard.press("ArrowUp");
+  await expect(page.getByRole("button", { name: "Slide 1", exact: true })).toHaveAttribute(
+    "aria-current",
+    "true"
+  );
+
+  await editableHeading.click();
+  await expect(selectionOverlay).toBeVisible();
+  await page.keyboard.press("ArrowRight");
+  await expect(page.getByRole("button", { name: "Slide 1", exact: true })).toHaveAttribute(
+    "aria-current",
+    "true"
+  );
+  await expectInlineStyleContains(editableHeading, "transform", "translate(5px, 0px)");
+
+  await stagePanel.click({ position: { x: 12, y: 12 } });
+  await expect(selectionOverlay).toBeHidden();
+  await page.keyboard.press("ArrowRight");
+  await expect(page.getByRole("button", { name: "Slide 2", exact: true })).toHaveAttribute(
+    "aria-current",
+    "true"
+  );
+});
+
 test("keyboard copy paste duplicates the selected element and selects the copy", async ({
   page,
 }) => {

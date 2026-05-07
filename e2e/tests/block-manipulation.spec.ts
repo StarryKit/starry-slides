@@ -18,7 +18,6 @@ test("double clicking a non-text element does not enter text editing", async ({ 
 
   const frame = coverFrame(page);
   const blockCard = frame.locator('[data-editor-id="block-4"]');
-  const { editingHint } = getHistoryControls(page);
 
   await expect(blockCard).toBeVisible();
 
@@ -26,7 +25,7 @@ test("double clicking a non-text element does not enter text editing", async ({ 
     node.dispatchEvent(new MouseEvent("dblclick", { bubbles: true, cancelable: true }));
   });
 
-  await expect(editingHint).toBeHidden();
+  await expect(blockCard).not.toHaveAttribute("contenteditable", /.+/);
 });
 
 test("clicking a block element outside editing only selects and does not create history", async ({
@@ -36,12 +35,12 @@ test("clicking a block element outside editing only selects and does not create 
 
   const frame = coverFrame(page);
   const blockCard = frame.locator('[data-editor-id="block-4"]');
-  const { selectionOverlay, editingHint } = getHistoryControls(page);
+  const { selectionOverlay } = getHistoryControls(page);
 
   await blockCard.click({ position: { x: 12, y: 12 } });
 
   await expect(selectionOverlay).toBeVisible();
-  await expect(editingHint).toBeHidden();
+  await expect(blockCard).not.toHaveAttribute("contenteditable", /.+/);
   await page.keyboard.press(`${MODIFIER}+Z`);
   await expect(selectionOverlay).toBeVisible();
 });
@@ -279,17 +278,16 @@ test("escape cancels text editing without creating undo history", async ({ page 
 
   const frame = coverFrame(page);
   const editableHeading = frame.locator('[data-editor-id="text-1"]');
-  const editingHint = page.getByText("Editing text. Press Enter to save or Escape to cancel.");
   const originalText = HERO_KICKER;
   const draftText = "Draft text that should be discarded";
 
   await editableHeading.dblclick();
-  await expect(editingHint).toBeVisible();
+  await expect(editableHeading).toHaveAttribute("contenteditable", "plaintext-only");
 
   await selectAllAndFill(editableHeading, draftText);
   await editableHeading.press("Escape");
 
-  await expect(editingHint).toBeHidden();
+  await expect(editableHeading).not.toHaveAttribute("contenteditable", /.+/);
   await expect(editableHeading).toHaveText(originalText);
   await page.keyboard.press(`${MODIFIER}+Z`);
   await expect(editableHeading).toHaveText(originalText);
@@ -303,7 +301,7 @@ test("double clicking a group enters scope and Escape returns to the group", asy
   const firstCard = frame.locator('[data-editor-id="snap-card-a"]');
   const secondCard = frame.locator('[data-editor-id="snap-card-b"]');
   const outsideCard = frame.locator('[data-editor-id="snap-card-c"]');
-  const { selectionOverlay, editingHint } = getHistoryControls(page);
+  const { selectionOverlay } = getHistoryControls(page);
 
   await selectionOverlay.dblclick();
   await expect(group).toHaveAttribute("data-hse-active-group-scope", "true");
@@ -319,9 +317,10 @@ test("double clicking a group enters scope and Escape returns to the group", asy
   expect(Math.abs(selectedChildOverlay.width - childRect.width)).toBeLessThanOrEqual(3);
 
   await firstCard.locator('[data-editor-id="text-5"]').dblclick();
-  await expect(editingHint).toBeVisible();
+  const groupedText = firstCard.locator('[data-editor-id="text-5"]');
+  await expect(groupedText).toHaveAttribute("contenteditable", "plaintext-only");
   await page.keyboard.press("Escape");
-  await expect(editingHint).toBeHidden();
+  await expect(groupedText).not.toHaveAttribute("contenteditable", /.+/);
   await expect(group).toHaveAttribute("data-hse-active-group-scope", "true");
 
   await page.keyboard.press("Escape");

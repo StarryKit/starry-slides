@@ -56,16 +56,20 @@ Required behavior coverage:
 - clearing selection from the stage background
 - entering and leaving text editing by double-click, Enter, Escape, blur, and
   outside click where supported
+- reselecting the same element after leaving text editing via outside click or
+  stage background click
 - toolbar and manipulation chrome visibility across selected, dragging,
   resizing, rotating, text-editing, and group-editing states
 - commands being unavailable when text editing should use native browser
   behavior
 - selection and command behavior after switching slides
+- deck-level slide navigation by stage wheel and by ArrowUp/ArrowDown/
+  ArrowLeft/ArrowRight when no element is selected
 
 Invocation surfaces:
 
 - stage click, double-click, background click, keyboard Enter/Escape, blur, and
-  slide switching
+  slide switching, stage wheel, and no-selection arrow keys
 
 Current coverage is partially present in:
 
@@ -81,6 +85,7 @@ Known gaps:
 - toolbar suppression during rotation is not explicitly covered
 - command unavailability during native text editing is not consistently covered
   for all shortcut and toolbar paths
+- stage wheel and no-selection arrow-key slide navigation are not covered
 
 #### Text content editing and native text clipboard
 
@@ -120,6 +125,8 @@ Required behavior coverage:
 - font family, font size, font weight, italic style, underline, strikethrough,
   line height, text alignment, and text color
 - each formatting change writes the expected inline style or HTML attribute
+- Font family selection must be covered by an explicit changed-value path from
+  the Floating Toolbar, not only by checking that the menu is visible
 - each undoable formatting change participates in undo and redo
 - representative formatting changes persist after refresh or reopen
 

@@ -144,7 +144,12 @@ function FloatingToolbar({
 
   useEffect(() => {
     function closeOnOutsidePointer(event: MouseEvent) {
+      const target = event.target;
       if (toolbarRef.current?.contains(event.target as Node)) {
+        return;
+      }
+
+      if (target instanceof Element && target.closest('[data-slot="select-content"]')) {
         return;
       }
 

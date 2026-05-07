@@ -11,7 +11,7 @@ import {
   getHistoryControls,
   getSlideElementRect,
   gotoEditor,
-  selectToolPanelOptionAndExpectInlineStyle,
+  selectFontFamilyOption,
 } from "./helpers";
 
 test("floating toolbar applies typography controls", async ({ page }) => {
@@ -22,15 +22,7 @@ test("floating toolbar applies typography controls", async ({ page }) => {
   const toolbar = page.getByTestId("floating-toolbar-anchor");
 
   await editableHeading.click();
-  await clickFloatingToolbarButton(page, "Font");
-  await selectToolPanelOptionAndExpectInlineStyle(
-    page,
-    editableHeading,
-    "Font family",
-    'Georgia, "Times New Roman", serif',
-    "font-family",
-    'Georgia, "Times New Roman", serif'
-  );
+  await selectFontFamilyOption(page, editableHeading, "Georgia", /Georgia|Times New Roman|serif/);
 
   await toolbar.getByLabel("Font size", { exact: true }).fill("44");
   await expectInlineStyle(editableHeading, "font-size", "44px");
@@ -65,6 +57,28 @@ test("floating toolbar applies typography controls", async ({ page }) => {
     "text-align",
     "center"
   );
+});
+
+test("floating toolbar font family select changes the selected text font", async ({ page }) => {
+  await gotoEditor(page);
+
+  const editableHeading = coverFrame(page).locator('[data-editor-id="text-1"]');
+  const toolbar = page.getByTestId("floating-toolbar-anchor");
+
+  await editableHeading.click();
+  await expect(toolbar).toBeVisible();
+  const beforeFont = await getComputedStyleValue(editableHeading, "font-family");
+
+  await selectFontFamilyOption(page, editableHeading, "Georgia", /Georgia|Times New Roman|serif/);
+
+  await expectInlineStyle(editableHeading, "font-family", 'Georgia, "Times New Roman", serif');
+  const afterFont = await getComputedStyleValue(editableHeading, "font-family");
+  expect(afterFont).not.toBe(beforeFont);
+
+  await page.keyboard.press(`${MODIFIER}+Z`);
+  await expectInlineStyle(editableHeading, "font-family", "");
+  await page.keyboard.press(`${MODIFIER}+Shift+Z`);
+  await expectInlineStyle(editableHeading, "font-family", 'Georgia, "Times New Roman", serif');
 });
 
 test("floating toolbar applies appearance, layout, and custom css controls", async ({ page }) => {
