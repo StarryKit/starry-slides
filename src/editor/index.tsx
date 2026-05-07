@@ -13,6 +13,8 @@ import {
   type StyleUpdateOperation,
   captureElementLayoutStyleSnapshot,
   composeTransform,
+  createBlankSlide,
+  createDuplicatedSlide,
   createElementPlacement,
   createGroupCreateOperation,
   createGroupUngroupOperation,
@@ -365,6 +367,101 @@ function SlidesEditor({
     }
   }
 
+  function addSlideAfterActive() {
+    if (!activeSlide) {
+      return;
+    }
+
+    const activeIndex = slides.findIndex((slide) => slide.id === activeSlide.id);
+    const insertIndex = activeIndex >= 0 ? activeIndex + 1 : slides.length;
+    const slide = createBlankSlide(slides, insertIndex);
+
+    commitOperation({
+      type: "slide.create",
+      slide,
+      index: insertIndex,
+      timestamp: Date.now(),
+    });
+    setActiveSlideId(slide.id);
+    clearSelection();
+  }
+
+  function duplicateSlide(slideId: string) {
+    const sourceSlide = slides.find((slide) => slide.id === slideId);
+    if (!sourceSlide) {
+      return;
+    }
+
+    const sourceIndex = slides.findIndex((slide) => slide.id === slideId);
+    const insertIndex = sourceIndex >= 0 ? sourceIndex + 1 : slides.length;
+    const slide = createDuplicatedSlide(slides, sourceSlide);
+
+    commitOperation({
+      type: "slide.duplicate",
+      sourceSlideId: slideId,
+      slide,
+      index: insertIndex,
+      timestamp: Date.now(),
+    });
+    setActiveSlideId(slide.id);
+    clearSelection();
+  }
+
+  function deleteSlide(slideId: string) {
+    if (slides.length <= 1) {
+      return;
+    }
+
+    const index = slides.findIndex((slide) => slide.id === slideId);
+    const slide = slides[index];
+    if (!slide) {
+      return;
+    }
+
+    const fallbackSlide = slides[index + 1] ?? slides[index - 1] ?? slides[0];
+    commitOperation({
+      type: "slide.delete",
+      slide,
+      index,
+      timestamp: Date.now(),
+    });
+    if (activeSlideId === slideId) {
+      setActiveSlideId(fallbackSlide?.id ?? "");
+    }
+    clearSelection();
+  }
+
+  function toggleSlideHidden(slideId: string) {
+    const slide = slides.find((item) => item.id === slideId);
+    if (!slide) {
+      return;
+    }
+
+    commitOperation({
+      type: "slide.visibility.update",
+      slideId,
+      previousHidden: slide.hidden === true,
+      nextHidden: slide.hidden !== true,
+      timestamp: Date.now(),
+    });
+  }
+
+  function reorderSlide(slideId: string, targetIndex: number) {
+    const fromIndex = slides.findIndex((slide) => slide.id === slideId);
+    if (fromIndex < 0 || fromIndex === targetIndex) {
+      return;
+    }
+
+    commitOperation({
+      type: "slide.reorder",
+      slideId,
+      fromIndex,
+      toIndex: targetIndex,
+      timestamp: Date.now(),
+    });
+    setActiveSlideId(slideId);
+  }
+
   function groupSelection() {
     if (!activeSlide || selectedElementIds.length < 2) {
       return;
@@ -634,6 +731,11 @@ function SlidesEditor({
               setActiveSlideId(slideId);
               setSelectedElementId(null);
             }}
+            onAdd={addSlideAfterActive}
+            onDuplicate={duplicateSlide}
+            onDelete={deleteSlide}
+            onToggleHidden={toggleSlideHidden}
+            onReorder={reorderSlide}
           />
 
           <main className="flex min-h-0 min-w-0 flex-auto overflow-visible max-[1200px]:block">

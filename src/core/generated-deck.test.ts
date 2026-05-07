@@ -37,7 +37,7 @@ describe("generated deck import", () => {
         return new Response(
           JSON.stringify({
             topic: "Contract Deck",
-            slides: [{ file: "slide-1.html", title: "Slide A" }],
+            slides: [{ file: "slide-1.html", title: "Slide A", hidden: true }],
           }),
           {
             status: 200,
@@ -76,6 +76,7 @@ describe("generated deck import", () => {
 
     expect(deck?.slides[0]?.id).toBe("generated-slide-1");
     expect(deck?.slides[0]?.title).toBe("Slide A");
+    expect(deck?.slides[0]?.hidden).toBe(true);
     expect(deck?.slides[0]?.sourceFile).toBe("slide-1.html");
     expect(requests).toHaveLength(2);
     expect(requests[0]?.init).toMatchObject({

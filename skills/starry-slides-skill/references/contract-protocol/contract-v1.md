@@ -135,12 +135,17 @@ Decks should include a `manifest.json` next to the slide files.
 - top-level `topic`
 - top-level `generatedAt`
 - per-slide `archetype`
+- per-slide `hidden`
 - per-slide `notes`
 - per-slide `stylePack`
 
 Default behavior when omitted:
 
 - missing optional metadata does not block parsing or editing
+- missing per-slide `hidden` is equivalent to `false`
+- when present, per-slide `hidden` must be a boolean; `true` marks the slide as
+  hidden from presentation/export consumers that support visibility semantics,
+  while editors may still show it for authoring
 
 ## Validation rules
 

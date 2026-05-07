@@ -32,9 +32,19 @@ const NOT_FOUND_ERROR_CODE = "ENOENT";
 
 interface SaveGeneratedDeckPayload {
   clientLoadedAt?: number;
+  manifest?: {
+    topic?: string;
+    slides?: Array<{
+      file?: string;
+      title?: string;
+      hidden?: boolean;
+    }>;
+  };
   slides?: Array<{
     file?: string;
     htmlSource?: string;
+    title?: string;
+    hidden?: boolean;
   }>;
 }
 
@@ -136,8 +146,14 @@ function createSaveGeneratedDeckPlugin() {
     }
 
     const slides = payload.slides?.filter(
-      (slide): slide is { file: string; htmlSource: string } =>
-        typeof slide.file === "string" && typeof slide.htmlSource === "string"
+      (
+        slide
+      ): slide is {
+        file: string;
+        htmlSource: string;
+        title?: string;
+        hidden?: boolean;
+      } => typeof slide.file === "string" && typeof slide.htmlSource === "string"
     );
 
     if (!slides?.length) {
@@ -158,6 +174,30 @@ function createSaveGeneratedDeckPlugin() {
         );
       })
     );
+
+    if (payload.manifest?.slides?.length) {
+      const manifestPath = path.join(
+        GENERATED_SAVE_TARGETS[0] ?? GENERATED_RUNTIME_DIR,
+        "manifest.json"
+      );
+      const nextManifest = {
+        ...payload.manifest,
+        slides: payload.manifest.slides.filter(
+          (slide): slide is { file: string; title?: string; hidden?: boolean } =>
+            typeof slide.file === "string"
+        ),
+      };
+      await fs.writeFile(manifestPath, JSON.stringify(nextManifest, null, 2), "utf8");
+      await Promise.all(
+        GENERATED_SAVE_TARGETS.slice(1).map((targetRoot) =>
+          fs.writeFile(
+            path.join(targetRoot, "manifest.json"),
+            JSON.stringify(nextManifest, null, 2),
+            "utf8"
+          )
+        )
+      );
+    }
 
     response.statusCode = 200;
     response.setHeader("Content-Type", "application/json");

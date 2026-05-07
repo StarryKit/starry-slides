@@ -4,6 +4,7 @@ export * from "./slide-document";
 export * from "./slide-html-document";
 export * from "./layout";
 export * from "./slide-operations";
+export * from "./deck-slide-operations";
 export * from "./history";
 export * from "./generated-deck";
 export * from "./pdf-export";
