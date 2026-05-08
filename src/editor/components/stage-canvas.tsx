@@ -3,8 +3,9 @@ import type { EditableType, StageRect } from "../../core";
 import type { CssPropertyRow } from "../lib/collect-css-properties";
 import { cn } from "../lib/utils";
 import { BlockManipulationOverlay } from "./block-manipulation-overlay";
-import { SelectionContextMenu } from "./context-menu";
+import { SelectionContextMenuContent } from "./context-menu";
 import { FloatingToolbar, type SelectionCommandAvailability } from "./floating-toolbar";
+import { ContextMenu, ContextMenuTrigger } from "./ui/context-menu";
 
 type ResizeHandleCorner = "top-left" | "top-right" | "bottom-right" | "bottom-left";
 const SELECTION_CHROME_STYLE = {
@@ -51,10 +52,12 @@ interface StageCanvasProps {
   iframeRef: RefObject<HTMLIFrameElement | null>;
   stageViewportRef: RefObject<HTMLDivElement | null>;
   selectionOverlayRef: RefObject<HTMLDivElement | null>;
+  selectionContextMenuTriggerRef: RefObject<HTMLSpanElement | null>;
   isManipulating: boolean;
   onSelectionOverlayMouseDown: (event: ReactMouseEvent<HTMLDivElement>) => void;
   onSelectionOverlayMouseUp: (event: ReactMouseEvent<HTMLDivElement>) => void;
   onSelectionOverlayMouseMove: (event: ReactMouseEvent<HTMLDivElement>) => void;
+  onSelectionOverlayContextMenu: (event: ReactMouseEvent<HTMLDivElement>) => void;
   onStageMouseLeave: () => void;
   onResizeHandleMouseDown: (
     corner: ResizeHandleCorner,
@@ -93,10 +96,12 @@ function StageCanvas({
   iframeRef,
   stageViewportRef,
   selectionOverlayRef,
+  selectionContextMenuTriggerRef,
   isManipulating,
   onSelectionOverlayMouseDown,
   onSelectionOverlayMouseUp,
   onSelectionOverlayMouseMove,
+  onSelectionOverlayContextMenu,
   onStageMouseLeave,
   onResizeHandleMouseDown,
   onRotateHandleMouseDown,
@@ -199,39 +204,51 @@ function StageCanvas({
           }}
         />
       ) : null}
-      {selectionOverlay && !isEditingText ? (
-        <SelectionContextMenu
-          selectionCommandAvailability={selectionCommandAvailability}
-          onAlignToSlide={onAlignToSlide}
-          onDelete={onDelete}
-          onDistribute={onDistribute}
-          onDuplicate={onDuplicate}
-          onGroup={onGroup}
-          onLayerOrder={onLayerOrder}
-          onUngroup={onUngroup}
-        >
-          <div
-            ref={selectionOverlayRef}
-            data-testid="selection-overlay"
-            className={cn(
-              "absolute z-[3] border border-dashed",
-              groupScopeOverlayPassive ? "pointer-events-none" : "pointer-events-auto"
-            )}
-            style={{
-              ...SELECTION_CHROME_STYLE,
-              left: `${selectionOverlay.x}px`,
-              top: `${selectionOverlay.y}px`,
-              width: `${selectionOverlay.width}px`,
-              height: `${selectionOverlay.height}px`,
-            }}
-            onMouseDown={onSelectionOverlayMouseDown}
-            onMouseMove={onSelectionOverlayMouseMove}
-            onMouseUp={onSelectionOverlayMouseUp}
-            onDoubleClick={(event) => {
-              onSelectionOverlayDoubleClick(event);
-            }}
+      {!isEditingText ? (
+        <ContextMenu>
+          <ContextMenuTrigger asChild>
+            <span
+              ref={selectionContextMenuTriggerRef}
+              data-testid="selection-context-menu-trigger"
+              className="pointer-events-none absolute size-0"
+              aria-hidden="true"
+            />
+          </ContextMenuTrigger>
+          <SelectionContextMenuContent
+            selectionCommandAvailability={selectionCommandAvailability}
+            onAlignToSlide={onAlignToSlide}
+            onDelete={onDelete}
+            onDistribute={onDistribute}
+            onDuplicate={onDuplicate}
+            onGroup={onGroup}
+            onLayerOrder={onLayerOrder}
+            onUngroup={onUngroup}
           />
-        </SelectionContextMenu>
+        </ContextMenu>
+      ) : null}
+      {selectionOverlay && !isEditingText ? (
+        <div
+          ref={selectionOverlayRef}
+          data-testid="selection-overlay"
+          className={cn(
+            "absolute z-[3] border border-dashed",
+            groupScopeOverlayPassive ? "pointer-events-none" : "pointer-events-auto"
+          )}
+          style={{
+            ...SELECTION_CHROME_STYLE,
+            left: `${selectionOverlay.x}px`,
+            top: `${selectionOverlay.y}px`,
+            width: `${selectionOverlay.width}px`,
+            height: `${selectionOverlay.height}px`,
+          }}
+          onMouseDown={onSelectionOverlayMouseDown}
+          onMouseMove={onSelectionOverlayMouseMove}
+          onMouseUp={onSelectionOverlayMouseUp}
+          onContextMenu={onSelectionOverlayContextMenu}
+          onDoubleClick={(event) => {
+            onSelectionOverlayDoubleClick(event);
+          }}
+        />
       ) : null}
       {manipulationOverlay ? (
         <BlockManipulationOverlay

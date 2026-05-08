@@ -11,6 +11,7 @@ export interface UseIframeTextEditingOptions {
   activeSlide: SlideModel | undefined;
   iframeRef: RefObject<HTMLIFrameElement | null>;
   onCommitOperation: (operation: TextUpdateOperation) => void;
+  onOpenSelectionContextMenu?: (clientX: number, clientY: number) => void;
 }
 
 export interface UseIframeTextEditingResult {
@@ -28,4 +29,5 @@ export interface UseIframeTextEditingResult {
   clearPreselection: () => void;
   updatePointerPreselection: (clientX: number, clientY: number) => string | null;
   retargetPointerSelection: (clientX: number, clientY: number, additive: boolean) => string | null;
+  openPointerSelectionContextMenu: (clientX: number, clientY: number) => boolean;
 }

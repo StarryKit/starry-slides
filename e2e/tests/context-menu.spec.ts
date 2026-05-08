@@ -51,6 +51,33 @@ test("context menu duplicates and deletes the selected element with undoable obj
   await expect(copiedHeading).toBeHidden();
 });
 
+test("context menu opens from a preselected element without prior selection", async ({ page }) => {
+  await gotoEditor(page);
+
+  const frame = coverFrame(page);
+  const nestedText = frame.locator('[data-editor-id="text-5"]');
+  const { preselectionOverlay, selectionOverlay } = getHistoryControls(page);
+
+  await nestedText.hover();
+  await expect(preselectionOverlay).toBeVisible();
+  await expect(selectionOverlay).toBeHidden();
+
+  await nestedText.click({ button: "right" });
+
+  const menu = page.getByRole("menu", { name: "Selection actions" });
+  await expect(menu).toBeVisible();
+  await expect(selectionOverlay).toBeVisible();
+
+  const [textBox, overlayBox] = await Promise.all([
+    getRequiredBoundingBox(nestedText, "nested text"),
+    getRequiredBoundingBox(selectionOverlay, "selection overlay"),
+  ]);
+  expect(Math.abs(overlayBox.x - textBox.x)).toBeLessThanOrEqual(3);
+  expect(Math.abs(overlayBox.y - textBox.y)).toBeLessThanOrEqual(3);
+  expect(Math.abs(overlayBox.width - textBox.width)).toBeLessThanOrEqual(6);
+  expect(Math.abs(overlayBox.height - textBox.height)).toBeLessThanOrEqual(6);
+});
+
 test("context menu layer and align commands mutate rendered order and position", async ({
   page,
 }) => {

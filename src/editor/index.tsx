@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 import {
   type AtomicSlideOperation,
   DEFAULT_SLIDE_HEIGHT,
@@ -85,6 +85,7 @@ function SlidesEditor({
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const stageViewportRef = useRef<HTMLDivElement>(null);
   const selectionOverlayRef = useRef<HTMLDivElement>(null);
+  const selectionContextMenuTriggerRef = useRef<HTMLSpanElement>(null);
   const overlayPointerDownRef = useRef<{
     clientX: number;
     clientY: number;
@@ -93,6 +94,24 @@ function SlidesEditor({
   } | null>(null);
   const [isPresenting, setIsPresenting] = useState(false);
   const thumbnails = useSlideThumbnails(slides);
+  const openSelectionContextMenu = useCallback((clientX: number, clientY: number) => {
+    const trigger = selectionContextMenuTriggerRef.current;
+    if (!trigger) {
+      return;
+    }
+
+    trigger.dispatchEvent(
+      new MouseEvent("contextmenu", {
+        bubbles: true,
+        cancelable: true,
+        view: window,
+        clientX,
+        clientY,
+        button: 2,
+        buttons: 2,
+      })
+    );
+  }, []);
   const {
     selectedElementId,
     selectedElementIds,
@@ -107,10 +126,12 @@ function SlidesEditor({
     clearPreselection,
     updatePointerPreselection,
     retargetPointerSelection,
+    openPointerSelectionContextMenu,
   } = useIframeTextEditing({
     activeSlide,
     iframeRef,
     onCommitOperation: commitOperation,
+    onOpenSelectionContextMenu: openSelectionContextMenu,
   });
 
   const selectedElement = activeSlide?.elements.find((element) => element.id === selectedElementId);
@@ -876,8 +897,13 @@ function SlidesEditor({
                 iframeRef={iframeRef}
                 stageViewportRef={stageViewportRef}
                 selectionOverlayRef={selectionOverlayRef}
+                selectionContextMenuTriggerRef={selectionContextMenuTriggerRef}
                 isManipulating={isManipulating}
                 onSelectionOverlayMouseDown={(event) => {
+                  if (event.button !== 0) {
+                    return;
+                  }
+
                   if (!selectedElementIds.length) {
                     return;
                   }
@@ -929,6 +955,11 @@ function SlidesEditor({
                     preventDefault: () => event.preventDefault(),
                     stopPropagation: () => event.stopPropagation(),
                   });
+                }}
+                onSelectionOverlayContextMenu={(event) => {
+                  event.preventDefault();
+                  event.stopPropagation();
+                  openSelectionContextMenu(event.clientX, event.clientY);
                 }}
                 onSelectionOverlayMouseUp={(event) => {
                   const pointerDown = overlayPointerDownRef.current;

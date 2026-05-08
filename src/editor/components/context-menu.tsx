@@ -42,6 +42,17 @@ interface SelectionContextMenuProps {
   onUngroup: () => void;
 }
 
+interface SelectionContextMenuContentProps {
+  selectionCommandAvailability: SelectionCommandAvailability;
+  onAlignToSlide: (action: string) => void;
+  onDelete: () => void;
+  onDistribute: (action: string) => void;
+  onDuplicate: () => void;
+  onGroup: () => void;
+  onLayerOrder: (action: string) => void;
+  onUngroup: () => void;
+}
+
 function SelectionContextMenu({
   children,
   selectionCommandAvailability,
@@ -56,102 +67,126 @@ function SelectionContextMenu({
   return (
     <ContextMenu>
       <ContextMenuTrigger asChild>{children}</ContextMenuTrigger>
-      <ContextMenuContent aria-label="Selection actions">
-        <ContextMenuItem disabled={!selectionCommandAvailability.group} onSelect={onGroup}>
-          <Group className="size-3.5" />
-          Group
-        </ContextMenuItem>
-        <ContextMenuItem disabled={!selectionCommandAvailability.ungroup} onSelect={onUngroup}>
-          <Ungroup className="size-3.5" />
-          Ungroup
-        </ContextMenuItem>
-        <ContextMenuSeparator />
-        <ContextMenuSub>
-          <ContextMenuSubTrigger>
-            <ArrowUpToLine className="size-3.5" />
-            Layer
-          </ContextMenuSubTrigger>
-          <ContextMenuSubContent>
-            <ContextMenuItem onSelect={() => onLayerOrder("front")}>
-              <ArrowUpToLine className="size-3.5" />
-              Bring to front
-            </ContextMenuItem>
-            <ContextMenuItem onSelect={() => onLayerOrder("forward")}>
-              <ChevronUp className="size-3.5" />
-              Bring forward
-            </ContextMenuItem>
-            <ContextMenuItem onSelect={() => onLayerOrder("backward")}>
-              <ChevronDown className="size-3.5" />
-              Send backward
-            </ContextMenuItem>
-            <ContextMenuItem onSelect={() => onLayerOrder("back")}>
-              <ArrowDownToLine className="size-3.5" />
-              Send to back
-            </ContextMenuItem>
-          </ContextMenuSubContent>
-        </ContextMenuSub>
-        <ContextMenuSub>
-          <ContextMenuSubTrigger>
-            <AlignCenterHorizontal className="size-3.5" />
-            Align
-          </ContextMenuSubTrigger>
-          <ContextMenuSubContent>
-            <ContextMenuItem onSelect={() => onAlignToSlide("left")}>
-              <AlignStartHorizontal className="size-3.5" />
-              Align left
-            </ContextMenuItem>
-            <ContextMenuItem onSelect={() => onAlignToSlide("hcenter")}>
-              <AlignCenterHorizontal className="size-3.5" />
-              Align horizontal center
-            </ContextMenuItem>
-            <ContextMenuItem onSelect={() => onAlignToSlide("right")}>
-              <AlignEndHorizontal className="size-3.5" />
-              Align right
-            </ContextMenuItem>
-            <ContextMenuItem onSelect={() => onAlignToSlide("top")}>
-              <AlignStartVertical className="size-3.5" />
-              Align top
-            </ContextMenuItem>
-            <ContextMenuItem onSelect={() => onAlignToSlide("vcenter")}>
-              <AlignCenterVertical className="size-3.5" />
-              Align vertical center
-            </ContextMenuItem>
-            <ContextMenuItem onSelect={() => onAlignToSlide("bottom")}>
-              <AlignEndVertical className="size-3.5" />
-              Align bottom
-            </ContextMenuItem>
-          </ContextMenuSubContent>
-        </ContextMenuSub>
-        <ContextMenuSub>
-          <ContextMenuSubTrigger>
-            <Columns3 className="size-3.5" />
-            Distribute
-          </ContextMenuSubTrigger>
-          <ContextMenuSubContent>
-            <ContextMenuItem onSelect={() => onDistribute("horizontal")}>
-              <Columns3 className="size-3.5" />
-              Horizontally
-            </ContextMenuItem>
-            <ContextMenuItem onSelect={() => onDistribute("vertical")}>
-              <Rows3 className="size-3.5" />
-              Vertically
-            </ContextMenuItem>
-          </ContextMenuSubContent>
-        </ContextMenuSub>
-        <ContextMenuSeparator />
-        <ContextMenuItem onSelect={onDuplicate}>
-          <Copy className="size-3.5" />
-          Duplicate
-          <ContextMenuShortcut>⌘D</ContextMenuShortcut>
-        </ContextMenuItem>
-        <ContextMenuItem variant="destructive" onSelect={onDelete}>
-          <Trash2 className="size-3.5" />
-          Delete
-          <ContextMenuShortcut>Del</ContextMenuShortcut>
-        </ContextMenuItem>
-      </ContextMenuContent>
+      <SelectionContextMenuContent
+        selectionCommandAvailability={selectionCommandAvailability}
+        onAlignToSlide={onAlignToSlide}
+        onDelete={onDelete}
+        onDistribute={onDistribute}
+        onDuplicate={onDuplicate}
+        onGroup={onGroup}
+        onLayerOrder={onLayerOrder}
+        onUngroup={onUngroup}
+      />
     </ContextMenu>
   );
 }
 
-export { SelectionContextMenu };
+function SelectionContextMenuContent({
+  selectionCommandAvailability,
+  onAlignToSlide,
+  onDelete,
+  onDistribute,
+  onDuplicate,
+  onGroup,
+  onLayerOrder,
+  onUngroup,
+}: SelectionContextMenuContentProps) {
+  return (
+    <ContextMenuContent aria-label="Selection actions">
+      <ContextMenuItem disabled={!selectionCommandAvailability.group} onSelect={onGroup}>
+        <Group className="size-3.5" />
+        Group
+      </ContextMenuItem>
+      <ContextMenuItem disabled={!selectionCommandAvailability.ungroup} onSelect={onUngroup}>
+        <Ungroup className="size-3.5" />
+        Ungroup
+      </ContextMenuItem>
+      <ContextMenuSeparator />
+      <ContextMenuSub>
+        <ContextMenuSubTrigger>
+          <ArrowUpToLine className="size-3.5" />
+          Layer
+        </ContextMenuSubTrigger>
+        <ContextMenuSubContent>
+          <ContextMenuItem onSelect={() => onLayerOrder("front")}>
+            <ArrowUpToLine className="size-3.5" />
+            Bring to front
+          </ContextMenuItem>
+          <ContextMenuItem onSelect={() => onLayerOrder("forward")}>
+            <ChevronUp className="size-3.5" />
+            Bring forward
+          </ContextMenuItem>
+          <ContextMenuItem onSelect={() => onLayerOrder("backward")}>
+            <ChevronDown className="size-3.5" />
+            Send backward
+          </ContextMenuItem>
+          <ContextMenuItem onSelect={() => onLayerOrder("back")}>
+            <ArrowDownToLine className="size-3.5" />
+            Send to back
+          </ContextMenuItem>
+        </ContextMenuSubContent>
+      </ContextMenuSub>
+      <ContextMenuSub>
+        <ContextMenuSubTrigger>
+          <AlignCenterHorizontal className="size-3.5" />
+          Align
+        </ContextMenuSubTrigger>
+        <ContextMenuSubContent>
+          <ContextMenuItem onSelect={() => onAlignToSlide("left")}>
+            <AlignStartHorizontal className="size-3.5" />
+            Align left
+          </ContextMenuItem>
+          <ContextMenuItem onSelect={() => onAlignToSlide("hcenter")}>
+            <AlignCenterHorizontal className="size-3.5" />
+            Align horizontal center
+          </ContextMenuItem>
+          <ContextMenuItem onSelect={() => onAlignToSlide("right")}>
+            <AlignEndHorizontal className="size-3.5" />
+            Align right
+          </ContextMenuItem>
+          <ContextMenuItem onSelect={() => onAlignToSlide("top")}>
+            <AlignStartVertical className="size-3.5" />
+            Align top
+          </ContextMenuItem>
+          <ContextMenuItem onSelect={() => onAlignToSlide("vcenter")}>
+            <AlignCenterVertical className="size-3.5" />
+            Align vertical center
+          </ContextMenuItem>
+          <ContextMenuItem onSelect={() => onAlignToSlide("bottom")}>
+            <AlignEndVertical className="size-3.5" />
+            Align bottom
+          </ContextMenuItem>
+        </ContextMenuSubContent>
+      </ContextMenuSub>
+      <ContextMenuSub>
+        <ContextMenuSubTrigger>
+          <Columns3 className="size-3.5" />
+          Distribute
+        </ContextMenuSubTrigger>
+        <ContextMenuSubContent>
+          <ContextMenuItem onSelect={() => onDistribute("horizontal")}>
+            <Columns3 className="size-3.5" />
+            Horizontally
+          </ContextMenuItem>
+          <ContextMenuItem onSelect={() => onDistribute("vertical")}>
+            <Rows3 className="size-3.5" />
+            Vertically
+          </ContextMenuItem>
+        </ContextMenuSubContent>
+      </ContextMenuSub>
+      <ContextMenuSeparator />
+      <ContextMenuItem onSelect={onDuplicate}>
+        <Copy className="size-3.5" />
+        Duplicate
+        <ContextMenuShortcut>⌘D</ContextMenuShortcut>
+      </ContextMenuItem>
+      <ContextMenuItem variant="destructive" onSelect={onDelete}>
+        <Trash2 className="size-3.5" />
+        Delete
+        <ContextMenuShortcut>Del</ContextMenuShortcut>
+      </ContextMenuItem>
+    </ContextMenuContent>
+  );
+}
+
+export { SelectionContextMenu, SelectionContextMenuContent };

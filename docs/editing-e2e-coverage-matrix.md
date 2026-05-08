@@ -95,5 +95,6 @@ supported editor-facing command or state route to browser-level coverage.
 | Command or behavior | Surfaces | Fixture | Expected effect | Selection/focus | History | Persistence | Test coverage |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | Context Menu opens from selection and multi-selection | Right-click | Regression deck slides 1, 12 | Menu exposes valid commands | Selection preserved | N/A | N/A | `context-menu.spec.ts` |
+| Context Menu opens from hover preselection | Hover, right-click | Regression deck slide 1 | Menu exposes valid commands for the pointed editable target | Pointed target becomes selected | N/A | N/A | `context-menu.spec.ts` |
 | Duplicate/Delete/Group/Ungroup parity | Context Menu, keyboard, Floating Toolbar | Regression deck slides 1, 12 | Same DOM/model semantics across surfaces | Same selection semantics | Undo/redo covered | Representative persistence covered | `context-menu.spec.ts`; `keyboard-and-multiselect.spec.ts`; `floating-toolbar.spec.ts` |
 | Layer/Align/Distribute parity | Context Menu, Floating Toolbar, keyboard where supported | Regression deck slides 1, 12 | Same rendered order/position/spacing semantics | Selection retained | Undo/redo covered | Representative persistence covered | `context-menu.spec.ts`; `floating-toolbar.spec.ts`; `keyboard-and-multiselect.spec.ts` |

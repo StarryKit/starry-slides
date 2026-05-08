@@ -18,6 +18,7 @@ function useIframeTextEditing({
   activeSlide,
   iframeRef,
   onCommitOperation,
+  onOpenSelectionContextMenu,
 }: UseIframeTextEditingOptions): UseIframeTextEditingResult {
   const [selectedElementIds, setSelectedElementIds] = useState<string[]>([]);
   const [preselectedElementId, setPreselectedElementId] = useState<string | null>(null);
@@ -100,6 +101,23 @@ function useIframeTextEditing({
       return targetId;
     },
     [getPointerEditableTargetId, toggleSelectedElementId]
+  );
+
+  const openPointerSelectionContextMenu = useCallback(
+    (clientX: number, clientY: number) => {
+      const targetId = getPointerEditableTargetId(clientX, clientY);
+      if (!targetId) {
+        return false;
+      }
+
+      setSelectedElementIds((currentIds) =>
+        currentIds.includes(targetId) ? currentIds : [targetId]
+      );
+      setPreselectedElementId(targetId);
+      onOpenSelectionContextMenu?.(clientX, clientY);
+      return true;
+    },
+    [getPointerEditableTargetId, onOpenSelectionContextMenu]
   );
 
   const beginTextEditing = useCallback(
@@ -319,6 +337,23 @@ function useIframeTextEditing({
       setPreselectedElementId((currentId) => (currentId === targetId ? currentId : targetId));
     };
 
+    doc.oncontextmenu = (event) => {
+      if (textEditingRef.current) {
+        return;
+      }
+
+      const iframeRect = iframe.getBoundingClientRect();
+      const iframeScaleX = iframeRect.width > 0 ? iframe.clientWidth / iframeRect.width : 1;
+      const iframeScaleY = iframeRect.height > 0 ? iframe.clientHeight / iframeRect.height : 1;
+      const parentClientX = iframeRect.left + event.clientX / iframeScaleX;
+      const parentClientY = iframeRect.top + event.clientY / iframeScaleY;
+
+      if (openPointerSelectionContextMenu(parentClientX, parentClientY)) {
+        event.preventDefault();
+        event.stopPropagation();
+      }
+    };
+
     doc.onmouseleave = () => {
       clearPreselection();
     };
@@ -396,6 +431,7 @@ function useIframeTextEditing({
     beginTextEditing,
     clearPreselection,
     iframeRef,
+    openPointerSelectionContextMenu,
     toggleSelectedElementId,
   ]);
 
@@ -548,6 +584,7 @@ function useIframeTextEditing({
     clearPreselection,
     updatePointerPreselection,
     retargetPointerSelection,
+    openPointerSelectionContextMenu,
   };
 }
 
