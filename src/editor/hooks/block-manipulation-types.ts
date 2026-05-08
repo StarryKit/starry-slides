@@ -54,6 +54,7 @@ export interface UseBlockManipulationOptions {
   stageGeometry: StageGeometry;
   isEditingText: boolean;
   onCommitOperation: (operation: ElementLayoutUpdateOperation | SlideBatchOperation) => void;
+  isElementLocked: (elementId: string) => boolean;
 }
 
 export interface UseBlockManipulationResult {

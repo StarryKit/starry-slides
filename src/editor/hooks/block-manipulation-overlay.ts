@@ -6,6 +6,7 @@ import type { BlockManipulationOverlay } from "./block-manipulation-types";
 export function createBlockManipulationOverlay({
   isEditingText,
   isManipulating,
+  isLocked,
   selectedElement,
   selectedElementId,
   snapGuides,
@@ -13,12 +14,19 @@ export function createBlockManipulationOverlay({
 }: {
   isEditingText: boolean;
   isManipulating: boolean;
+  isLocked: boolean;
   selectedElement: EditableElement | undefined;
   selectedElementId: string | null;
   snapGuides: SnapGuide[];
   stageRect: StageRect | null;
 }): BlockManipulationOverlay | null {
-  if (!stageRect || !selectedElementId || !isManipulable(selectedElement) || isEditingText) {
+  if (
+    !stageRect ||
+    !selectedElementId ||
+    !isManipulable(selectedElement) ||
+    isEditingText ||
+    isLocked
+  ) {
     return null;
   }
 

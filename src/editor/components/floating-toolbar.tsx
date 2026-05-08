@@ -76,6 +76,7 @@ interface FloatingToolbarProps {
   inspectedStyles: CssPropertyRow[];
   selectedElementType: EditableType | "multi";
   selectionCommandAvailability: SelectionCommandAvailability;
+  isSelectedElementLocked: boolean;
   attributeValues: AttributeValues;
   onStyleChange: (propertyName: string, nextValue: string) => void;
   onAttributeChange: (attributeName: string, nextValue: string) => void;
@@ -131,6 +132,7 @@ function FloatingToolbar({
   inspectedStyles,
   selectedElementType,
   selectionCommandAvailability,
+  isSelectedElementLocked,
   attributeValues,
   onStyleChange,
   onAttributeChange,
@@ -301,30 +303,34 @@ function FloatingToolbar({
         aria-label="Full editing toolbar"
       >
         {renderLockSection()}
-        <Divider />
-        {renderFontSection()}
-        <Divider />
-        {renderTextStyleSection()}
-        <Divider />
-        {renderColorSection()}
-        <Divider />
-        {renderParagraphSection()}
-        <Divider />
-        {renderBorderSection()}
-        {showMultiTools ? (
+        {isSelectedElementLocked ? null : (
           <>
             <Divider />
-            {renderMultiArrangeSection()}
-          </>
-        ) : null}
-        {showGroupTool ? (
-          <>
+            {renderFontSection()}
             <Divider />
-            {renderGroupSection()}
+            {renderTextStyleSection()}
+            <Divider />
+            {renderColorSection()}
+            <Divider />
+            {renderParagraphSection()}
+            <Divider />
+            {renderBorderSection()}
+            {showMultiTools ? (
+              <>
+                <Divider />
+                {renderMultiArrangeSection()}
+              </>
+            ) : null}
+            {showGroupTool ? (
+              <>
+                <Divider />
+                {renderGroupSection()}
+              </>
+            ) : null}
+            <Divider />
+            {renderOtherSection()}
           </>
-        ) : null}
-        <Divider />
-        {renderOtherSection()}
+        )}
       </div>
 
       <AttributeDialog
@@ -341,15 +347,18 @@ function FloatingToolbar({
   );
 
   function renderLockSection() {
-    const locked = Boolean(attributeValues.locked);
     return (
       <ToolbarSection>
         <IconButton
-          label={locked ? "Unlock" : "Lock"}
-          active={locked}
-          onClick={() => commitFeature(getFeature("locked"), locked ? "" : "true")}
+          label={isSelectedElementLocked ? "Unlock" : "Lock"}
+          active={isSelectedElementLocked}
+          onClick={() => commitFeature(getFeature("locked"), isSelectedElementLocked ? "" : "true")}
         >
-          {locked ? <LockOpen className="size-3.5" /> : <Lock className="size-3.5" />}
+          {isSelectedElementLocked ? (
+            <LockOpen className="size-3.5" />
+          ) : (
+            <Lock className="size-3.5" />
+          )}
         </IconButton>
       </ToolbarSection>
     );

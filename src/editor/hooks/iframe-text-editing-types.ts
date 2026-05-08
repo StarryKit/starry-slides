@@ -11,6 +11,7 @@ export interface UseIframeTextEditingOptions {
   activeSlide: SlideModel | undefined;
   iframeRef: RefObject<HTMLIFrameElement | null>;
   onCommitOperation: (operation: TextUpdateOperation) => void;
+  isElementLocked?: (elementId: string) => boolean;
   onOpenSelectionContextMenu?: (clientX: number, clientY: number) => void;
   onStageWheel?: (event: WheelEvent) => void;
   onBeginPointerMove?: (

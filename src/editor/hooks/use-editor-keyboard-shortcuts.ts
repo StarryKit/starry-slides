@@ -25,6 +25,7 @@ import {
 function useEditorKeyboardShortcuts({
   activeSlide,
   selectedElementIds,
+  lockedElementIds,
   iframeRef,
   slideWidth,
   slideHeight,
@@ -41,6 +42,7 @@ function useEditorKeyboardShortcuts({
   const clipboardRef = useRef<ClipboardPayload | null>(null);
   const activeSlideRef = useRef(activeSlide);
   const selectedElementIdsRef = useRef(selectedElementIds);
+  const lockedElementIdsRef = useRef(lockedElementIds);
   const canUndoRef = useRef(canUndo);
   const canRedoRef = useRef(canRedo);
   const isEditingTextRef = useRef(isEditingText);
@@ -50,6 +52,7 @@ function useEditorKeyboardShortcuts({
 
   activeSlideRef.current = activeSlide;
   selectedElementIdsRef.current = selectedElementIds;
+  lockedElementIdsRef.current = lockedElementIds;
   canUndoRef.current = canUndo;
   canRedoRef.current = canRedo;
   isEditingTextRef.current = isEditingText;
@@ -118,7 +121,13 @@ function useEditorKeyboardShortcuts({
       const delta = ARROW_DELTAS[event.key];
       const currentSlide = activeSlideRef.current;
       const currentSelectedElementIds = selectedElementIdsRef.current;
-      if (!currentSlide || !currentSelectedElementIds.length || !delta) {
+      const currentLockedElementIds = lockedElementIdsRef.current;
+      if (
+        !currentSlide ||
+        !currentSelectedElementIds.length ||
+        !delta ||
+        currentSelectedElementIds.some((id) => currentLockedElementIds.includes(id))
+      ) {
         return false;
       }
 
@@ -127,7 +136,7 @@ function useEditorKeyboardShortcuts({
       const operations = currentSelectedElementIds
         .map((elementId) => {
           const element = currentSlide.elements.find((candidate) => candidate.id === elementId);
-          if (!isLayoutEditable(element)) {
+          if (!isLayoutEditable(element) || currentLockedElementIds.includes(elementId)) {
             return null;
           }
 
@@ -166,7 +175,12 @@ function useEditorKeyboardShortcuts({
     const commitLayerAction = (direction: "front" | "forward" | "backward" | "back") => {
       const currentSlide = activeSlideRef.current;
       const currentSelectedElementIds = selectedElementIdsRef.current;
-      if (!currentSlide || !currentSelectedElementIds.length) {
+      const currentLockedElementIds = lockedElementIdsRef.current;
+      if (
+        !currentSlide ||
+        !currentSelectedElementIds.length ||
+        currentSelectedElementIds.some((id) => currentLockedElementIds.includes(id))
+      ) {
         return false;
       }
 
@@ -174,7 +188,7 @@ function useEditorKeyboardShortcuts({
       const operations = currentSelectedElementIds
         .map((elementId) => {
           const node = doc ? querySlideElement<HTMLElement>(doc, elementId) : null;
-          if (!node) {
+          if (!node || currentLockedElementIds.includes(elementId)) {
             return null;
           }
 
@@ -233,13 +247,25 @@ function useEditorKeyboardShortcuts({
       } else if (commandKey && !event.shiftKey && key === "c") {
         handled = copySelection();
       } else if (commandKey && !event.shiftKey && key === "x") {
-        handled = copySelection() && removeSelection();
+        handled =
+          !selectedElementIdsRef.current.some((id) => lockedElementIdsRef.current.includes(id)) &&
+          copySelection() &&
+          removeSelection();
       } else if (commandKey && !event.shiftKey && key === "v") {
-        handled = pasteSelection();
+        handled =
+          !selectedElementIdsRef.current.some((id) => lockedElementIdsRef.current.includes(id)) &&
+          pasteSelection();
       } else if (commandKey && !event.shiftKey && key === "d") {
-        handled = copySelection() && pasteSelection();
+        handled =
+          !selectedElementIdsRef.current.some((id) => lockedElementIdsRef.current.includes(id)) &&
+          copySelection() &&
+          pasteSelection();
       } else if (event.key === "Backspace" || event.key === "Delete") {
-        handled = removeSelection();
+        handled = !selectedElementIdsRef.current.some((id) =>
+          lockedElementIdsRef.current.includes(id)
+        )
+          ? removeSelection()
+          : false;
       } else if (event.key === "Escape") {
         handled = onEscapeSelectionRef.current();
       } else if (event.key in ARROW_DELTAS) {

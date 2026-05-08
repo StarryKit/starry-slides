@@ -81,6 +81,15 @@ test("selected block can be moved by dragging the same selection overlay and kee
   await page.mouse.move(start.x, start.y);
   await page.mouse.down();
   await page.mouse.move(end.x, end.y, { steps: 8 });
+
+  const duringDrag = await blockCard.boundingBox();
+  expect(duringDrag).not.toBeNull();
+  if (!duringDrag) {
+    throw new Error("Expected selected block to have bounds during dragging.");
+  }
+  expect(duringDrag.x).toBeGreaterThan(before.x + 30);
+  expect(duringDrag.y).toBeGreaterThan(before.y + 20);
+
   await page.mouse.up();
 
   const after = await blockCard.boundingBox();
@@ -92,6 +101,8 @@ test("selected block can be moved by dragging the same selection overlay and kee
     throw new Error("Expected selected block and overlay to have bounds after dragging.");
   }
 
+  expect(after.x).toBeGreaterThan(before.x + 30);
+  expect(after.y).toBeGreaterThan(before.y + 20);
   expect(overlayAfter.x).toBeGreaterThan(overlayBefore.x + 30);
   expect(overlayAfter.y).toBeGreaterThan(overlayBefore.y + 20);
   await expect(page.getByTestId("selection-overlay")).toHaveCount(1);
@@ -131,6 +142,18 @@ test("selected text element can be moved by dragging the same selection overlay"
   await page.mouse.move(start.x, start.y);
   await page.mouse.down();
   await page.mouse.move(end.x, end.y, { steps: 8 });
+
+  await expect
+    .poll(async () => getComputedStyleValue(textElement, "transform"), { timeout: 1000 })
+    .not.toBe("none");
+  const duringDrag = await textElement.boundingBox();
+  expect(duringDrag).not.toBeNull();
+  if (!duringDrag) {
+    throw new Error("Expected selected text element to have bounds during dragging.");
+  }
+  expect(duringDrag.x).toBeGreaterThan(before.x + 25);
+  expect(duringDrag.y).toBeGreaterThan(before.y + 12);
+
   await page.mouse.up();
 
   const after = await textElement.boundingBox();
@@ -142,6 +165,8 @@ test("selected text element can be moved by dragging the same selection overlay"
     throw new Error("Expected selected text element and overlay to have bounds after dragging.");
   }
 
+  expect(after.x).toBeGreaterThan(before.x + 25);
+  expect(after.y).toBeGreaterThan(before.y + 12);
   expect(overlayAfter.x).toBeGreaterThan(overlayBefore.x + 25);
   expect(overlayAfter.y).toBeGreaterThan(overlayBefore.y + 12);
   await expect(page.getByTestId("selection-overlay")).toHaveCount(1);

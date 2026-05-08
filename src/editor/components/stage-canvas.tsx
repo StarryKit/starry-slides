@@ -26,6 +26,7 @@ interface StageCanvasProps {
   inspectedStyles: CssPropertyRow[];
   selectedElementType: EditableType | "multi";
   selectionCommandAvailability: SelectionCommandAvailability;
+  isSelectedElementLocked: boolean;
   groupScopeOverlayPassive: boolean;
   isEditingText: boolean;
   manipulationOverlay: {
@@ -91,6 +92,7 @@ function StageCanvas({
   inspectedStyles,
   selectedElementType,
   selectionCommandAvailability,
+  isSelectedElementLocked,
   groupScopeOverlayPassive,
   isEditingText,
   manipulationOverlay,
@@ -162,6 +164,7 @@ function StageCanvas({
             inspectedStyles={inspectedStyles}
             selectedElementType={selectedElementType}
             selectionCommandAvailability={selectionCommandAvailability}
+            isSelectedElementLocked={isSelectedElementLocked}
             attributeValues={attributeValues}
             onStyleChange={onStyleChange}
             onAttributeChange={onAttributeChange}

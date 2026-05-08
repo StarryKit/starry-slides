@@ -123,10 +123,6 @@ test("full floating editor applies other attributes through dialogs", async ({ p
   const toolbar = page.getByTestId("floating-toolbar-anchor");
 
   await editableHeading.click();
-  await toolbar.getByRole("button", { name: "Lock", exact: true }).click();
-  await expect(editableHeading).toHaveAttribute("data-editor-locked", "true");
-  await expect(toolbar.getByRole("button", { name: "Unlock", exact: true })).toBeVisible();
-
   await toolbar.getByRole("button", { name: "Other", exact: true }).click();
   await page.getByRole("button", { name: "Link", exact: true }).click();
   await page.getByRole("dialog").getByRole("textbox").fill("https://example.com/deck");
@@ -153,6 +149,49 @@ test("full floating editor applies other attributes through dialogs", async ({ p
   await expect(reloadedHeading).toHaveAttribute("data-link-url", "https://example.com/deck");
   await expect(reloadedHeading).toHaveAttribute("alt", "Hero kicker text");
   await expect(reloadedHeading).toHaveAttribute("aria-label", "Hero kicker label");
+});
+
+test("locked element only exposes unlock and blocks direct manipulation", async ({ page }) => {
+  await gotoEditor(page);
+
+  const frame = coverFrame(page);
+  const editableHeading = frame.locator('[data-editor-id="text-1"]');
+  const toolbar = page.getByTestId("floating-toolbar-anchor");
+  const { selectionOverlay } = getHistoryControls(page);
+
+  await editableHeading.click();
+  await expect(selectionOverlay).toBeVisible();
+  await toolbar.getByRole("button", { name: "Lock", exact: true }).click();
+  await expect(editableHeading).not.toHaveAttribute("data-editor-locked", "true");
+
+  await expect(toolbar.getByRole("button", { name: "Unlock", exact: true })).toBeVisible();
+  await expect(toolbar.getByRole("button", { name: "Lock", exact: true })).toBeHidden();
+  await expect(toolbar.getByLabel("Font", { exact: true })).toBeHidden();
+  await expect(
+    toolbar.getByRole("button", { name: "Increase font size", exact: true })
+  ).toBeHidden();
+  await expect(toolbar.getByRole("button", { name: "Bold", exact: true })).toBeHidden();
+  await expect(toolbar.getByRole("button", { name: "Other", exact: true })).toBeHidden();
+  await expect(page.getByTestId("block-resize-handle-bottom-right")).toBeHidden();
+
+  const before = await getSlideElementRect(editableHeading);
+  const overlayBefore = await selectionOverlay.boundingBox();
+  if (!overlayBefore) {
+    throw new Error("Expected selection overlay to have bounds before locked drag.");
+  }
+
+  await page.mouse.move(overlayBefore.x + 12, overlayBefore.y + 12);
+  await page.mouse.down();
+  await page.mouse.move(overlayBefore.x + 92, overlayBefore.y + 72, { steps: 8 });
+  await page.mouse.up();
+
+  const after = await getSlideElementRect(editableHeading);
+  expect(after.x).toBeCloseTo(before.x, 0);
+  expect(after.y).toBeCloseTo(before.y, 0);
+
+  await toolbar.getByRole("button", { name: "Unlock", exact: true }).click();
+  await expect(toolbar.getByRole("button", { name: "Lock", exact: true })).toBeVisible();
+  await expect(toolbar.getByLabel("Font", { exact: true })).toBeVisible();
 });
 
 test("full floating editor is the only primary element tooling surface", async ({ page }) => {

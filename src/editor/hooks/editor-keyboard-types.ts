@@ -29,6 +29,7 @@ export interface SlideRect {
 export interface UseEditorKeyboardShortcutsOptions {
   activeSlide: SlideModel | undefined;
   selectedElementIds: string[];
+  lockedElementIds: string[];
   iframeRef: RefObject<HTMLIFrameElement | null>;
   slideWidth: number;
   slideHeight: number;

@@ -49,7 +49,8 @@ supported editor-facing command or state route to browser-level coverage.
 
 | Command or behavior | Surfaces | Fixture | Expected effect | Selection/focus | History | Persistence | Test coverage |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| Background, border, radius, shadow, opacity, lock | Floating Toolbar Fill/Border/Visibility | Regression deck slide 1 | Expected inline style is written | Selection retained | Undo/redo covered for appearance category | Refresh persistence covered | `floating-toolbar.spec.ts` |
+| Background, border, radius, shadow, opacity | Floating Toolbar Fill/Border/Visibility | Regression deck slide 1 | Expected inline style is written | Selection retained | Undo/redo covered for appearance category | Refresh persistence covered | `floating-toolbar.spec.ts` |
+| Lock state | Floating Toolbar Lock | Regression deck slide 1 | Editor-local lock state restricts toolbar and direct manipulation; unlock restores editing controls | Selection retained for unlocking | No history; local-only state intentionally does not persist | No refresh persistence by design | `floating-toolbar.spec.ts` |
 | Link URL, alt text, ARIA label | Floating Toolbar Link/Text alternatives | Regression deck slide 1 | Expected HTML attributes are written | Selection retained | Undo/redo covered for attributes | Refresh persistence covered | `floating-toolbar.spec.ts` |
 | Custom CSS add/update/remove | Floating Toolbar CSS | Regression deck slide 1 | Property can be added, overwritten, removed | Selection retained | Undo/redo covered for custom CSS | Refresh persistence covered | `floating-toolbar.spec.ts` |
 | Invalid values | Floating Toolbar fields | Regression deck slide 1 | Browser normalizes or no-ops invalid style values | Selection retained | No unexpected history mutation | N/A | `floating-toolbar.spec.ts` |

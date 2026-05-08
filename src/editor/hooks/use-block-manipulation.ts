@@ -44,6 +44,7 @@ function useBlockManipulation({
   stageGeometry,
   isEditingText,
   onCommitOperation,
+  isElementLocked,
 }: UseBlockManipulationOptions): UseBlockManipulationResult {
   const { offsetX, offsetY, scale, slideHeight, slideWidth } = stageGeometry;
   const sessionRef = useRef<ManipulationSession | null>(null);
@@ -58,6 +59,7 @@ function useBlockManipulation({
   const manipulationOverlay = createBlockManipulationOverlay({
     isEditingText,
     isManipulating,
+    isLocked: Boolean(selectedElementId && isElementLocked(selectedElementId)),
     selectedElement,
     selectedElementId,
     snapGuides,
@@ -110,7 +112,13 @@ function useBlockManipulation({
       const targetElement = targetElementId
         ? activeSlide?.elements.find((element) => element.id === targetElementId)
         : undefined;
-      if (!activeSlide || !targetElementId || !isLayoutEditable(targetElement) || isEditingText) {
+      if (
+        !activeSlide ||
+        !targetElementId ||
+        !isLayoutEditable(targetElement) ||
+        isEditingText ||
+        isElementLocked(targetElementId)
+      ) {
         return;
       }
 
@@ -425,6 +433,7 @@ function useBlockManipulation({
       slideWidth,
       slideHeight,
       suppressBackgroundClearTemporarily,
+      isElementLocked,
     ]
   );
 

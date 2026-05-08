@@ -1,4 +1,4 @@
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
 import {
   type AtomicSlideOperation,
   DEFAULT_SLIDE_HEIGHT,
@@ -60,6 +60,8 @@ export interface SlidesEditorProps {
   onExportHtml?: () => void;
 }
 
+const EMPTY_LOCKED_ELEMENT_IDS: string[] = [];
+
 function SlidesEditor({
   slides: loadedSlides,
   deckTitle,
@@ -105,6 +107,17 @@ function SlidesEditor({
   } | null>(null);
   const [isPresenting, setIsPresenting] = useState(false);
   const [isToolbarSuppressed, setIsToolbarSuppressed] = useState(false);
+  const [lockedElementIdsBySlideId, setLockedElementIdsBySlideId] = useState<
+    Record<string, string[]>
+  >({});
+  const lockedElementIds = activeSlide
+    ? (lockedElementIdsBySlideId[activeSlide.id] ?? EMPTY_LOCKED_ELEMENT_IDS)
+    : EMPTY_LOCKED_ELEMENT_IDS;
+  const lockedElementIdSet = useMemo(() => new Set(lockedElementIds), [lockedElementIds]);
+  const isElementLocked = useCallback(
+    (elementId: string) => lockedElementIdSet.has(elementId),
+    [lockedElementIdSet]
+  );
   const thumbnails = useSlideThumbnails(slides);
   const openSelectionContextMenu = useCallback((clientX: number, clientY: number) => {
     const trigger = selectionContextMenuTriggerRef.current;
@@ -143,6 +156,7 @@ function SlidesEditor({
     activeSlide,
     iframeRef,
     onCommitOperation: commitOperation,
+    isElementLocked,
     onOpenSelectionContextMenu: openSelectionContextMenu,
     onStageWheel: navigateSlideFromWheel,
     onBeginPointerMove: useCallback(
@@ -189,6 +203,7 @@ function SlidesEditor({
     Boolean(activeGroupScopeId) &&
     selectedElementIds.length === 1 &&
     selectedElementId === activeGroupScopeId;
+  const isSelectedElementLocked = Boolean(selectedElementId && isElementLocked(selectedElementId));
   const resolvedDeckTitle = deckTitle ?? "";
 
   const slideWidth = activeSlide?.width || DEFAULT_SLIDE_WIDTH;
@@ -234,6 +249,7 @@ function SlidesEditor({
     },
     isEditingText,
     onCommitOperation: commitOperation,
+    isElementLocked,
   });
   beginPointerMoveRef.current = (elementId, clientX, clientY, pointerOptions) => {
     beginMove(
@@ -250,9 +266,7 @@ function SlidesEditor({
   const unifiedSelectionOverlay = manipulationOverlay?.selectionBounds ?? selectionOverlay;
   const selectedTargetElementId = selectedElementId ?? "slide-root";
   const attributeValues = {
-    locked: activeSlide
-      ? getHtmlAttributeValue(activeSlide, selectedTargetElementId, "data-editor-locked")
-      : "",
+    locked: isSelectedElementLocked ? "true" : "",
     altText: activeSlide ? getHtmlAttributeValue(activeSlide, selectedTargetElementId, "alt") : "",
     ariaLabel: activeSlide
       ? getHtmlAttributeValue(activeSlide, selectedTargetElementId, "aria-label")
@@ -281,6 +295,28 @@ function SlidesEditor({
 
   function commitAttributeChange(attributeName: string, nextValue: string) {
     if (!activeSlide) {
+      return;
+    }
+
+    if (attributeName === "data-editor-locked") {
+      const nextLocked = nextValue.trim() === "true";
+      if (!selectedElementId) {
+        return;
+      }
+
+      setLockedElementIdsBySlideId((current) => {
+        const nextIds = new Set(current[activeSlide.id] ?? []);
+        if (nextLocked) {
+          nextIds.add(selectedElementId);
+        } else {
+          nextIds.delete(selectedElementId);
+        }
+
+        return {
+          ...current,
+          [activeSlide.id]: Array.from(nextIds),
+        };
+      });
       return;
     }
 
@@ -908,6 +944,7 @@ function SlidesEditor({
   useEditorKeyboardShortcuts({
     activeSlide,
     selectedElementIds,
+    lockedElementIds,
     iframeRef,
     slideWidth,
     slideHeight,
@@ -989,6 +1026,7 @@ function SlidesEditor({
                 inspectedStyles={inspectedStyles}
                 selectedElementType={selectedElementType}
                 selectionCommandAvailability={selectionCommandAvailability}
+                isSelectedElementLocked={isSelectedElementLocked}
                 groupScopeOverlayPassive={groupScopeOverlayPassive}
                 isEditingText={isEditingText}
                 manipulationOverlay={manipulationOverlay}
@@ -1004,6 +1042,11 @@ function SlidesEditor({
                   }
 
                   if (!selectedElementIds.length) {
+                    return;
+                  }
+                  if (isSelectedElementLocked) {
+                    event.preventDefault();
+                    event.stopPropagation();
                     return;
                   }
                   setIsToolbarSuppressed(true);
@@ -1035,6 +1078,9 @@ function SlidesEditor({
                   });
                 }}
                 onSelectionOverlayMouseMove={(event) => {
+                  if (isSelectedElementLocked) {
+                    return;
+                  }
                   const pointerDown = overlayPointerDownRef.current;
                   updatePointerPreselection(event.clientX, event.clientY);
 
@@ -1070,6 +1116,11 @@ function SlidesEditor({
                   openSelectionContextMenu(event.clientX, event.clientY);
                 }}
                 onSelectionOverlayMouseUp={(event) => {
+                  if (isSelectedElementLocked) {
+                    overlayPointerDownRef.current = null;
+                    setIsToolbarSuppressed(false);
+                    return;
+                  }
                   const pointerDown = overlayPointerDownRef.current;
                   overlayPointerDownRef.current = null;
                   setIsToolbarSuppressed(false);
