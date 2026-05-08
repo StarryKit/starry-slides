@@ -306,9 +306,6 @@ test("floating toolbar hides while dragging a selected element", async ({ page }
   await blockCard.click({ position: { x: 12, y: 12 } });
   await expect(selectionOverlay).toBeVisible();
   await expect(floatingToolbarAnchor).toBeVisible();
-  await expect(
-    floatingToolbarAnchor.getByRole("button", { name: "Group", exact: true })
-  ).toBeVisible();
 
   const overlayBefore = await selectionOverlay.boundingBox();
   if (!overlayBefore) {

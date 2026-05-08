@@ -13,6 +13,15 @@ export interface UseIframeTextEditingOptions {
   onCommitOperation: (operation: TextUpdateOperation) => void;
   onOpenSelectionContextMenu?: (clientX: number, clientY: number) => void;
   onStageWheel?: (event: WheelEvent) => void;
+  onBeginPointerMove?: (
+    elementId: string,
+    clientX: number,
+    clientY: number,
+    pointerOptions?: {
+      sourceWindow?: Window | null;
+      toStagePoint?: (clientX: number, clientY: number) => { x: number; y: number };
+    }
+  ) => void;
 }
 
 export interface UseIframeTextEditingResult {

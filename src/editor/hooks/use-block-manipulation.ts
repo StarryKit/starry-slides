@@ -104,15 +104,13 @@ function useBlockManipulation({
     (
       mode: ManipulationMode,
       event: PointerStartLike,
-      resizeCorner: ResizeHandleCorner | null = null
+      resizeCorner: ResizeHandleCorner | null = null,
+      targetElementId = selectedElementId
     ) => {
-      if (
-        !activeSlide ||
-        !selectedElementId ||
-        !selectedStageRect ||
-        !isLayoutEditable(selectedElement) ||
-        isEditingText
-      ) {
+      const targetElement = targetElementId
+        ? activeSlide?.elements.find((element) => element.id === targetElementId)
+        : undefined;
+      if (!activeSlide || !targetElementId || !isLayoutEditable(targetElement) || isEditingText) {
         return;
       }
 
@@ -122,7 +120,7 @@ function useBlockManipulation({
       }
 
       const rootNode = doc.querySelector<HTMLElement>(activeSlide.rootSelector);
-      const targetNode = querySlideElement<HTMLElement>(doc, selectedElementId);
+      const targetNode = querySlideElement<HTMLElement>(doc, targetElementId);
       if (!rootNode || !targetNode) {
         return;
       }
@@ -130,7 +128,7 @@ function useBlockManipulation({
         activeSlide,
         doc,
         mode,
-        selectedElementId,
+        selectedElementId: targetElementId,
         selectedElementIds,
       });
       const targetNodes = Object.fromEntries(
@@ -157,6 +155,10 @@ function useBlockManipulation({
       );
       const iframeElement = iframeRef.current;
       const previousIframePointerEvents = iframeElement?.style.pointerEvents || "";
+      const pointerSourceWindow = event.sourceWindow ?? window;
+      const toStagePoint =
+        event.toStagePoint ?? ((clientX, clientY) => ({ x: clientX, y: clientY }));
+      const startPointer = toStagePoint(event.clientX, event.clientY);
 
       event.preventDefault();
       event.stopPropagation();
@@ -180,7 +182,7 @@ function useBlockManipulation({
         activeSlide,
         doc,
         rootRect,
-        selectedElementId,
+        selectedElementId: targetElementId,
         slideStageRect,
         stageGeometry: snapStageGeometry,
       });
@@ -202,22 +204,24 @@ function useBlockManipulation({
             elementRectToStageRect(node.getBoundingClientRect(), rootRect, snapStageGeometry),
           ])
       );
-      const freshSelectedStageRect = freshStageRects.length
-        ? unionStageRects(freshStageRects)
-        : selectedStageRect;
+      if (!freshStageRects.length) {
+        return;
+      }
+
+      const freshSelectedStageRect = unionStageRects(freshStageRects);
       sessionRef.current = {
         slideId: activeSlide.id,
-        elementId: selectedElementId,
+        elementId: targetElementId,
         elementIds: Object.keys(targetNodes),
         mode,
         resizeCorner,
-        startPointer: { x: event.clientX, y: event.clientY },
+        startPointer,
         startStageRect: freshSelectedStageRect,
         centerPoint: {
           x: startRect.left + startRect.width / 2,
           y: startRect.top + startRect.height / 2,
         },
-        previousStyle: previousStyles[selectedElementId],
+        previousStyle: previousStyles[targetElementId],
         previousStyles,
         startElementStageRects,
         resizeParentElementIds,
@@ -232,15 +236,19 @@ function useBlockManipulation({
         iframeElement.style.pointerEvents = "none";
       }
 
-      const onMouseMove = (moveEvent: MouseEvent) => {
+      const handleMouseMove = (
+        moveEvent: MouseEvent,
+        mapPoint: (clientX: number, clientY: number) => { x: number; y: number }
+      ) => {
         const session = sessionRef.current;
         if (!session) {
           return;
         }
 
         moveEvent.preventDefault();
-        const stageDeltaX = moveEvent.clientX - session.startPointer.x;
-        const stageDeltaY = moveEvent.clientY - session.startPointer.y;
+        const stagePoint = mapPoint(moveEvent.clientX, moveEvent.clientY);
+        const stageDeltaX = stagePoint.x - session.startPointer.x;
+        const stageDeltaY = stagePoint.y - session.startPointer.y;
         if (session.mode === "move") {
           const unsnappedRect = {
             x: session.startStageRect.x + stageDeltaX,
@@ -310,8 +318,8 @@ function useBlockManipulation({
           session.centerPoint.y
         );
         const currentAngle = getRotationDeltaDegrees(
-          moveEvent.clientX,
-          moveEvent.clientY,
+          stagePoint.x,
+          stagePoint.y,
           session.centerPoint.x,
           session.centerPoint.y
         );
@@ -327,11 +335,21 @@ function useBlockManipulation({
         });
         setSnapGuides([]);
       };
+      const onMouseMove = (moveEvent: MouseEvent) => {
+        handleMouseMove(moveEvent, toStagePoint);
+      };
+      const onParentMouseMove = (moveEvent: MouseEvent) => {
+        handleMouseMove(moveEvent, (clientX, clientY) => ({ x: clientX, y: clientY }));
+      };
 
       const teardown = () => {
-        window.removeEventListener("mousemove", onMouseMove);
-        window.removeEventListener("mouseup", onMouseUp);
-        window.removeEventListener("keydown", onKeyDown);
+        pointerSourceWindow.removeEventListener("mousemove", onMouseMove);
+        pointerSourceWindow.removeEventListener("mouseup", onMouseUp);
+        pointerSourceWindow.removeEventListener("keydown", onKeyDown);
+        if (pointerSourceWindow !== window) {
+          window.removeEventListener("mousemove", onParentMouseMove);
+          window.removeEventListener("mouseup", onMouseUp);
+        }
         if (iframeElement) {
           iframeElement.style.pointerEvents = previousIframePointerEvents;
         }
@@ -386,19 +404,21 @@ function useBlockManipulation({
         setTransientStageRect(null);
       };
 
-      window.addEventListener("mousemove", onMouseMove);
-      window.addEventListener("mouseup", onMouseUp);
-      window.addEventListener("keydown", onKeyDown);
+      pointerSourceWindow.addEventListener("mousemove", onMouseMove);
+      pointerSourceWindow.addEventListener("mouseup", onMouseUp);
+      pointerSourceWindow.addEventListener("keydown", onKeyDown);
+      if (pointerSourceWindow !== window) {
+        window.addEventListener("mousemove", onParentMouseMove);
+        window.addEventListener("mouseup", onMouseUp);
+      }
     },
     [
       activeSlide,
       iframeRef,
       isEditingText,
       onCommitOperation,
-      selectedElement,
       selectedElementId,
       selectedElementIds,
-      selectedStageRect,
       scale,
       offsetX,
       offsetY,
@@ -412,8 +432,8 @@ function useBlockManipulation({
     manipulationOverlay,
     isManipulating: isManipulating || isManipulatingRef.current,
     suppressBackgroundClear,
-    beginMove: (event) => {
-      beginManipulation("move", event);
+    beginMove: (event, targetElementId) => {
+      beginManipulation("move", event, null, targetElementId);
     },
     beginResize: (corner, event) => {
       beginManipulation("resize", event, corner);
@@ -443,7 +463,7 @@ function getManipulationElementIds({
   });
 
   if (mode === "move") {
-    return selectedLayoutElementIds;
+    return selectedLayoutElementIds.length ? selectedLayoutElementIds : [selectedElementId];
   }
 
   if (mode === "rotate") {

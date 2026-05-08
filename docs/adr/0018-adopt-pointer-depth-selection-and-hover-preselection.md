@@ -40,6 +40,13 @@ the editable target currently under the pointer. The preselection overlay:
 - is hidden while text editing or direct manipulation is active
 - is hidden when there is no editable target under the pointer
 
+Pressing the primary pointer button on a preselected editable target starts the
+same move interaction as dragging an already selected element. The pointer-down
+gesture selects the preselected target and begins the move session in one
+continuous drag; users do not need to click once to select and then drag. This
+primary-button drag path must still use pointer-depth hit testing and must not
+show resize, rotate, or other manipulation handles before the pointer is down.
+
 Click selection uses the editable target at the current pointer location, not
 the previously selected element or the editor overlay that happened to receive
 the event. For nested editable elements, the selected target is the deepest
@@ -107,10 +114,12 @@ selection path because component visibility alone cannot prove this interaction.
     starting a move session
 
 - **Tests**:
-  - E2E hover over nested Text shows a preselection overlay aligned to that Text
-  - E2E hover does not show manipulation handles
-  - E2E click from an already selected outer Block onto nested Text selects the
-    Text target
+- E2E hover over nested Text shows a preselection overlay aligned to that Text
+- E2E hover does not show manipulation handles
+- E2E click from an already selected outer Block onto nested Text selects the
+  Text target
+- E2E primary-button drag from a preselection overlay moves that editable target
+  without requiring a prior click selection
 
 ## Verification
 
@@ -120,6 +129,8 @@ selection path because component visibility alone cannot prove this interaction.
   element.
 - [ ] Selecting an outer Block, then clicking a nested Text node through the
   selected overlay, selects the Text node without clearing selection first.
+- [ ] Pressing and dragging from a preselected editable element selects and moves
+  that element in the same pointer gesture.
 - [ ] Text editing still hides selection and preselection chrome.
 - [ ] Existing selection, manipulation, group, and text-editing E2E tests remain
   passing.

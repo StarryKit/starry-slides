@@ -25,6 +25,7 @@ function useIframeTextEditing({
   onCommitOperation,
   onOpenSelectionContextMenu,
   onStageWheel,
+  onBeginPointerMove,
 }: UseIframeTextEditingOptions): UseIframeTextEditingResult {
   const [selectedElementIds, setSelectedElementIds] = useState<string[]>([]);
   const [preselectedElementId, setPreselectedElementId] = useState<string | null>(null);
@@ -395,6 +396,7 @@ function useIframeTextEditing({
       node.ondblclick = null;
       node.onblur = null;
       node.onkeydown = null;
+      node.onmousedown = null;
       node.onclick = (event) => {
         event.stopPropagation();
 
@@ -422,6 +424,77 @@ function useIframeTextEditing({
             setSelectedElementIds([targetId]);
           }
         }
+      };
+
+      node.onmousedown = (event) => {
+        if (event.button !== 0 || textEditingRef.current) {
+          return;
+        }
+
+        const editableTarget = getEditableSelectionTargetInScope(
+          event.target as Element,
+          activeGroupScopeIdRef.current
+        );
+        if (activeGroupScopeIdRef.current && !editableTarget) {
+          return;
+        }
+
+        const targetId =
+          editableTarget?.getAttribute(SELECTOR_ATTR) ?? node.getAttribute(SELECTOR_ATTR);
+        if (!targetId) {
+          return;
+        }
+
+        const iframeRect = iframe.getBoundingClientRect();
+        const iframeScaleX = iframeRect.width > 0 ? iframe.clientWidth / iframeRect.width : 1;
+        const iframeScaleY = iframeRect.height > 0 ? iframe.clientHeight / iframeRect.height : 1;
+
+        const toStagePoint = (clientX: number, clientY: number) => ({
+          x: iframeRect.left + clientX / iframeScaleX,
+          y: iframeRect.top + clientY / iframeScaleY,
+        });
+
+        const sourceWindow = iframe.contentWindow;
+        if (!sourceWindow) {
+          return;
+        }
+
+        const startX = event.clientX;
+        const startY = event.clientY;
+        let didStartMove = false;
+
+        const teardown = () => {
+          sourceWindow.removeEventListener("mousemove", onMouseMove);
+          sourceWindow.removeEventListener("mouseup", onMouseUp);
+        };
+
+        const onMouseMove = (moveEvent: MouseEvent) => {
+          if (didStartMove) {
+            return;
+          }
+
+          if (Math.hypot(moveEvent.clientX - startX, moveEvent.clientY - startY) <= 4) {
+            return;
+          }
+
+          didStartMove = true;
+          teardown();
+          setSelectedElementIds([targetId]);
+          setPreselectedElementId(targetId);
+          onBeginPointerMove?.(targetId, startX, startY, {
+            sourceWindow,
+            toStagePoint,
+          });
+          moveEvent.preventDefault();
+          moveEvent.stopPropagation();
+        };
+
+        const onMouseUp = () => {
+          teardown();
+        };
+
+        sourceWindow.addEventListener("mousemove", onMouseMove);
+        sourceWindow.addEventListener("mouseup", onMouseUp);
       };
 
       node.ondblclick = (event) => {
@@ -480,6 +553,7 @@ function useIframeTextEditing({
     beginTextEditing,
     clearPreselection,
     iframeRef,
+    onBeginPointerMove,
     openPointerSelectionContextMenu,
   ]);
 

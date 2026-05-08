@@ -113,6 +113,46 @@ test("hovering an editable element shows a passive preselection overlay for the 
   expect(Math.abs(preselectionBox.height - textBox.height)).toBeLessThanOrEqual(6);
 });
 
+test("dragging from a preselected editable element selects and moves it in one gesture", async ({
+  page,
+}) => {
+  await gotoEditor(page);
+
+  const frame = coverFrame(page);
+  const nestedText = frame.locator('[data-editor-id="text-5"]');
+  const { preselectionOverlay, selectionOverlay } = getHistoryControls(page);
+
+  await nestedText.hover();
+  await expect(preselectionOverlay).toBeVisible();
+  await expect(selectionOverlay).toBeHidden();
+
+  const textBefore = await getRequiredBoundingBox(nestedText, "nested text before dragging");
+  const preselectionBox = await getRequiredBoundingBox(preselectionOverlay, "preselection overlay");
+  const start = {
+    x: preselectionBox.x + preselectionBox.width / 2,
+    y: preselectionBox.y + preselectionBox.height / 2,
+  };
+
+  await page.mouse.move(start.x, start.y);
+  await page.mouse.down();
+  await page.mouse.move(start.x + 80, start.y + 45, { steps: 8 });
+  await page.mouse.up();
+
+  await expect(selectionOverlay).toBeVisible();
+
+  const [textAfter, overlayAfter] = await Promise.all([
+    getRequiredBoundingBox(nestedText, "nested text after dragging"),
+    getRequiredBoundingBox(selectionOverlay, "selection overlay after dragging"),
+  ]);
+
+  expect(textAfter.x).toBeGreaterThan(textBefore.x + 30);
+  expect(textAfter.y).toBeGreaterThan(textBefore.y + 15);
+  expect(Math.abs(overlayAfter.x - textAfter.x)).toBeLessThanOrEqual(3);
+  expect(Math.abs(overlayAfter.y - textAfter.y)).toBeLessThanOrEqual(3);
+  expect(Math.abs(overlayAfter.width - textAfter.width)).toBeLessThanOrEqual(6);
+  expect(Math.abs(overlayAfter.height - textAfter.height)).toBeLessThanOrEqual(6);
+});
+
 test("clicking a nested text target through a selected outer block retargets selection by pointer depth", async ({
   page,
 }) => {
@@ -161,7 +201,5 @@ test("floating toolbar is the only element tooling surface", async ({ page }) =>
   const { floatingToolbarAnchor } = getHeaderControls(page);
 
   await expect(floatingToolbarAnchor).toBeVisible();
-  await expect(
-    floatingToolbarAnchor.getByRole("button", { name: "Font", exact: true })
-  ).toBeVisible();
+  await expect(floatingToolbarAnchor.getByLabel("Font", { exact: true })).toBeVisible();
 });

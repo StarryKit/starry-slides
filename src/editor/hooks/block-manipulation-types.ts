@@ -60,7 +60,7 @@ export interface UseBlockManipulationResult {
   manipulationOverlay: BlockManipulationOverlay | null;
   isManipulating: boolean;
   suppressBackgroundClear: boolean;
-  beginMove: (event: PointerStartLike) => void;
+  beginMove: (event: PointerStartLike, targetElementId?: string) => void;
   beginResize: (corner: ResizeHandleCorner, event: PointerStartLike) => void;
   beginRotate: (event: PointerStartLike) => void;
 }
@@ -68,6 +68,8 @@ export interface UseBlockManipulationResult {
 export interface PointerStartLike {
   clientX: number;
   clientY: number;
+  sourceWindow?: Window | null;
+  toStagePoint?: (clientX: number, clientY: number) => { x: number; y: number };
   preventDefault: () => void;
   stopPropagation: () => void;
 }
