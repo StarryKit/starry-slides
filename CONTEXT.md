@@ -17,9 +17,24 @@ Shared planning:
 
 - [ROADMAP.md](/Users/haichao/code/starry-slides/ROADMAP.md)
 
-Cross-context architectural decisions remain in:
+## Architecture Decisions
 
-- [docs/adr/README.md](/Users/haichao/code/starry-slides/docs/adr/README.md)
+Cross-context architectural decisions remain in
+[docs/adr/README.md](/Users/haichao/code/starry-slides/docs/adr/README.md).
+
+Read the ADR index and relevant ADRs before changing architecture,
+persistence, collaboration, package boundaries, history, or editor pipeline
+semantics.
+
+Important current decisions:
+
+- ADR-0001: editing pipeline and versioning strategy
+- ADR-0003: Tailwind and shadcn/ui for editor UI
+- ADR-0007: generated deck copy policy
+- ADR-0008: `@starrykit/slides` single-package architecture
+- ADR-0009: Floating Toolbar as the only element tooling surface
+- ADR-0016: PDF export pipeline through core, runtime, CLI, and editor
+- ADR-0021: reusable Present mode and single HTML export
 
 ## Testing Contracts
 

@@ -36,6 +36,29 @@ test("selecting another element after clearing selection keeps the app mounted",
   expect(pageErrors).toEqual([]);
 });
 
+test("header title input renames the deck topic and persists after refresh", async ({ page }) => {
+  await gotoEditor(page);
+
+  const nextTitle = "Quarterly Planning Narrative";
+  const titleInput = page.getByLabel("Deck title");
+
+  await titleInput.fill(nextTitle);
+  await expect(titleInput).toHaveValue(nextTitle);
+  await expect(page.getByText("saving...")).toBeVisible();
+  await expect(page.getByText("saving...")).toBeHidden();
+
+  await expect
+    .poll(async () => {
+      const manifestResponse = await page.request.get(`/deck/manifest.json?v=${Date.now()}`);
+      expect(manifestResponse.ok()).toBeTruthy();
+      return (await manifestResponse.json()).topic;
+    })
+    .toBe(nextTitle);
+
+  await page.reload();
+  await expect(page.getByLabel("Deck title")).toHaveValue(nextTitle);
+});
+
 test("sidebar renders fixed thumbnail list chrome and slide actions", async ({ page }) => {
   await gotoEditor(page);
 
@@ -148,14 +171,14 @@ test("sidebar context menu adds slides above and below the clicked slide", async
   await page.getByTestId("slide-card").nth(1).click({ button: "right" });
   await page.getByRole("menu", { name: "Slide actions" }).getByText("Add Slide Above").click();
 
-  await expect(page.getByText("15 slides")).toBeVisible();
+  await expect(page.getByText(`${REGRESSION_DECK_SLIDE_COUNT + 1} slides`)).toBeVisible();
   await expect(page.getByLabel("Slide 2")).toHaveAttribute("aria-current", "true");
   await expect(coverFrame(page).locator('[data-editor-id="text-1"]')).toHaveText("Untitled Slide");
 
   await page.getByTestId("slide-card").nth(3).click({ button: "right" });
   await page.getByRole("menu", { name: "Slide actions" }).getByText("Add Slide Below").click();
 
-  await expect(page.getByText("16 slides")).toBeVisible();
+  await expect(page.getByText(`${REGRESSION_DECK_SLIDE_COUNT + 2} slides`)).toBeVisible();
   await expect(page.getByLabel("Slide 5")).toHaveAttribute("aria-current", "true");
   await expect(coverFrame(page).locator('[data-editor-id="text-1"]')).toHaveText("Untitled Slide");
 });
@@ -166,7 +189,7 @@ test("sidebar slide actions add duplicate hide and delete slides", async ({ page
   await page.getByLabel("Slide 2").click();
   await page.getByRole("button", { name: "Add slide" }).click();
 
-  await expect(page.getByText("15 slides")).toBeVisible();
+  await expect(page.getByText(`${REGRESSION_DECK_SLIDE_COUNT + 1} slides`)).toBeVisible();
   await expect(page.getByLabel("Slide 3")).toHaveAttribute("aria-current", "true");
   await expect(coverFrame(page).locator('[data-editor-id="text-1"]')).toHaveText("Untitled Slide");
 
@@ -174,7 +197,7 @@ test("sidebar slide actions add duplicate hide and delete slides", async ({ page
   await newSlideCard.click({ button: "right" });
   await page.getByRole("menu", { name: "Slide actions" }).getByText("Duplicate").click();
 
-  await expect(page.getByText("16 slides")).toBeVisible();
+  await expect(page.getByText(`${REGRESSION_DECK_SLIDE_COUNT + 2} slides`)).toBeVisible();
   await expect(page.getByLabel("Slide 4")).toHaveAttribute("aria-current", "true");
 
   const duplicateCard = page.getByTestId("slide-card").nth(3);
@@ -189,7 +212,7 @@ test("sidebar slide actions add duplicate hide and delete slides", async ({ page
   await duplicateCard.click({ button: "right" });
   await page.getByRole("menu", { name: "Slide actions" }).getByText("Delete").click();
 
-  await expect(page.getByText("15 slides")).toBeVisible();
+  await expect(page.getByText(`${REGRESSION_DECK_SLIDE_COUNT + 1} slides`)).toBeVisible();
   await expect(page.getByRole("button", { name: "Slide 4", exact: true })).toHaveAttribute(
     "aria-current",
     "true"
@@ -305,6 +328,7 @@ test("export PDF opens a scope dialog and exports selected or all slides", async
   await dialog.getByRole("button", { name: "Export PDF" }).click();
 
   await expect(page.getByText("PDF export is ready.")).toBeVisible();
+  await expect.poll(() => exportRequests.length).toBe(1);
   expect(exportRequests.at(-1)).toEqual({
     selection: {
       mode: "slides",
@@ -314,10 +338,12 @@ test("export PDF opens a scope dialog and exports selected or all slides", async
 
   await page.getByRole("button", { name: "Export" }).click();
   await page.getByRole("button", { name: "PDF" }).click();
-  await expect(dialog).toBeVisible();
-  await dialog.getByRole("radio", { name: "All slides" }).check();
-  await dialog.getByRole("button", { name: "Export PDF" }).click();
+  const reopenedDialog = page.getByRole("dialog", { name: "Export PDF" });
+  await expect(reopenedDialog).toBeVisible();
+  await expect(reopenedDialog.getByRole("radio", { name: "All slides" })).toBeChecked();
+  await reopenedDialog.getByRole("button", { name: "Export PDF" }).click();
 
+  await expect.poll(() => exportRequests.length).toBe(2);
   expect(exportRequests.at(-1)).toEqual({
     selection: {
       mode: "all",

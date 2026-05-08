@@ -1,4 +1,4 @@
-# ADR-0018: Adopt reusable Present mode and single HTML export
+# ADR-0021: Adopt reusable Present mode and single HTML export
 
 - Status: accepted
 - Date: 2026-05-07

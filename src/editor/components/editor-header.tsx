@@ -127,7 +127,8 @@ export function EditorHeader({
           <input
             value={title}
             onChange={(e) => onTitleChange?.(e.target.value)}
-            className="max-w-full min-w-0 flex-none rounded-md bg-transparent px-2 py-1 text-[14px] font-medium text-foreground outline-none focus:bg-foreground/[0.04]"
+            aria-label="Deck title"
+            className="max-w-full min-w-0 flex-none rounded-md bg-transparent px-2 py-1 text-[18px] font-semibold text-foreground outline-none focus:bg-foreground/[0.04]"
             style={titleWidth ? { width: `${titleWidth}px` } : undefined}
             placeholder="Untitled presentation"
           />
@@ -135,7 +136,7 @@ export function EditorHeader({
             key={titleDisplay}
             ref={measureTitleRef}
             aria-hidden="true"
-            className="pointer-events-none invisible absolute left-0 top-0 whitespace-pre rounded-md px-2 py-1 text-[14px] font-medium"
+            className="pointer-events-none invisible absolute left-0 top-0 whitespace-pre rounded-md px-2 py-1 text-[18px] font-semibold"
           >
             {titleDisplay}
           </span>

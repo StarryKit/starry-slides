@@ -1,4 +1,4 @@
-# ADR-0018: Adopt block flatten through Ungroup
+# ADR-0020: Adopt block flatten through Ungroup
 
 - Status: accepted
 - Date: 2026-05-07

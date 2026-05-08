@@ -55,6 +55,7 @@ export interface SlidesEditorProps {
   deckTitle?: string;
   isSaving?: boolean;
   onSlidesChange?: (slides: SlideModel[]) => void;
+  onDeckTitleChange?: (title: string) => void;
   onExportPdf?: (selection: PdfExportSelection) => void;
   onExportHtml?: () => void;
 }
@@ -64,6 +65,7 @@ function SlidesEditor({
   deckTitle,
   isSaving = false,
   onSlidesChange,
+  onDeckTitleChange,
   onExportPdf,
   onExportHtml,
 }: SlidesEditorProps) {
@@ -139,7 +141,7 @@ function SlidesEditor({
     Boolean(activeGroupScopeId) &&
     selectedElementIds.length === 1 &&
     selectedElementId === activeGroupScopeId;
-  const resolvedDeckTitle = deckTitle?.trim() || "Untitled deck";
+  const resolvedDeckTitle = deckTitle ?? "";
 
   const slideWidth = activeSlide?.width || DEFAULT_SLIDE_WIDTH;
   const slideHeight = activeSlide?.height || DEFAULT_SLIDE_HEIGHT;
@@ -816,6 +818,7 @@ function SlidesEditor({
         >
           <EditorHeader
             title={resolvedDeckTitle}
+            onTitleChange={onDeckTitleChange}
             isSaving={isSaving}
             onPresent={() => {
               clearSelection();

@@ -19,6 +19,7 @@ supported editor-facing command or state route to browser-level coverage.
 
 | Command or behavior | Surfaces | Fixture | Expected effect | Selection/focus | History | Persistence | Test coverage |
 | --- | --- | --- | --- | --- | --- | --- | --- |
+| Rename deck title | Editor header title input | Regression deck manifest | `manifest.topic` is updated without changing slide content | Header input keeps focus while editing | N/A | Refresh preserves renamed deck topic | `editor-chrome.spec.ts` |
 | Add slide after active slide | Sidebar add button | Regression deck | New blank slide is inserted immediately after the active slide | New slide becomes active and stage renders it | Undo removes the new slide; redo restores it | Refresh preserves new manifest entry and slide file | `editor-chrome.spec.ts` |
 | Duplicate slide | Sidebar slide menu | Regression deck | Source slide is copied immediately after the source slide with unique `id` and `sourceFile` | Duplicate becomes active | Undo removes duplicate; redo restores it | Refresh preserves duplicate slide order and file | `editor-chrome.spec.ts` |
 | Delete slide | Sidebar slide menu | Regression deck | Slide is removed from the deck and manifest; deleting the last slide is unavailable | Active slide moves to next slide, otherwise previous slide | Undo restores deleted slide at original index | Refresh keeps removed slide absent | `editor-chrome.spec.ts` |

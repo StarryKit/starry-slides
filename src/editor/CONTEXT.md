@@ -5,7 +5,7 @@
 `src/editor` owns the interactive browser editor UI inside `@starrykit/slides`.
 
 Shared roadmap lives in
-[ROADMAP.md](/Users/haichao/code/html-slides-editor/ROADMAP.md).
+[ROADMAP.md](/Users/haichao/code/starry-slides/ROADMAP.md).
 
 This module is responsible for:
 

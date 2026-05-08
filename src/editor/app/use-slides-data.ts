@@ -13,6 +13,7 @@ interface SlidesDataResult {
   isLoading: boolean;
   isSaving: boolean;
   saveSlides: (slides: SlideModel[]) => void;
+  saveDeckTitle: (title: string) => void;
   exportPdf: (selection: PdfExportSelection) => Promise<void>;
   exportHtml: () => Promise<void>;
 }
@@ -39,6 +40,7 @@ export function useSlidesData(): SlidesDataResult {
   const manifestRef = useRef<SlideDeckManifest | null>(null);
   const loadedSlidesRef = useRef<SlideModel[]>([]);
   const latestSlidesRef = useRef<SlideModel[] | null>(null);
+  const latestDeckTitleRef = useRef<string | null>(null);
   const saveTimerRef = useRef<number | null>(null);
   const saveRequestIdRef = useRef(0);
   const isSaveInFlightRef = useRef(false);
@@ -64,7 +66,9 @@ export function useSlidesData(): SlidesDataResult {
         }
 
         manifestRef.current = importedDeck.manifest;
-        setDeckTitle(importedDeck.manifest.topic || "Generated deck");
+        const importedTitle = importedDeck.manifest.topic || "Generated deck";
+        latestDeckTitleRef.current = importedTitle;
+        setDeckTitle(importedTitle);
         setSlides(importedDeck.slides);
         loadedSlidesRef.current = importedDeck.slides;
         setErrorMessage(null);
@@ -91,7 +95,8 @@ export function useSlidesData(): SlidesDataResult {
 
   const flushSave = async (): Promise<void> => {
     const manifest = manifestRef.current;
-    const nextSlides = latestSlidesRef.current;
+    const nextSlides = latestSlidesRef.current ?? loadedSlidesRef.current;
+    const nextDeckTitle = latestDeckTitleRef.current ?? deckTitle;
     const saveRequestId = saveRequestIdRef.current;
 
     if (!manifest?.slides?.length || !nextSlides?.length) {
@@ -136,6 +141,7 @@ export function useSlidesData(): SlidesDataResult {
         clientLoadedAt: clientLoadedAtRef.current,
         manifest: {
           ...manifest,
+          topic: nextDeckTitle,
           slides: manifestSlides,
         },
         slides: nextSlides.map(
@@ -189,6 +195,23 @@ export function useSlidesData(): SlidesDataResult {
 
     loadedSlidesRef.current = nextSlides;
     latestSlidesRef.current = nextSlides;
+    saveRequestIdRef.current += 1;
+    setIsSaving(true);
+
+    if (saveTimerRef.current) {
+      window.clearTimeout(saveTimerRef.current);
+    }
+
+    saveTimerRef.current = window.setTimeout(() => {
+      saveTimerRef.current = null;
+      void flushSave();
+    }, SAVE_DEBOUNCE_MS);
+  };
+
+  const saveDeckTitle = (nextTitle: string) => {
+    const normalizedTitle = nextTitle.trim() || "Untitled deck";
+    setDeckTitle(nextTitle);
+    latestDeckTitleRef.current = normalizedTitle;
     saveRequestIdRef.current += 1;
     setIsSaving(true);
 
@@ -269,6 +292,7 @@ export function useSlidesData(): SlidesDataResult {
     isLoading,
     isSaving,
     saveSlides,
+    saveDeckTitle,
     exportPdf,
     exportHtml,
   };

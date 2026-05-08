@@ -252,9 +252,9 @@ Start here before making changes:
    - `src/editor/CONTEXT.md` for editor UI and interactions.
    - `src/runtime/CONTEXT.md` for local deck loading, save/reset behavior, and
      CLI runtime integration.
-3. Read `docs/adr/README.md` and relevant ADRs before changing architecture,
-   persistence, collaboration, package boundaries, history, or editor pipeline
-   semantics.
+3. Read `CONTEXT.md` for shared architectural decision pointers before changing
+   architecture, persistence, collaboration, package boundaries, history, or
+   editor pipeline semantics.
 4. For deck generation work, use `skills/starry-slides-skill/SKILL.md` and its
    bundled scripts.
 5. Before closing implementation work, run `pnpm verify` unless the change is
@@ -268,18 +268,6 @@ Agent rules that matter in this repo:
 - do not add extra persistent deck copies beyond `sample-slides/` and the
   ignored e2e working deck
 - keep generated slides Contract-compatible and validate them with `starry-slides`
-
-## Architecture Decisions
-
-Important current decisions:
-
-- ADR-0001: editing pipeline and versioning strategy
-- ADR-0003: Tailwind and shadcn/ui for editor UI
-- ADR-0006: shared toolbar model for element tooling
-- ADR-0007: generated deck copy policy
-- ADR-0008: `@starrykit/slides` single-package architecture
-
-The ADR index is `docs/adr/README.md`.
 
 ## Roadmap
 

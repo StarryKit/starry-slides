@@ -1,4 +1,4 @@
-# ADR-0018: Adopt a progressive PDF export dialog in the editor
+# ADR-0019: Adopt a progressive PDF export dialog in the editor
 
 - Status: accepted
 - Date: 2026-05-07

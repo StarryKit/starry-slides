@@ -39,6 +39,7 @@ function App() {
     isLoading,
     isSaving,
     saveSlides,
+    saveDeckTitle,
     exportPdf,
     exportHtml,
   } = useSlidesData();
@@ -64,6 +65,7 @@ function App() {
         deckTitle={deckTitle}
         isSaving={isSaving}
         onSlidesChange={saveSlides}
+        onDeckTitleChange={saveDeckTitle}
         onExportPdf={(request) => {
           const toastId = toast.loading("Exporting PDF...");
           void exportPdf(request)

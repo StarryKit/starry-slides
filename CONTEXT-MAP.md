@@ -76,7 +76,7 @@ Use these repo terms consistently:
 
 ## Shared Planning
 
-- [ROADMAP.md](/Users/haichao/code/html-slides-editor/ROADMAP.md) is the single
+- [ROADMAP.md](/Users/haichao/code/starry-slides/ROADMAP.md) is the single
   shared roadmap for the whole repo
 - context `CONTEXT.md` files should reference the roadmap when needed, but
   should only define module boundaries, module-specific constraints, and local
@@ -86,23 +86,23 @@ Use these repo terms consistently:
 
 ## Contexts
 
-- [src/core/CONTEXT.md](/Users/haichao/code/html-slides-editor/src/core/CONTEXT.md)
+- [src/core/CONTEXT.md](/Users/haichao/code/starry-slides/src/core/CONTEXT.md)
   — slide contract, parsing, normalization, HTML mutation, operations, shared
   history, geometry, import helpers, and deck verification
-- [src/editor/CONTEXT.md](/Users/haichao/code/html-slides-editor/src/editor/CONTEXT.md)
+- [src/editor/CONTEXT.md](/Users/haichao/code/starry-slides/src/editor/CONTEXT.md)
   — editor UI, overlays, selection, inspector, text editing, CSS/layout editing
   interactions, and browser app composition
-- [src/runtime/CONTEXT.md](/Users/haichao/code/html-slides-editor/src/runtime/CONTEXT.md)
+- [src/runtime/CONTEXT.md](/Users/haichao/code/starry-slides/src/runtime/CONTEXT.md)
   — local deck path resolution, CLI runtime behavior, Vite deck mounting,
   save/reset routes, and browser opening
 
 ## Shared Decisions
 
-- [docs/adr/README.md](/Users/haichao/code/html-slides-editor/docs/adr/README.md)
+- [docs/adr/README.md](/Users/haichao/code/starry-slides/docs/adr/README.md)
   indexes cross-context ADRs
-- [docs/adr/0001-editing-pipeline-and-versioning.md](/Users/haichao/code/html-slides-editor/docs/adr/0001-editing-pipeline-and-versioning.md)
+- [docs/adr/0001-editing-pipeline-and-versioning.md](/Users/haichao/code/starry-slides/docs/adr/0001-editing-pipeline-and-versioning.md)
   defines the editing pipeline
-- [docs/adr/0008-adopt-starrykit-slides-single-package.md](/Users/haichao/code/html-slides-editor/docs/adr/0008-adopt-starrykit-slides-single-package.md)
+- [docs/adr/0008-adopt-starrykit-slides-single-package.md](/Users/haichao/code/starry-slides/docs/adr/0008-adopt-starrykit-slides-single-package.md)
   defines the current single-package boundary
 
 ## Reading Guide
