@@ -1,4 +1,5 @@
 import {
+  type ChangeEvent,
   type PointerEvent as ReactPointerEvent,
   useEffect,
   useMemo,
@@ -6,6 +7,7 @@ import {
   useState,
 } from "react";
 import { cn } from "../lib/utils";
+import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 
 const SWATCHES = [
@@ -33,22 +35,45 @@ const GRADIENTS = [
 ];
 
 interface ColorPickerProps {
+  ariaLabelPrefix?: string;
   value: string;
   includeGradients?: boolean;
+  includeOpacity?: boolean;
   onChange: (value: string) => void;
+  onCommit?: () => void;
 }
 
-function ColorPicker({ value, includeGradients = true, onChange }: ColorPickerProps) {
+function ColorPicker({
+  ariaLabelPrefix,
+  value,
+  includeGradients = true,
+  includeOpacity = true,
+  onChange,
+  onCommit,
+}: ColorPickerProps) {
   const spectrumRef = useRef<HTMLDivElement>(null);
   const hueRef = useRef<HTMLDivElement>(null);
-  const hsv = useMemo(() => hexToHsv(value), [value]);
+  const parsedColor = useMemo(() => parseColorValue(value), [value]);
+  const hsv = useMemo(() => hexToHsv(parsedColor.hex), [parsedColor.hex]);
   const normalizedHex = hsvToHex(hsv);
   const [hexInput, setHexInput] = useState(normalizedHex.replace("#", ""));
+  const [gradientStart, setGradientStart] = useState("#06B6D4");
+  const [gradientEnd, setGradientEnd] = useState("#8B5CF6");
+  const [gradientAngle, setGradientAngle] = useState(135);
   const hueColor = `hsl(${hsv.h}, 100%, 50%)`;
 
   useEffect(() => {
     setHexInput(normalizedHex.replace("#", ""));
   }, [normalizedHex]);
+
+  function commitColor(nextHex: string, nextAlpha = parsedColor.alpha) {
+    onChange(formatColorValue(nextHex, nextAlpha));
+  }
+
+  function updateOpacity(event: ChangeEvent<HTMLInputElement>) {
+    const alpha = Number.parseInt(event.target.value, 10) / 100;
+    commitColor(normalizedHex, alpha);
+  }
 
   function updateFromSpectrum(event: ReactPointerEvent<HTMLDivElement>) {
     const rect = spectrumRef.current?.getBoundingClientRect();
@@ -61,7 +86,7 @@ function ColorPicker({ value, includeGradients = true, onChange }: ColorPickerPr
 
     const saturation = clamp((event.clientX - rect.left) / rect.width, 0, 1);
     const brightness = clamp(1 - (event.clientY - rect.top) / rect.height, 0, 1);
-    onChange(hsvToHex({ ...hsv, s: saturation, v: brightness }));
+    commitColor(hsvToHex({ ...hsv, s: saturation, v: brightness }));
   }
 
   function updateFromHue(event: ReactPointerEvent<HTMLDivElement>) {
@@ -74,7 +99,7 @@ function ColorPicker({ value, includeGradients = true, onChange }: ColorPickerPr
     event.currentTarget.setPointerCapture(event.pointerId);
 
     const hue = Math.round(clamp((event.clientX - rect.left) / rect.width, 0, 1) * 360);
-    onChange(hsvToHex({ ...hsv, h: hue === 360 ? 0 : hue }));
+    commitColor(hsvToHex({ ...hsv, h: hue === 360 ? 0 : hue }));
   }
 
   return (
@@ -87,7 +112,7 @@ function ColorPicker({ value, includeGradients = true, onChange }: ColorPickerPr
         aria-valuemin={0}
         aria-valuemax={100}
         aria-valuenow={Math.round(hsv.v * 100)}
-        aria-valuetext={normalizedHex}
+        aria-valuetext={formatColorValue(normalizedHex, parsedColor.alpha)}
         tabIndex={0}
         style={{ backgroundColor: hueColor }}
         onPointerDown={updateFromSpectrum}
@@ -134,7 +159,7 @@ function ColorPicker({ value, includeGradients = true, onChange }: ColorPickerPr
       <div className="grid grid-cols-[40px_auto_minmax(0,1fr)] items-center gap-2">
         <span
           className="size-10 rounded-md border border-foreground/10 shadow-[0_1px_4px_rgba(0,0,0,0.08)]"
-          style={{ background: normalizedHex }}
+          style={{ background: formatColorValue(normalizedHex, parsedColor.alpha) }}
           aria-hidden="true"
         />
         <span className="font-mono text-sm font-medium leading-none text-foreground/45">#</span>
@@ -148,7 +173,7 @@ function ColorPicker({ value, includeGradients = true, onChange }: ColorPickerPr
             setHexInput(nextValue);
 
             if (nextValue.length === 6) {
-              onChange(`#${nextValue}`);
+              commitColor(`#${nextValue}`);
             }
           }}
           onBlur={() => {
@@ -156,6 +181,24 @@ function ColorPicker({ value, includeGradients = true, onChange }: ColorPickerPr
           }}
         />
       </div>
+
+      {includeOpacity ? (
+        <section className="grid gap-1.5" aria-label="Opacity">
+          <div className="flex items-center justify-between text-[10px] font-medium uppercase leading-tight tracking-wider text-foreground/40">
+            <span>Opacity</span>
+            <span>{Math.round(parsedColor.alpha * 100)}%</span>
+          </div>
+          <input
+            type="range"
+            min={0}
+            max={100}
+            value={Math.round(parsedColor.alpha * 100)}
+            aria-label="Opacity"
+            onChange={updateOpacity}
+            className="h-2 w-full cursor-pointer appearance-none rounded-full bg-foreground/10 accent-foreground"
+          />
+        </section>
+      ) : null}
 
       <section className="grid gap-1.5" aria-label="Preset colors">
         <div className="text-[10px] font-medium uppercase leading-tight tracking-wider text-foreground/40">
@@ -172,9 +215,10 @@ function ColorPicker({ value, includeGradients = true, onChange }: ColorPickerPr
               )}
               type="button"
               style={{ background: color }}
-              aria-label={`Use ${color}`}
+              aria-label={ariaLabelPrefix ? `Use ${ariaLabelPrefix} ${color}` : `Use ${color}`}
               onClick={() => {
-                onChange(color);
+                commitColor(color);
+                onCommit?.();
               }}
             />
           ))}
@@ -182,12 +226,12 @@ function ColorPicker({ value, includeGradients = true, onChange }: ColorPickerPr
       </section>
 
       {includeGradients ? (
-        <section className="grid gap-1.5" aria-label="Preset gradients">
+        <section className="grid gap-2" aria-label="Preset gradients">
           <div className="text-[10px] font-medium uppercase leading-tight tracking-wider text-foreground/40">
             Gradients
           </div>
           <div className="grid grid-cols-6 gap-1.5">
-            {GRADIENTS.map((gradient) => (
+            {GRADIENTS.map((gradient, index) => (
               <button
                 key={gradient}
                 className={cn(
@@ -196,12 +240,70 @@ function ColorPicker({ value, includeGradients = true, onChange }: ColorPickerPr
                 )}
                 type="button"
                 style={{ background: gradient }}
-                aria-label="Use gradient"
+                aria-label={
+                  ariaLabelPrefix
+                    ? `Use ${ariaLabelPrefix} gradient ${index + 1}`
+                    : `Use gradient ${index + 1}`
+                }
                 onClick={() => {
                   onChange(gradient);
+                  onCommit?.();
                 }}
               />
             ))}
+          </div>
+          <div className="grid gap-2 rounded-md bg-foreground/[0.03] p-2">
+            <div
+              className="h-8 rounded-md border border-foreground/10"
+              style={{ background: createGradientValue(gradientAngle, gradientStart, gradientEnd) }}
+              aria-hidden="true"
+            />
+            <div className="grid grid-cols-2 gap-2">
+              <Input
+                className="h-8 rounded-md bg-white px-2 font-mono text-xs uppercase"
+                aria-label="Gradient start"
+                value={gradientStart.replace("#", "")}
+                onChange={(event) =>
+                  setGradientStart(`#${event.target.value.replace(/[^0-9a-f]/gi, "").slice(0, 6)}`)
+                }
+                onBlur={() => setGradientStart(expandHex(gradientStart))}
+              />
+              <Input
+                className="h-8 rounded-md bg-white px-2 font-mono text-xs uppercase"
+                aria-label="Gradient end"
+                value={gradientEnd.replace("#", "")}
+                onChange={(event) =>
+                  setGradientEnd(`#${event.target.value.replace(/[^0-9a-f]/gi, "").slice(0, 6)}`)
+                }
+                onBlur={() => setGradientEnd(expandHex(gradientEnd))}
+              />
+            </div>
+            <div className="grid gap-1">
+              <div className="flex items-center justify-between text-[10px] font-medium uppercase tracking-wider text-foreground/40">
+                <span>Angle</span>
+                <span>{gradientAngle}deg</span>
+              </div>
+              <input
+                type="range"
+                min={0}
+                max={360}
+                value={gradientAngle}
+                aria-label="Gradient angle"
+                onChange={(event) => setGradientAngle(Number.parseInt(event.target.value, 10))}
+                className="h-2 w-full cursor-pointer appearance-none rounded-full bg-foreground/10 accent-foreground"
+              />
+            </div>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                onChange(createGradientValue(gradientAngle, gradientStart, gradientEnd));
+                onCommit?.();
+              }}
+            >
+              Apply gradient
+            </Button>
           </div>
         </section>
       ) : null}
@@ -213,9 +315,62 @@ function clamp(value: number, min: number, max: number) {
   return Math.min(Math.max(value, min), max);
 }
 
+function parseColorValue(value: string) {
+  const rgbaMatch = value
+    .trim()
+    .match(/^rgba?\(\s*(\d{1,3})[\s,]+(\d{1,3})[\s,]+(\d{1,3})(?:[\s,/]+([\d.]+))?\s*\)$/i);
+  if (rgbaMatch) {
+    return {
+      alpha: clamp(Number.parseFloat(rgbaMatch[4] ?? "1"), 0, 1),
+      hex: `#${toHexChannel(rgbaMatch[1] || "0")}${toHexChannel(
+        rgbaMatch[2] || "0"
+      )}${toHexChannel(rgbaMatch[3] || "0")}`,
+    };
+  }
+
+  return {
+    alpha: 1,
+    hex: isHexColor(value) ? value.trim() : "#0F172A",
+  };
+}
+
+function formatColorValue(hex: string, alpha: number) {
+  if (alpha >= 0.995) {
+    return hex.toUpperCase();
+  }
+
+  const normalizedHex = expandHex(hex).replace("#", "");
+  const red = Number.parseInt(normalizedHex.slice(0, 2), 16);
+  const green = Number.parseInt(normalizedHex.slice(2, 4), 16);
+  const blue = Number.parseInt(normalizedHex.slice(4, 6), 16);
+  return `rgba(${red}, ${green}, ${blue}, ${Math.round(alpha * 100) / 100})`;
+}
+
+function createGradientValue(angle: number, start: string, end: string) {
+  return `linear-gradient(${angle}deg, ${expandHex(start)}, ${expandHex(end)})`;
+}
+
+function isHexColor(value: string): boolean {
+  return /^#?(?:[0-9a-f]{3}|[0-9a-f]{6})$/i.test(value.trim());
+}
+
+function expandHex(value: string): string {
+  const normalized = value.trim().replace("#", "");
+  if (normalized.length === 3) {
+    return `#${normalized
+      .split("")
+      .map((character) => character + character)
+      .join("")}`.toUpperCase();
+  }
+  if (normalized.length === 6) {
+    return `#${normalized}`.toUpperCase();
+  }
+  return "#0F172A";
+}
+
 function hexToHsv(value: string) {
   const fallback = { h: 220, s: 0.54, v: 0.5 };
-  const match = /^#?([0-9a-f]{6})$/i.exec(value.trim());
+  const match = /^#?([0-9a-f]{6})$/i.exec(expandHex(value));
 
   if (!match) {
     return fallback;
@@ -284,6 +439,11 @@ function toHex(value: number) {
   return Math.round(clamp(value, 0, 1) * 255)
     .toString(16)
     .padStart(2, "0");
+}
+
+function toHexChannel(value: string): string {
+  const numericValue = Math.max(0, Math.min(255, Number.parseInt(value, 10) || 0));
+  return numericValue.toString(16).padStart(2, "0");
 }
 
 export { ColorPicker };

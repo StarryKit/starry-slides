@@ -2,8 +2,8 @@ import { type FrameLocator, type Locator, type Page, expect, test } from "@playw
 import {
   REGRESSION_DECK_AGENDA_PARAGRAPH,
   REGRESSION_DECK_HERO_KICKER,
-  REGRESSION_DECK_SOURCE_LABEL,
   REGRESSION_DECK_SLIDE_COUNT,
+  REGRESSION_DECK_SOURCE_LABEL,
   REGRESSION_DECK_SUMMARY,
   REGRESSION_DECK_TOPIC,
 } from "./regression-deck";
@@ -265,11 +265,6 @@ export async function createGroupFromSnapCards(
   }
 
   await clickFloatingToolbarButton(page, "Group");
-  await page
-    .getByTestId("floating-toolbar-anchor")
-    .getByRole("menu")
-    .getByRole("button", { name: "Group", exact: true })
-    .click();
 
   const group = frame.locator('[data-editor-id="group-1"]');
   await expect(group).toBeVisible();
@@ -293,11 +288,6 @@ export async function createGroupFromGeometryCards(
   }
 
   await clickFloatingToolbarButton(page, "Group");
-  await page
-    .getByTestId("floating-toolbar-anchor")
-    .getByRole("menu")
-    .getByRole("button", { name: "Group", exact: true })
-    .click();
 
   const group = frame.locator('[data-editor-id="group-1"]');
   await expect(group).toBeVisible();

@@ -28,7 +28,11 @@ export type ElementToolFeatureId =
   | "link-url"
   | "alt-text"
   | "aria-label"
-  | "custom-css";
+  | "custom-css"
+  | "other-tools"
+  | "other-link"
+  | "other-alt-text"
+  | "other-aria-label";
 
 export type ElementToolControlType =
   | "select"
@@ -44,6 +48,7 @@ export interface ElementToolOption {
   label: string;
   value: string;
   icon?: LucideIcon;
+  description?: string;
 }
 
 export interface ElementToolFeature {

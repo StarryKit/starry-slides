@@ -1,6 +1,11 @@
-import { useId, useState } from "react";
-import type { ElementToolFeature } from "../lib/element-tool-model";
-import { getFeatureOptions, isFeatureActive } from "../lib/element-tool-values";
+import { RotateCcw } from "lucide-react";
+import type { ElementToolFeature, ElementToolOption } from "../lib/element-tool-model";
+import {
+  getFeatureOptions,
+  getSteppedFeatureValue,
+  isFeatureActive,
+} from "../lib/element-tool-values";
+import { cn } from "../lib/utils";
 import { ColorPicker } from "./color-picker";
 import { FieldLabel, ToolbarIcon, ToolbarOption } from "./floating-toolbar-parts";
 import { Button } from "./ui/button";
@@ -22,14 +27,12 @@ export function renderFloatingToolbarFeature({
   onClosePanel,
   onCommitFeature,
   operationAvailability,
-  onStyleChange,
 }: {
   currentValue: string;
   feature: ElementToolFeature;
   onClosePanel: () => void;
   onCommitFeature: (feature: ElementToolFeature, nextValue: string) => void;
   operationAvailability?: Partial<Record<ElementToolFeature["id"], boolean>>;
-  onStyleChange: (propertyName: string, nextValue: string) => void;
 }) {
   const fieldId = `floating-${feature.id}`;
 
@@ -47,7 +50,7 @@ export function renderFloatingToolbarFeature({
             id={fieldId}
             aria-label={feature.label}
             size="sm"
-            className="h-8 rounded-md border-transparent bg-foreground/[0.03] px-2 text-xs shadow-none hover:bg-foreground/[0.06]"
+            className="h-8 max-w-full rounded-md border-transparent bg-foreground/[0.03] px-2 text-xs shadow-none hover:bg-foreground/[0.06]"
             data-value={currentValue}
           >
             <SelectValue />
@@ -103,60 +106,39 @@ export function renderFloatingToolbarFeature({
     );
   }
 
-  if (feature.controlType === "slider" || feature.controlType === "number") {
+  if (feature.controlType === "number" || feature.controlType === "slider") {
     return (
-      <div key={feature.id} className="grid gap-1">
-        <FieldLabel htmlFor={fieldId}>{feature.label}</FieldLabel>
-        <Input
-          id={fieldId}
-          type="number"
-          min={feature.min}
-          max={feature.max}
-          step={feature.step}
-          value={currentValue}
-          onChange={(event) => onCommitFeature(feature, event.target.value)}
-          className="h-8 rounded-md bg-foreground/[0.03] px-2 text-[13px] tabular-nums"
-        />
-      </div>
+      <StepControl
+        key={feature.id}
+        currentValue={currentValue}
+        feature={feature}
+        onCommitFeature={onCommitFeature}
+      />
     );
   }
 
   if (feature.controlType === "action-group") {
-    return (
-      <div key={feature.id} className="grid gap-1">
-        <FieldLabel>{feature.label}</FieldLabel>
-        <div className="grid gap-1">
-          {(feature.options ?? []).map((option) => {
-            const Icon = option.icon;
-            const disabled =
-              feature.target === "operation" && operationAvailability
-                ? operationAvailability[feature.id] === false
-                : false;
-            return (
-              <ToolbarOption
-                key={option.value}
-                disabled={disabled}
-                title={option.label}
-                onClick={() => {
-                  if (disabled) {
-                    return;
-                  }
-                  onCommitFeature(feature, option.value);
-                  onClosePanel();
-                }}
-              >
-                {Icon ? <ToolbarIcon icon={Icon} /> : null}
-                <span>{option.label}</span>
-              </ToolbarOption>
-            );
-          })}
-        </div>
-      </div>
-    );
-  }
+    if (feature.id === "font-size" || feature.id === "rotation") {
+      return (
+        <StepControl
+          key={feature.id}
+          currentValue={currentValue}
+          feature={feature}
+          onCommitFeature={onCommitFeature}
+        />
+      );
+    }
 
-  if (feature.controlType === "custom-css") {
-    return <CustomCssControl key={feature.id} onCommit={onStyleChange} />;
+    return (
+      <OptionGroup
+        key={feature.id}
+        currentValue={currentValue}
+        feature={feature}
+        onClosePanel={onClosePanel}
+        onCommitFeature={onCommitFeature}
+        operationAvailability={operationAvailability}
+      />
+    );
   }
 
   return (
@@ -174,57 +156,222 @@ export function renderFloatingToolbarFeature({
   );
 }
 
-function CustomCssControl({
-  onCommit,
+function StepControl({
+  currentValue,
+  feature,
+  onCommitFeature,
 }: {
-  onCommit: (propertyName: string, nextValue: string) => void;
+  currentValue: string;
+  feature: ElementToolFeature;
+  onCommitFeature: (feature: ElementToolFeature, nextValue: string) => void;
 }) {
-  const propertyNameId = useId();
-  const propertyValueId = useId();
-  const [propertyName, setPropertyName] = useState("");
-  const [propertyValue, setPropertyValue] = useState("");
-
-  function apply() {
-    const normalizedPropertyName = propertyName.trim();
-    if (!normalizedPropertyName) {
-      return;
-    }
-
-    onCommit(normalizedPropertyName, propertyValue.trim());
-    setPropertyValue("");
-  }
+  const unit = feature.unit ?? "";
+  const displayValue = getStepDisplayValue(feature, currentValue);
+  const stepOptions = getFeatureOptions(feature, currentValue);
+  const quickPicks = feature.id === "rotation" ? stepOptions : [];
 
   return (
     <div className="grid gap-2">
-      <div className="grid gap-1">
-        <FieldLabel htmlFor={propertyNameId}>Property name</FieldLabel>
-        <Input
-          id={propertyNameId}
-          type="text"
-          value={propertyName}
-          placeholder="e.g. justify-content"
-          onChange={(event) => setPropertyName(event.target.value)}
-        />
+      <div className="flex items-center justify-between gap-3">
+        <FieldLabel>{feature.label}</FieldLabel>
+        <span className="min-w-10 text-right text-[12px] font-medium tabular-nums text-foreground/55">
+          {displayValue}
+        </span>
       </div>
-      <div className="grid gap-1">
-        <FieldLabel htmlFor={propertyValueId}>Property value</FieldLabel>
-        <Input
-          id={propertyValueId}
-          type="text"
-          value={propertyValue}
-          placeholder="e.g. space-between"
-          onChange={(event) => setPropertyValue(event.target.value)}
-          onKeyDown={(event) => {
-            if (event.key === "Enter") {
-              event.preventDefault();
-              apply();
-            }
-          }}
-        />
+      <div className="flex items-center gap-1">
+        {stepOptions
+          .filter((option) => option.value === "decrease" || option.value === "increase")
+          .map((option) => {
+            const Icon = option.icon;
+            return (
+              <Button
+                key={option.value}
+                type="button"
+                variant="outline"
+                size="icon-sm"
+                aria-label={option.label}
+                title={option.label}
+                onClick={() => {
+                  onCommitFeature(
+                    feature,
+                    getSteppedFeatureValue({
+                      currentValue,
+                      direction: option.value === "increase" ? "increase" : "decrease",
+                      feature,
+                    })
+                  );
+                }}
+              >
+                {Icon ? <ToolbarIcon icon={Icon} /> : option.label}
+              </Button>
+            );
+          })}
+        {feature.id === "rotation" ? (
+          <Button
+            type="button"
+            variant="outline"
+            size="icon-sm"
+            aria-label="Reset rotation"
+            title="Reset rotation"
+            onClick={() => onCommitFeature(feature, "0")}
+          >
+            <RotateCcw className="size-3.5" />
+          </Button>
+        ) : null}
+        <div className="ml-auto rounded-md bg-foreground/[0.04] px-2 py-1 text-[12px] font-medium tabular-nums text-foreground/65">
+          {Number.parseFloat(currentValue || "0") || 0}
+          {unit}
+        </div>
       </div>
-      <Button type="button" variant="outline" disabled={!propertyName.trim()} onClick={apply}>
-        Apply property
-      </Button>
+      {quickPicks.length ? (
+        <div className="grid grid-cols-4 gap-1">
+          {quickPicks.map((option) => (
+            <Button
+              key={option.value}
+              type="button"
+              variant={currentValue === option.value ? "secondary" : "ghost"}
+              size="sm"
+              className="h-7 px-2 text-[12px]"
+              aria-label={`${feature.label} ${option.label}`}
+              onClick={() => onCommitFeature(feature, option.value)}
+            >
+              {option.label}
+            </Button>
+          ))}
+        </div>
+      ) : null}
     </div>
   );
+}
+
+function OptionGroup({
+  currentValue,
+  feature,
+  onClosePanel,
+  onCommitFeature,
+  operationAvailability,
+}: {
+  currentValue: string;
+  feature: ElementToolFeature;
+  onClosePanel: () => void;
+  onCommitFeature: (feature: ElementToolFeature, nextValue: string) => void;
+  operationAvailability?: Partial<Record<ElementToolFeature["id"], boolean>>;
+}) {
+  const options = getFeatureOptions(feature, currentValue);
+  const isGrid =
+    feature.target === "style" &&
+    [
+      "line-height",
+      "text-align",
+      "width",
+      "height",
+      "opacity",
+      "border",
+      "border-radius",
+      "box-shadow",
+    ].includes(feature.id);
+
+  return (
+    <div className="grid gap-1">
+      <FieldLabel>{feature.label}</FieldLabel>
+      <div className={cn(isGrid ? "grid grid-cols-2 gap-1" : "grid gap-1")}>
+        {options.map((option) => {
+          const Icon = option.icon;
+          const disabled =
+            feature.target === "operation" && operationAvailability
+              ? operationAvailability[feature.id] === false
+              : false;
+          const active = isStyleOptionActive(feature, currentValue, option);
+          const shouldClose = feature.target === "operation";
+
+          return (
+            <ToolbarOption
+              key={option.value}
+              disabled={disabled}
+              title={option.description ?? option.label}
+              onClick={() => {
+                if (disabled) {
+                  return;
+                }
+                onCommitFeature(feature, option.value);
+                if (shouldClose) {
+                  onClosePanel();
+                }
+              }}
+            >
+              {Icon ? (
+                <ToolbarIcon icon={Icon} />
+              ) : (
+                <OptionPreview feature={feature} option={option} />
+              )}
+              <span className="truncate">{option.label}</span>
+              {active ? <span className="ml-auto size-1.5 rounded-full bg-foreground/70" /> : null}
+            </ToolbarOption>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+function OptionPreview({
+  feature,
+  option,
+}: {
+  feature: ElementToolFeature;
+  option: ElementToolOption;
+}) {
+  if (feature.id === "box-shadow") {
+    return (
+      <span
+        className="size-4 rounded border border-foreground/10 bg-white"
+        style={{ boxShadow: option.value === "none" ? undefined : option.value }}
+        aria-hidden="true"
+      />
+    );
+  }
+
+  if (feature.id === "border") {
+    return (
+      <span
+        className="size-4 rounded bg-white"
+        style={{ border: option.value === "none" ? "1px solid rgba(15,23,42,.12)" : option.value }}
+        aria-hidden="true"
+      />
+    );
+  }
+
+  if (feature.id === "border-radius") {
+    return (
+      <span
+        className="size-4 border border-foreground/15 bg-foreground/[0.04]"
+        style={{ borderRadius: option.value }}
+        aria-hidden="true"
+      />
+    );
+  }
+
+  return <span className="size-1.5 rounded-full bg-foreground/30" aria-hidden="true" />;
+}
+
+function isStyleOptionActive(
+  feature: ElementToolFeature,
+  currentValue: string,
+  option: ElementToolOption
+): boolean {
+  if (feature.target !== "style") {
+    return false;
+  }
+
+  if (feature.id === "border" || feature.id === "box-shadow") {
+    return currentValue === option.value || (!currentValue && option.value === "none");
+  }
+
+  return currentValue === option.value;
+}
+
+function getStepDisplayValue(feature: ElementToolFeature, currentValue: string): string {
+  const numericValue = Number.parseFloat(currentValue);
+  const fallback = feature.id === "font-size" ? 32 : 0;
+  return `${Number.isFinite(numericValue) ? numericValue : fallback}${feature.unit ?? ""}`;
 }

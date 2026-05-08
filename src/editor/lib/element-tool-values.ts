@@ -1,11 +1,13 @@
-import { parseTransformParts } from "../../core";
+import { DEFAULT_SLIDE_HEIGHT, DEFAULT_SLIDE_WIDTH, parseTransformParts } from "../../core";
 import type { CssPropertyRow } from "./collect-css-properties";
 import type { ElementToolFeature, ElementToolOption } from "./element-tool-model";
 import {
   getColorInputValue,
   isBoldFontWeight,
   isFontFamilySelected,
+  parsePixelValue,
   parseTextDecorationLines,
+  roundCssPixel,
 } from "./style-controls";
 
 interface ElementToolValueOptions {
@@ -25,6 +27,15 @@ export function getElementToolValue({
   attributeValues,
 }: ElementToolValueOptions): string {
   if (feature.target === "attribute") {
+    if (feature.id === "other-link") {
+      return attributeValues.linkUrl;
+    }
+    if (feature.id === "other-alt-text") {
+      return attributeValues.altText;
+    }
+    if (feature.id === "other-aria-label") {
+      return attributeValues.ariaLabel;
+    }
     if (feature.attributeName === "data-editor-locked") {
       return attributeValues.locked;
     }
@@ -75,7 +86,16 @@ export function normalizeFeatureCommitValue(
   nextValue: string
 ): string {
   if (feature.id === "font-size" && nextValue.trim()) {
-    return `${Math.min(200, Math.max(8, Number.parseFloat(nextValue) || 8))}px`;
+    const currentValue = Number.parseFloat(nextValue);
+    const clampedValue = Math.min(
+      200,
+      Math.max(8, Number.isFinite(currentValue) ? currentValue : 8)
+    );
+    return `${clampedValue}px`;
+  }
+
+  if ((feature.id === "width" || feature.id === "height") && nextValue) {
+    return normalizeSizePreset(feature.id, nextValue);
   }
 
   if (feature.id === "font-bold") {
@@ -99,6 +119,31 @@ export function normalizeFeatureCommitValue(
   }
 
   return nextValue.trim();
+}
+
+export function getSteppedFeatureValue({
+  currentValue,
+  feature,
+  direction,
+}: {
+  currentValue: string;
+  feature: ElementToolFeature;
+  direction: "decrease" | "increase";
+}): string {
+  const sign = direction === "increase" ? 1 : -1;
+  const step = feature.step ?? 1;
+
+  if (feature.id === "font-size") {
+    const currentSize = parsePixelValue(currentValue, 32);
+    return String(clamp(currentSize + sign * step, feature.min ?? 8, feature.max ?? 200));
+  }
+
+  if (feature.id === "rotation") {
+    const currentRotation = Number.parseFloat(currentValue) || 0;
+    return String(clamp(currentRotation + sign * step, feature.min ?? -360, feature.max ?? 360));
+  }
+
+  return currentValue;
 }
 
 export function getTextDecorationCommitValue(
@@ -140,6 +185,10 @@ export function getFeatureOptions(
   feature: ElementToolFeature,
   currentValue: string
 ): ElementToolOption[] {
+  if (feature.id === "font-size") {
+    return feature.options ?? [];
+  }
+
   const options = feature.options ?? [{ label: "unset", value: "" }];
   if (!currentValue || options.some((option) => option.value === currentValue)) {
     return options;
@@ -150,4 +199,31 @@ export function getFeatureOptions(
 
 function getStyleValue(styles: CssPropertyRow[], propertyName: string): string {
   return styles.find((property) => property.name === propertyName)?.value ?? "";
+}
+
+function normalizeSizePreset(featureId: ElementToolFeature["id"], nextValue: string): string {
+  if (nextValue === "auto") {
+    return "";
+  }
+
+  const base = featureId === "width" ? DEFAULT_SLIDE_WIDTH : DEFAULT_SLIDE_HEIGHT;
+  const ratio = getSizePresetRatio(nextValue);
+  return roundCssPixel(base * ratio);
+}
+
+function getSizePresetRatio(value: string): number {
+  if (value === "compact") {
+    return 0.18;
+  }
+  if (value === "wide") {
+    return 0.42;
+  }
+  if (value === "full") {
+    return 0.82;
+  }
+  return 0.42;
+}
+
+function clamp(value: number, min: number, max: number): number {
+  return Math.min(max, Math.max(min, value));
 }
