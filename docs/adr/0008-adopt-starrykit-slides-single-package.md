@@ -94,15 +94,15 @@ Use these internal module boundaries:
 ```text
 src/
   cli/       command parsing and process exit behavior
-  runtime/   local HTTP server, deck mounting, ports, browser opening, save/reset
+  node/   local HTTP server, deck mounting, ports, browser opening, save/reset
   editor/    browser React editor UI
   core/      deck contract, import, HTML parsing, history, operations
 ```
 
-`src/runtime` may depend on `src/core`. `src/editor` may depend on `src/core`.
-`src/core` must not depend on `src/runtime` or `src/editor`.
+`src/node` may depend on `src/core`. `src/editor` may depend on `src/core`.
+`src/core` must not depend on `src/node` or `src/editor`.
 
-The current `apps/web` runtime becomes `src/editor/app` and `src/runtime`
+The current `apps/web` runtime becomes `src/editor/app` and `src/node`
 implementation. The current `packages/editor` implementation becomes
 `src/editor` and `src/core` implementation.
 
@@ -175,7 +175,7 @@ This decision does not:
   except `packages/editor/src/lib/core/*`, which moves into `src/core/*`.
 - **App migration**: move `apps/web/src/*` into `src/editor/app/*`, move
   `apps/web/index.html` to the root app entry, and fold the Vite save/reset deck
-  plugin into `src/runtime`.
+  plugin into `src/node`.
 - **Sample deck**: move `apps/web/public/sample-slides/` to `sample-slides/`.
 - **Tests and tools**: move editor unit tests and Playwright tests under the
   root package, update test globs and generated regression deck paths, and keep

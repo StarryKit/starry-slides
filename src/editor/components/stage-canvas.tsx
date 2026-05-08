@@ -54,6 +54,7 @@ interface StageCanvasProps {
   selectionOverlayRef: RefObject<HTMLDivElement | null>;
   selectionContextMenuTriggerRef: RefObject<HTMLSpanElement | null>;
   isManipulating: boolean;
+  isToolbarSuppressed: boolean;
   onSelectionOverlayMouseDown: (event: ReactMouseEvent<HTMLDivElement>) => void;
   onSelectionOverlayMouseUp: (event: ReactMouseEvent<HTMLDivElement>) => void;
   onSelectionOverlayMouseMove: (event: ReactMouseEvent<HTMLDivElement>) => void;
@@ -98,6 +99,7 @@ function StageCanvas({
   selectionOverlayRef,
   selectionContextMenuTriggerRef,
   isManipulating,
+  isToolbarSuppressed,
   onSelectionOverlayMouseDown,
   onSelectionOverlayMouseUp,
   onSelectionOverlayMouseMove,
@@ -144,7 +146,7 @@ function StageCanvas({
       }}
       onMouseLeave={onStageMouseLeave}
     >
-      {selectionOverlay && !isManipulating && !isEditingText ? (
+      {selectionOverlay && !isManipulating && !isToolbarSuppressed && !isEditingText ? (
         <div
           className="pointer-events-none absolute z-40 w-max max-[1200px]:static max-[1200px]:mb-4 max-[1200px]:pointer-events-auto"
           style={toolbarStyle}

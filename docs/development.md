@@ -40,7 +40,7 @@ The browser regression suite uses a temporary ignored deck in
 ```text
 src/
   cli/                         starry-slides command parsing and process behavior
-  runtime/                     local deck path resolution, ports, browser opening
+  node/                     local deck path resolution, ports, browser opening
   editor/
     app/                       root Vite browser app integration
     components/                editor shell, floating toolbar, canvas, UI
@@ -65,7 +65,7 @@ Start here before making changes:
    - `src/core/CONTEXT.md` for slide parsing, operations, history, and
      validation.
    - `src/editor/CONTEXT.md` for editor UI and interactions.
-   - `src/runtime/CONTEXT.md` for local deck loading, save/reset behavior, and
+   - `src/node/CONTEXT.md` for local deck loading, save/reset behavior, and
      CLI runtime integration.
 3. Read `CONTEXT.md` before changing architecture, persistence, collaboration,
    package boundaries, history, or editor pipeline semantics.

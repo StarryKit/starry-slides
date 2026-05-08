@@ -2,6 +2,11 @@ import type { SetStateAction } from "react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { SELECTOR_ATTR, getSlideElementSelector, querySlideElement } from "../../core";
 import {
+  clearSelectionForEscape,
+  ensureSelectionContainsTarget,
+  nextSingleSelection,
+} from "./iframe-editing-session";
+import {
   applyGroupScopeFocus,
   ensureEditingTextStyle,
   getDeepestEditableElementFromPoint,
@@ -38,19 +43,9 @@ function useIframeTextEditing({
     setSelectedElementIds((currentIds) => {
       const nextValue =
         typeof value === "function" ? value(currentIds[currentIds.length - 1] ?? null) : value;
-      return nextValue ? [nextValue] : [];
+      return nextSingleSelection(nextValue);
     });
   }
-
-  const toggleSelectedElementId = useCallback((elementId: string) => {
-    setSelectedElementIds((currentIds) => {
-      if (currentIds.includes(elementId)) {
-        return currentIds.filter((currentId) => currentId !== elementId);
-      }
-
-      return [...currentIds, elementId];
-    });
-  }, []);
 
   const getPointerEditableTargetId = useCallback(
     (clientX: number, clientY: number) => {
@@ -93,14 +88,14 @@ function useIframeTextEditing({
       }
 
       if (additive) {
-        toggleSelectedElementId(targetId);
+        setSelectedElementIds((currentIds) => ensureSelectionContainsTarget(currentIds, targetId));
       } else {
         setSelectedElementIds([targetId]);
       }
 
       return targetId;
     },
-    [getPointerEditableTargetId, toggleSelectedElementId]
+    [getPointerEditableTargetId]
   );
 
   const openPointerSelectionContextMenu = useCallback(
@@ -110,9 +105,7 @@ function useIframeTextEditing({
         return false;
       }
 
-      setSelectedElementIds((currentIds) =>
-        currentIds.includes(targetId) ? currentIds : [targetId]
-      );
+      setSelectedElementIds((currentIds) => ensureSelectionContainsTarget(currentIds, targetId));
       setPreselectedElementId(targetId);
       onOpenSelectionContextMenu?.(clientX, clientY);
       return true;
@@ -163,18 +156,20 @@ function useIframeTextEditing({
       return false;
     }
 
-    if (activeGroupScopeIdRef.current) {
-      exitGroupEditingScope();
-      return true;
+    const result = clearSelectionForEscape({
+      selectedElementIds,
+      activeGroupScopeId: activeGroupScopeIdRef.current,
+    });
+    if (result.handled) {
+      if (result.exitGroupScope) {
+        activeGroupScopeIdRef.current = null;
+        setActiveGroupScopeId(null);
+      }
+      setSelectedElementIds(result.nextSelection);
     }
 
-    if (selectedElementIds.length) {
-      setSelectedElementIds([]);
-      return true;
-    }
-
-    return false;
-  }, [exitGroupEditingScope, selectedElementIds.length]);
+    return result.handled;
+  }, [selectedElementIds]);
 
   function commitTextEdit(elementId: string, nextText: string) {
     const editing = textEditing;
@@ -314,7 +309,7 @@ function useIframeTextEditing({
       const id = editableTarget.getAttribute(SELECTOR_ATTR);
       if (id) {
         if (event.shiftKey || event.metaKey || event.ctrlKey) {
-          toggleSelectedElementId(id);
+          setSelectedElementIds((currentIds) => ensureSelectionContainsTarget(currentIds, id));
         } else {
           setSelectedElementIds([id]);
         }
@@ -386,7 +381,9 @@ function useIframeTextEditing({
 
         if (targetId) {
           if (event.shiftKey || event.metaKey || event.ctrlKey) {
-            toggleSelectedElementId(targetId);
+            setSelectedElementIds((currentIds) =>
+              ensureSelectionContainsTarget(currentIds, targetId)
+            );
           } else {
             setSelectedElementIds([targetId]);
           }
@@ -432,7 +429,6 @@ function useIframeTextEditing({
     clearPreselection,
     iframeRef,
     openPointerSelectionContextMenu,
-    toggleSelectedElementId,
   ]);
 
   useEffect(() => {

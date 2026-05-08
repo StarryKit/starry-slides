@@ -93,6 +93,7 @@ function SlidesEditor({
     targetElementId: string | null;
   } | null>(null);
   const [isPresenting, setIsPresenting] = useState(false);
+  const [isToolbarSuppressed, setIsToolbarSuppressed] = useState(false);
   const thumbnails = useSlideThumbnails(slides);
   const openSelectionContextMenu = useCallback((clientX: number, clientY: number) => {
     const trigger = selectionContextMenuTriggerRef.current;
@@ -916,6 +917,7 @@ function SlidesEditor({
                 selectionOverlayRef={selectionOverlayRef}
                 selectionContextMenuTriggerRef={selectionContextMenuTriggerRef}
                 isManipulating={isManipulating}
+                isToolbarSuppressed={isToolbarSuppressed}
                 onSelectionOverlayMouseDown={(event) => {
                   if (event.button !== 0) {
                     return;
@@ -924,6 +926,7 @@ function SlidesEditor({
                   if (!selectedElementIds.length) {
                     return;
                   }
+                  setIsToolbarSuppressed(true);
 
                   const additive = event.shiftKey || event.metaKey || event.ctrlKey;
                   const targetElementId = updatePointerPreselection(event.clientX, event.clientY);
@@ -981,6 +984,7 @@ function SlidesEditor({
                 onSelectionOverlayMouseUp={(event) => {
                   const pointerDown = overlayPointerDownRef.current;
                   overlayPointerDownRef.current = null;
+                  setIsToolbarSuppressed(false);
 
                   if (!pointerDown) {
                     return;

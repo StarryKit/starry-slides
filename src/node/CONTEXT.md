@@ -1,9 +1,9 @@
-# Runtime Context
+# Node Context
 
 ## Purpose
 
-`src/runtime` owns local runtime concerns for verifying, previewing, opening,
-and serving deck packages inside `@starrykit/slides`.
+`src/node` owns Node-only concerns for verifying, previewing, exporting,
+opening, and serving deck packages inside `@starrykit/slides`.
 
 Shared roadmap lives in
 [ROADMAP.md](/Users/haichao/code/starry-slides/ROADMAP.md).
@@ -14,9 +14,11 @@ This module is responsible for:
 - choosing local ports for the editor server
 - opening the browser after the editor server starts
 - supporting CLI preview rendering for deck packages
-- supporting local deck mounting in cooperation with the root Vite config
+- supporting PDF and single HTML export from deck packages
+- supporting local deck mounting through the Vite deck runtime middleware
 
-The root `vite.config.ts` owns the dev and preview middleware that serves:
+`src/node/deck-runtime-middleware.ts` owns the dev and preview middleware
+implementation used by the root `vite.config.ts` Adapter. It serves:
 
 - `/deck/*` for the active deck package
 - `/__editor/save-generated-deck` for local write-back
@@ -150,6 +152,6 @@ _Avoid_: ignored overflow, tolerated overflow
 
 ## Boundaries
 
-`src/runtime` may depend on `src/core` when runtime behavior needs validation or
+`src/node` may depend on `src/core` when runtime behavior needs validation or
 contract-aware helpers. It must not own editor interaction semantics or duplicate
 core document operations.

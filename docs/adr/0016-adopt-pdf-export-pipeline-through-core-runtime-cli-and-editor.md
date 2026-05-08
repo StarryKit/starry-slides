@@ -6,7 +6,7 @@
 ## Context
 
 Starry Slides already has a browser-rendered preview pipeline in
-`src/runtime/view-renderer.ts` and an editor header export menu placeholder in
+`src/node/view-renderer.ts` and an editor header export menu placeholder in
 `src/editor/components/editor-header.tsx`. The product now needs a real PDF
 export path that can be triggered from both the CLI and the editor UI.
 
@@ -24,8 +24,8 @@ must be produced by Node runtime code that can launch Chromium and call
 
 Existing architecture constraints:
 
-- `src/core` must stay browser-safe and cannot depend on `src/runtime`
-- `src/runtime` may depend on `src/core` for contract-aware helpers
+- `src/core` must stay browser-safe and cannot depend on `src/node`
+- `src/node` may depend on `src/core` for contract-aware helpers
 - the CLI must remain agent-facing and machine-readable by default
 - the editor header should trigger the same export pipeline, not a separate
   implementation
@@ -37,7 +37,7 @@ Introduce a shared PDF export pipeline with the following structure:
 1. `src/core` owns PDF export planning and slide-selection resolution.
    It exposes a small browser-safe API that resolves which slides belong in a
    PDF export request and validates the selection shape.
-2. `src/runtime` owns the actual PDF generation. It loads slide HTML from a deck
+2. `src/node` owns the actual PDF generation. It loads slide HTML from a deck
    package, renders the selected slides in Chromium, and writes a PDF file or
    returns PDF bytes.
 3. `src/cli` adds `starry-slides export pdf ...` as the agent-facing command
@@ -84,11 +84,11 @@ slide references that do not match exact manifest `file` values.
 - **Affected paths**:
   - `src/core/pdf-export.ts` or equivalent new core module
   - `src/core/index.ts`
-  - `src/runtime/pdf-export.ts` or equivalent new runtime module
-  - `src/runtime/view-renderer.ts` if shared Chromium helpers are reused
+  - `src/node/pdf-export.ts` or equivalent new runtime module
+  - `src/node/view-renderer.ts` if shared Chromium helpers are reused
   - `src/cli/index.ts`
   - `src/cli/index.test.ts`
-  - `src/runtime/view-renderer.test.ts` or a new runtime PDF test file
+  - `src/node/view-renderer.test.ts` or a new runtime PDF test file
   - `src/editor/components/editor-header.tsx`
   - `src/editor/app/use-slides-data.ts`
   - `vite.config.ts`

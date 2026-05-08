@@ -150,7 +150,6 @@ test("keyboard paste keeps repeated copies inside the slide bounds", async ({ pa
   const additionalX = Math.max(0, Math.round(targetRightEdge - movedRect.x));
   await applyCustomCssProperty(page, "transform", `translate(${additionalX}px, 0px)`);
 
-  await editableHeading.click();
   await page.keyboard.press(`${MODIFIER}+C`);
 
   for (const copyId of ["text-1-copy", "text-1-copy-2", "text-1-copy-3", "text-1-copy-4"]) {

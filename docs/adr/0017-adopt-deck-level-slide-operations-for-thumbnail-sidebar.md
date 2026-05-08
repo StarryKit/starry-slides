@@ -113,7 +113,7 @@ while native drag is active.
   - `src/editor/components/slide-sidebar.tsx`
   - `src/editor/app/use-slides-data.ts`
   - `vite.config.ts`
-  - `src/runtime/view-renderer.ts`
+  - `src/node/view-renderer.ts`
   - `src/cli/index.ts`
   - relevant unit and e2e tests under `src/**.test.ts` and `e2e/tests/`
 
@@ -158,7 +158,7 @@ while native drag is active.
     duplicate/delete/hide/show, absence of per-slide action buttons, direct slide
     drag reorder, inactive thumbnail border contrast, active slide fallback after
     delete, scroll-to-active behavior, and manifest persistence after reload
-  - runtime/CLI tests cover presentation/export behavior for hidden slides once
+  - node/CLI tests cover presentation/export behavior for hidden slides once
     those consumers adopt visibility semantics
 
 ## Verification

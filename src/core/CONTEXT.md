@@ -21,7 +21,7 @@ This module is responsible for:
 
 ## Boundaries
 
-`src/core` must not depend on `src/editor` or `src/runtime`.
+`src/core` must not depend on `src/editor` or `src/node`.
 
 Browser-safe core exports live in `src/core/index.ts`. Node-only verifier code
 must stay outside that browser-facing barrel because the editor app imports the

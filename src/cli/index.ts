@@ -2,12 +2,12 @@
 
 import { spawn } from "node:child_process";
 import { type VerifyResult, createVerifyResult, verifyDeck } from "../core/verify-deck";
-import { resolveDeckPath } from "../runtime/deck-source";
-import { exportHtml } from "../runtime/html-export";
-import { openBrowser } from "../runtime/open-browser";
-import { exportPdf } from "../runtime/pdf-export";
-import { findAvailablePort } from "../runtime/ports";
-import { renderPreviewManifest, verifyRenderedOverflow } from "../runtime/view-renderer";
+import { resolveDeckPath } from "../node/deck-source";
+import { exportHtml } from "../node/html-export";
+import { openBrowser } from "../node/open-browser";
+import { exportPdf } from "../node/pdf-export";
+import { findAvailablePort } from "../node/ports";
+import { renderPreviewManifest, verifyRenderedOverflow } from "../node/view-renderer";
 
 type Command = "open" | "verify" | "view" | "export" | "add-skill" | "help";
 type PdfExportMode = "all" | "slide" | "slides";

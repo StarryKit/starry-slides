@@ -18,7 +18,7 @@ browser editor, not CLI command behavior.
 
 The CLI also depends on lower-level core verification behavior in
 `src/core/verify-deck.ts` and runtime rendering behavior in
-`src/runtime/view-renderer.ts`. The test plan must preserve that boundary:
+`src/node/view-renderer.ts`. The test plan must preserve that boundary:
 core tests should prove deck contract and verify result semantics without
 spawning processes, while CLI tests should prove process-level behavior,
 stdout/stderr contracts, exit codes, and filesystem side effects.
@@ -110,7 +110,7 @@ stdout.
 
 #### Runtime rendering tests
 
-Runtime rendering tests belong near `src/runtime/view-renderer.test.ts` if they
+Runtime rendering tests belong near `src/node/view-renderer.test.ts` if they
 need to exercise preview rendering or rendered overflow behavior directly.
 
 They must cover:
@@ -290,7 +290,7 @@ precise failure localization.
 ## Implementation Plan
 
 1. Add core verifier tests in `src/core/verify-deck.test.ts`.
-2. Add runtime rendering tests in `src/runtime/view-renderer.test.ts` if the
+2. Add runtime rendering tests in `src/node/view-renderer.test.ts` if the
    behavior is not already fully covered through CLI command tests.
 3. Keep and expand source CLI tests in `src/cli/index.test.ts` for argument
    parsing, command mode behavior, output JSON, exit codes, and filesystem side

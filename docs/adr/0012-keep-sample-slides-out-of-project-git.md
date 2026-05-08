@@ -93,7 +93,7 @@ Affected paths:
 - `.gitignore`
 - `sample-slides/`
 - `README.md`
-- `src/runtime/CONTEXT.md`
+- `src/node/CONTEXT.md`
 - `docs/adr/0007-limit-generated-deck-copies.md`
 
 Steps:

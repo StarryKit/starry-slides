@@ -10,22 +10,22 @@ import {
   selectAllAndFill,
 } from "./helpers";
 
-test("cursor returns to pointer after leaving text editing mode", async ({ page }) => {
+test("cursor returns to default after leaving text editing mode", async ({ page }) => {
   await gotoEditor(page);
 
   const frame = coverFrame(page);
   const firstText = frame.locator('[data-editor-id="text-1"]');
   const secondText = frame.locator('[data-editor-id="text-2"]');
 
-  await expect(firstText).toHaveCSS("cursor", "pointer");
+  await expect(firstText).toHaveCSS("cursor", "default");
 
   await firstText.dblclick();
   await expect(firstText).toHaveCSS("cursor", "text");
 
   await secondText.click();
 
-  await expect(firstText).toHaveCSS("cursor", "pointer");
-  await expect(secondText).toHaveCSS("cursor", "pointer");
+  await expect(firstText).toHaveCSS("cursor", "default");
+  await expect(secondText).toHaveCSS("cursor", "default");
 });
 
 test("pressing Enter without content changes exits editing without creating undo history", async ({

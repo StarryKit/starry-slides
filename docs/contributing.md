@@ -11,7 +11,7 @@ Read the relevant context:
 - `CONTEXT-MAP.md`
 - `src/core/CONTEXT.md`
 - `src/editor/CONTEXT.md`
-- `src/runtime/CONTEXT.md`
+- `src/node/CONTEXT.md`
 - `CONTEXT.md` for architectural decision pointers
 
 Use ADRs for changes that alter architecture, persistence, collaboration,

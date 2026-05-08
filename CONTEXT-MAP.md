@@ -92,7 +92,7 @@ Use these repo terms consistently:
 - [src/editor/CONTEXT.md](/Users/haichao/code/starry-slides/src/editor/CONTEXT.md)
   — editor UI, overlays, selection, inspector, text editing, CSS/layout editing
   interactions, and browser app composition
-- [src/runtime/CONTEXT.md](/Users/haichao/code/starry-slides/src/runtime/CONTEXT.md)
+- [src/node/CONTEXT.md](/Users/haichao/code/starry-slides/src/node/CONTEXT.md)
   — local deck path resolution, CLI runtime behavior, Vite deck mounting,
   save/reset routes, and browser opening
 
@@ -112,7 +112,7 @@ Use these repo terms consistently:
 - for user interactions and editor behavior, start with
   `src/editor/CONTEXT.md`
 - for CLI opening, application loading, save/reset, and local deck serving,
-  start with `src/runtime/CONTEXT.md`
+  start with `src/node/CONTEXT.md`
 - when a question changes editing architecture, persistence semantics,
   collaboration direction, or package boundaries, read `docs/adr/` first
 - for roadmap or milestone order questions, read `ROADMAP.md`

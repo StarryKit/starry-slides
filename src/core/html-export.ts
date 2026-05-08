@@ -1,3 +1,4 @@
+import { planPresentationSlides } from "./presentation";
 import {
   DEFAULT_SLIDE_HEIGHT,
   DEFAULT_SLIDE_WIDTH,
@@ -25,8 +26,7 @@ export interface HtmlExportDocumentOptions {
 }
 
 export function planHtmlExportSlides(slides: HtmlExportSlide[]): HtmlExportSlide[] {
-  const visibleSlides = slides.filter((slide) => slide.hidden !== true);
-  return visibleSlides.length > 0 ? visibleSlides : [...slides];
+  return planPresentationSlides(slides);
 }
 
 export function resolveHtmlExportSlides(slides: HtmlExportSlide[]): ResolvedHtmlExportSlide[] {

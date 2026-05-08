@@ -47,6 +47,7 @@ function useBlockManipulation({
 }: UseBlockManipulationOptions): UseBlockManipulationResult {
   const { offsetX, offsetY, scale, slideHeight, slideWidth } = stageGeometry;
   const sessionRef = useRef<ManipulationSession | null>(null);
+  const isManipulatingRef = useRef(false);
   const suppressClearTimerRef = useRef<number | null>(null);
   const [isManipulating, setIsManipulating] = useState(false);
   const [suppressBackgroundClear, setSuppressBackgroundClear] = useState(false);
@@ -224,6 +225,7 @@ function useBlockManipulation({
         targetNodes,
         snapTargets,
       };
+      isManipulatingRef.current = true;
       setIsManipulating(true);
       setSnapGuides([]);
       if (iframeElement) {
@@ -338,6 +340,7 @@ function useBlockManipulation({
       const onMouseUp = () => {
         const session = sessionRef.current;
         teardown();
+        isManipulatingRef.current = false;
         setIsManipulating(false);
         suppressBackgroundClearTemporarily();
         sessionRef.current = null;
@@ -407,7 +410,7 @@ function useBlockManipulation({
 
   return {
     manipulationOverlay,
-    isManipulating,
+    isManipulating: isManipulating || isManipulatingRef.current,
     suppressBackgroundClear,
     beginMove: (event) => {
       beginManipulation("move", event);

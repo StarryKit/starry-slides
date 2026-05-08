@@ -95,7 +95,7 @@ Affected paths:
 - `package.json`
 - `.gitignore`
 - `README.md`
-- `src/runtime/CONTEXT.md`
+- `src/node/CONTEXT.md`
 
 Steps:
 

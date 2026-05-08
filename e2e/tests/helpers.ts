@@ -2,8 +2,8 @@ import { type FrameLocator, type Locator, type Page, expect, test } from "@playw
 import {
   REGRESSION_DECK_AGENDA_PARAGRAPH,
   REGRESSION_DECK_HERO_KICKER,
-  REGRESSION_DECK_SOURCE_LABEL,
   REGRESSION_DECK_SLIDE_COUNT,
+  REGRESSION_DECK_SOURCE_LABEL,
   REGRESSION_DECK_SUMMARY,
   REGRESSION_DECK_TOPIC,
 } from "./regression-deck";

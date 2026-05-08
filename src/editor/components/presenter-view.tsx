@@ -1,14 +1,16 @@
 import { Maximize2, Pen, X, Zap } from "lucide-react";
 import type { PointerEvent as ReactPointerEvent, WheelEvent as ReactWheelEvent } from "react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import type { SlideModel } from "../../core";
+import {
+  PRESENTATION_PEN_COLORS,
+  type PresentationTool,
+  clampPresentationIndex,
+  planPresentationSlides,
+} from "../../core";
 import { Button } from "./ui/button";
 
-type PresenterTool = "none" | "laser" | "pen";
-const PEN_COLORS = ["#F59E0B", "#EF4444", "#10B981", "#3B82F6", "#8B5CF6", "#FFFFFF", "#0F172A"];
-
 export interface PresenterViewProps {
-  slides: SlideModel[];
+  slides: { hidden?: boolean; id: string; width: number; height: number; htmlSource: string }[];
   startSlideId?: string;
   onExit: () => void;
 }
@@ -19,7 +21,7 @@ function PresenterView({ slides, startSlideId, onExit }: PresenterViewProps) {
     return index >= 0 ? index : 0;
   }, [slides, startSlideId]);
   const [activeIndex, setActiveIndex] = useState(initialIndex);
-  const [tool, setTool] = useState<PresenterTool>("none");
+  const [tool, setTool] = useState<PresentationTool>("none");
   const [penColor, setPenColor] = useState("#F59E0B");
   const [toolbarVisible, setToolbarVisible] = useState(false);
   const [paths, setPaths] = useState<Array<{ color: string; points: string }>>([]);
@@ -35,10 +37,7 @@ function PresenterView({ slides, startSlideId, onExit }: PresenterViewProps) {
   const lastWheelAtRef = useRef(0);
   const previousActiveIndexRef = useRef(activeIndex);
 
-  const presentationSlides = useMemo(() => {
-    const visibleSlides = slides.filter((slide) => slide.hidden !== true);
-    return visibleSlides.length > 0 ? visibleSlides : slides;
-  }, [slides]);
+  const presentationSlides = useMemo(() => planPresentationSlides(slides), [slides]);
 
   const activeSlide =
     presentationSlides[Math.min(activeIndex, presentationSlides.length - 1)] ?? null;
@@ -90,7 +89,7 @@ function PresenterView({ slides, startSlideId, onExit }: PresenterViewProps) {
     }, 1500);
   }, []);
 
-  function setMode(nextTool: PresenterTool) {
+  function setMode(nextTool: PresentationTool) {
     setTool((currentTool) => (currentTool === nextTool ? "none" : nextTool));
   }
 
@@ -101,7 +100,7 @@ function PresenterView({ slides, startSlideId, onExit }: PresenterViewProps) {
 
   function goToIndex(nextIndex: number) {
     setTool("none");
-    setActiveIndex(Math.min(Math.max(nextIndex, 0), presentationSlides.length - 1));
+    setActiveIndex(clampPresentationIndex(nextIndex, presentationSlides.length));
     clearInk();
   }
 
@@ -347,7 +346,7 @@ function PresenterView({ slides, startSlideId, onExit }: PresenterViewProps) {
           data-testid="presenter-pen-colors"
           aria-label="Pen colors"
         >
-          {PEN_COLORS.map((color) => (
+          {PRESENTATION_PEN_COLORS.map((color) => (
             <button
               key={color}
               type="button"

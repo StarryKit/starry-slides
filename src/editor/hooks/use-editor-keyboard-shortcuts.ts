@@ -1,34 +1,26 @@
 import { useEffect, useRef } from "react";
 import {
   type ElementLayoutUpdateOperation,
-  type ElementRemoveOperation,
   captureElementLayoutStyleSnapshot,
   composeTransform,
-  createElementPlacement,
-  createUniqueElementId,
-  getSlideElementHtml,
   normalizeElementLayoutStyleSnapshot,
   parseTransformParts,
   querySlideElement,
-  updateSlideElementHtmlIds,
 } from "../../core";
-import {
-  elementRectToSlideRect,
-  getClampedPasteDelta,
-  getSlideBounds,
-  getUnionRect,
-  offsetSlideRect,
-  placeCopiedElement,
-} from "./editor-keyboard-geometry";
 import {
   ARROW_DELTAS,
   commitOperations,
-  createIdMapForCopiedElement,
   getShortcutStep,
   isEditableElementTarget,
   isLayoutEditable,
 } from "./editor-keyboard-operations";
 import type { ClipboardPayload, UseEditorKeyboardShortcutsOptions } from "./editor-keyboard-types";
+import {
+  commitObjectOperations,
+  copyObjectSelection,
+  createPasteObjectSelection,
+  createRemoveObjectSelectionOperations,
+} from "./object-clipboard-commands";
 
 function useEditorKeyboardShortcuts({
   activeSlide,
@@ -52,6 +44,7 @@ function useEditorKeyboardShortcuts({
   const canRedoRef = useRef(canRedo);
   const isEditingTextRef = useRef(isEditingText);
   const onEscapeSelectionRef = useRef(onEscapeSelection);
+  const activeSlideHtmlSource = activeSlide?.htmlSource ?? "";
 
   activeSlideRef.current = activeSlide;
   selectedElementIdsRef.current = selectedElementIds;
@@ -62,137 +55,59 @@ function useEditorKeyboardShortcuts({
 
   useEffect(() => {
     const copySelection = () => {
-      const currentSlide = activeSlideRef.current;
-      const currentSelectedElementIds = selectedElementIdsRef.current;
-      if (!currentSlide || !currentSelectedElementIds.length) {
-        return false;
+      const payload = copyObjectSelection({
+        slide: activeSlideRef.current,
+        selectedElementIds: selectedElementIdsRef.current,
+        iframeRef,
+      });
+      if (payload) {
+        clipboardRef.current = payload;
       }
-
-      const doc = iframeRef.current?.contentDocument;
-      const rootNode = doc?.querySelector<HTMLElement>(currentSlide.rootSelector);
-      const rootRect = rootNode?.getBoundingClientRect();
-
-      if (!rootRect) {
-        return false;
-      }
-
-      const elements = currentSelectedElementIds
-        .map((elementId) => {
-          const html = getSlideElementHtml(currentSlide.htmlSource, elementId);
-          const placement = createElementPlacement(currentSlide.htmlSource, elementId);
-          const node = doc ? querySlideElement<HTMLElement>(doc, elementId) : null;
-          if (!html || !placement || !node) {
-            return null;
-          }
-
-          return {
-            sourceElementId: elementId,
-            html,
-            rect: elementRectToSlideRect(node.getBoundingClientRect(), rootRect),
-            ...placement,
-          };
-        })
-        .filter((element): element is ClipboardPayload["elements"][number] => Boolean(element));
-
-      if (!elements.length) {
-        return false;
-      }
-
-      const unionRect = getUnionRect(elements.map((element) => element.rect));
-      if (!unionRect) {
-        return false;
-      }
-
-      clipboardRef.current = { elements, unionRect };
-      return true;
+      return Boolean(payload);
     };
 
     const removeSelection = () => {
       const currentSlide = activeSlideRef.current;
-      const currentSelectedElementIds = selectedElementIdsRef.current;
-      if (!currentSlide || !currentSelectedElementIds.length) {
+      if (!currentSlide) {
         return false;
       }
 
-      const operations = currentSelectedElementIds
-        .map((elementId) => {
-          const html = getSlideElementHtml(currentSlide.htmlSource, elementId);
-          const placement = createElementPlacement(currentSlide.htmlSource, elementId);
-          if (!html || !placement) {
-            return null;
-          }
-
-          return {
-            type: "element.remove" as const,
-            slideId: currentSlide.id,
-            elementId,
-            ...placement,
-            html,
-            timestamp: Date.now(),
-          };
-        })
-        .filter((operation): operation is ElementRemoveOperation => Boolean(operation));
+      const operations = createRemoveObjectSelectionOperations({
+        slide: currentSlide,
+        selectedElementIds: selectedElementIdsRef.current,
+      });
 
       if (!operations.length) {
         return false;
       }
 
-      commitOperations(currentSlide.id, operations, onCommitOperation);
+      commitObjectOperations(currentSlide.id, operations, onCommitOperation);
       onSelectElementIds([]);
       return true;
     };
 
     const pasteSelection = (payload = clipboardRef.current) => {
       const currentSlide = activeSlideRef.current;
-      if (!currentSlide || !payload) {
+      const paste = createPasteObjectSelection({
+        slide: currentSlide,
+        payload,
+        iframeRef,
+        slideSize: {
+          width: slideWidth,
+          height: slideHeight,
+        },
+      });
+      if (!currentSlide || !paste) {
         return false;
       }
 
-      let htmlSource = currentSlide.htmlSource;
-      const nextElementIds: string[] = [];
-      const slideBounds = getSlideBounds(iframeRef, currentSlide, {
-        width: slideWidth,
-        height: slideHeight,
-      });
-      const pasteDelta = getClampedPasteDelta(payload.unionRect, 24, {
-        width: slideBounds.width,
-        height: slideBounds.height,
-      });
-      const pastedElements: ClipboardPayload["elements"] = [];
-      const operations = payload.elements.map((source) => {
-        const nextElementId = createUniqueElementId(htmlSource, `${source.sourceElementId}-copy`);
-        const copiedHtml = updateSlideElementHtmlIds(
-          source.html,
-          createIdMapForCopiedElement(source.html, source.sourceElementId, nextElementId)
-        );
-        const targetRect = offsetSlideRect(source.rect, pasteDelta.x, pasteDelta.y);
-        const shiftedHtml = placeCopiedElement(copiedHtml, targetRect);
-
-        htmlSource = `${htmlSource}\n<!-- ${nextElementId} reserved -->`;
-        nextElementIds.push(nextElementId);
-        pastedElements.push({
-          ...source,
-          rect: targetRect,
-        });
-
-        return {
-          type: "element.insert" as const,
-          slideId: currentSlide.id,
-          elementId: nextElementId,
-          parentElementId: null,
-          previousSiblingElementId: null,
-          nextSiblingElementId: null,
-          html: shiftedHtml,
-          timestamp: Date.now(),
-        };
-      });
-
-      commitOperations(currentSlide.id, operations, onCommitOperation);
-      onSelectElementIds(nextElementIds);
-      clipboardRef.current = {
-        elements: pastedElements,
-        unionRect: offsetSlideRect(payload.unionRect, pasteDelta.x, pasteDelta.y),
+      commitObjectOperations(currentSlide.id, paste.operations, onCommitOperation);
+      activeSlideRef.current = {
+        ...currentSlide,
+        htmlSource: paste.nextHtmlSource,
       };
+      onSelectElementIds(paste.selectedElementIds);
+      clipboardRef.current = paste.nextClipboard;
       return true;
     };
 
@@ -338,7 +253,7 @@ function useEditorKeyboardShortcuts({
       }
     };
 
-    const iframeDocument = iframeRef.current?.contentDocument;
+    const iframeDocument = getIframeDocumentForSlideHtml(activeSlideHtmlSource, iframeRef);
     const iframeWindow = iframeRef.current?.contentWindow;
     window.addEventListener("keydown", onKeyDown);
     iframeWindow?.addEventListener("keydown", onKeyDown);
@@ -349,7 +264,23 @@ function useEditorKeyboardShortcuts({
       iframeWindow?.removeEventListener("keydown", onKeyDown);
       iframeDocument?.removeEventListener("keydown", onKeyDown);
     };
-  }, [iframeRef, onCommitOperation, onRedo, onSelectElementIds, onUndo, slideHeight, slideWidth]);
+  }, [
+    activeSlideHtmlSource,
+    iframeRef,
+    onCommitOperation,
+    onRedo,
+    onSelectElementIds,
+    onUndo,
+    slideHeight,
+    slideWidth,
+  ]);
+}
+
+function getIframeDocumentForSlideHtml(
+  _htmlSource: string,
+  iframeRef: UseEditorKeyboardShortcutsOptions["iframeRef"]
+) {
+  return iframeRef.current?.contentDocument;
 }
 
 export { useEditorKeyboardShortcuts };

@@ -11,7 +11,7 @@ Relevant context docs:
 
 - [src/core/CONTEXT.md](/Users/haichao/code/starry-slides/src/core/CONTEXT.md)
 - [src/editor/CONTEXT.md](/Users/haichao/code/starry-slides/src/editor/CONTEXT.md)
-- [src/runtime/CONTEXT.md](/Users/haichao/code/starry-slides/src/runtime/CONTEXT.md)
+- [src/node/CONTEXT.md](/Users/haichao/code/starry-slides/src/node/CONTEXT.md)
 
 Shared planning:
 
