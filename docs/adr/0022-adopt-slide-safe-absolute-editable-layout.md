@@ -126,10 +126,26 @@ The Contract documentation must distinguish:
 - canonical editable slides that are safe for freeform editing
 
 Only canonical editable slides are supported by the freeform editor. Complete
-verification must fail non-canonical editable layer geometry. A future import
-feature may provide rendered canonicalization for arbitrary flow-authored HTML,
-but that importer is not required to implement this ADR and must not weaken the
-editor's canonical layout invariant.
+verification must fail non-canonical editable layer geometry. Flow-authored HTML
+must go through the canonicalization tool before entering the freeform editor.
+
+### AI editing behavior after canonicalization
+
+When AI re-edits a slide that has already been canonicalized, the following
+rules apply:
+
+- **Content changes** (text, image replacement): AI edits the canonical HTML
+  directly. The absolute layout is preserved as-is; AI must not reflow or
+  reposition sibling editable elements.
+- **Layout changes** (adding/removing columns, changing structure): AI
+  regenerates the full slide as flow HTML, which is then re-canonicalized,
+  replacing the previous canonical HTML. User-made visual edits on that slide
+  are lost.
+
+AI must not attempt to reverse-engineer absolute pixel positions back into flow
+layout logic. Data attributes (`data-archetype`, `data-role`, `data-editable`)
+serve as the semantic layer for AI comprehension; CSS coordinates are not
+semantic.
 
 ## Non-goals
 
@@ -219,9 +235,14 @@ editor's canonical layout invariant.
   warnings.
 - Update `skills/starry-slides-skill/tools/contract-protocol/validate-slides.mjs`
   with the same issue vocabulary used by the CLI verifier.
-- Do not make a rendered flow-layout canonicalization tool a blocker for this
-  ADR. If such an importer is added later, it should be a separate feature that
-  freezes rendered editable geometry before a slide enters the freeform editor.
+- Build a rendered flow-layout canonicalization tool that freezes rendered
+  editable geometry into absolute layout. This is a mandatory step in the
+  AI generation pipeline: every AI-generated deck must be canonicalized before
+  entering the freeform editor. Because this requires browser layout, a
+  Playwright-backed or runtime-backed tool is preferred over the existing
+  static jsdom annotation script.
+- Canonicalization should be triggered automatically as a post-processing step
+  after AI generates flow-based HTML, not as an optional manual tool.
 
 ### Generated decks, fixtures, and starter content
 
