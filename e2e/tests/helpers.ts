@@ -3,14 +3,11 @@ import {
   REGRESSION_DECK_AGENDA_PARAGRAPH,
   REGRESSION_DECK_HERO_KICKER,
   REGRESSION_DECK_SLIDE_COUNT,
-  REGRESSION_DECK_SOURCE_LABEL,
   REGRESSION_DECK_SUMMARY,
   REGRESSION_DECK_TOPIC,
 } from "./regression-deck";
 
-export const EDITING_HINT = "Editing text. Press Enter to save or Escape to cancel.";
 export const MODIFIER = process.platform === "darwin" ? "Meta" : "Control";
-export const SOURCE_LABEL = REGRESSION_DECK_SOURCE_LABEL;
 export const RESET_URL = "/__editor/reset-generated-deck";
 export const HERO_KICKER = REGRESSION_DECK_HERO_KICKER;
 export const HERO_TITLE = REGRESSION_DECK_TOPIC;
@@ -36,7 +33,6 @@ export async function gotoEditor(page: Page) {
 
 export function getHistoryControls(page: Page) {
   return {
-    editingHint: page.getByText(EDITING_HINT),
     preselectionOverlay: page.getByTestId("preselection-overlay"),
     selectionOverlay: page.getByTestId("selection-overlay"),
   };
@@ -247,6 +243,21 @@ export async function clickFloatingToolbarButton(page: Page, label: string) {
   });
   await expect(button).toBeVisible();
   await button.click();
+}
+
+export async function selectFontFamilyOption(
+  page: Page,
+  target: ReturnType<FrameLocator["locator"]>,
+  optionLabel: string,
+  expectedCssPattern: RegExp
+) {
+  const fontSelect = page.getByTestId("floating-toolbar-anchor").getByLabel("Font", {
+    exact: true,
+  });
+  await expect(fontSelect).toBeVisible();
+  await fontSelect.click();
+  await page.getByRole("option", { name: optionLabel, exact: true }).click();
+  await expect(target).toHaveCSS("font-family", expectedCssPattern);
 }
 
 export async function createGroupFromSnapCards(

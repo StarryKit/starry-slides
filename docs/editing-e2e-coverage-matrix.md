@@ -11,9 +11,11 @@ supported editor-facing command or state route to browser-level coverage.
 | Hover preselection and pointer-depth retargeting | Stage hover, selected overlay click | Regression deck slide 1 | Hover previews the deepest editable target under the pointer; click selects that target even when an outer element is selected | Preselection overlay is passive and selection overlay moves to clicked target | N/A | N/A | `selection.spec.ts` |
 | Clear selection | Stage background click, Escape | Regression deck | Toolbar/overlay hidden | No active selection | N/A | N/A | `selection.spec.ts`; `floating-toolbar.spec.ts`; `block-manipulation.spec.ts` |
 | Enter and leave text editing | Double-click, Enter, Escape, blur, outside click | Regression deck slide 1 | Text draft commits or cancels according to gesture | Editing hint and native focus state update | Enter/blur commits are undoable; Escape is not | Text refresh persistence covered | `text-editing.spec.ts`; `text-editing-history.spec.ts`; `block-manipulation.spec.ts` |
+| Reselect same element after editing exits | Double-click, stage background click, same-element click | Regression deck slide 1 | Text editing exits and same element can be selected again | Overlay returns for the same element after background exit | N/A | N/A | `text-editing.spec.ts` |
 | Chrome visibility during selected, dragging, resizing, rotating, text editing, and group editing | Stage, manipulation handles, keyboard | Regression deck | Toolbar and manipulation chrome hide/show at correct times | Active mode suppresses irrelevant chrome | N/A | N/A | `editor-chrome.spec.ts`; `block-manipulation.spec.ts`; `floating-toolbar.spec.ts` |
 | Object commands unavailable during native text editing | Keyboard shortcuts, toolbar paths | Regression deck slide 1 | Native text edit changes text only | Object selection and object clipboard unchanged | Native undo remains separate from object commands | Text state persists after commit | `text-editing.spec.ts`; `text-editing-history.spec.ts`; `keyboard-and-multiselect.spec.ts` |
 | Slide switching resets command routing | Sidebar slide switch | Regression deck slides 1, 2 | Commands target the newly active slide | Previous slide selection does not leak | N/A | N/A | `editor-chrome.spec.ts`; `selection.spec.ts` |
+| Slide navigation with no selection | Stage wheel, ArrowUp/ArrowDown/ArrowLeft/ArrowRight | Regression deck slides 1-3 | Active slide changes to previous or next slide | Requires no active selection; selected elements keep arrow movement behavior | N/A | N/A | `keyboard-and-multiselect.spec.ts`; `editor-chrome.spec.ts` |
 
 ## Deck-Level Slide Operations
 
@@ -39,7 +41,7 @@ supported editor-facing command or state route to browser-level coverage.
 
 | Command or behavior | Surfaces | Fixture | Expected effect | Selection/focus | History | Persistence | Test coverage |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| Font family and size | Floating Toolbar Font | Regression deck slide 1 | Inline `font-family` and `font-size` update | Selected text element remains selected | Undo/redo covered for representative formatting | Refresh persistence covered | `floating-toolbar.spec.ts` |
+| Font family and size | Floating Toolbar Font | Regression deck slide 1 | Inline `font-family` changes to an explicitly different option and `font-size` updates | Selected text element remains selected | Undo/redo covered for representative formatting | Refresh persistence covered | `floating-toolbar.spec.ts` |
 | Bold, italic, underline, strikethrough | Floating Toolbar Font | Regression deck slide 1 | Inline font weight/style/text decoration update | Toolbar remains stable | Undo/redo covered for representative formatting | Refresh persistence covered | `floating-toolbar.spec.ts` |
 | Line height, alignment, text color | Floating Toolbar Paragraph/Fill | Regression deck slide 1 | Inline style or color attribute updates | Selected text element remains selected | Undo/redo covered for representative formatting | Refresh persistence covered | `floating-toolbar.spec.ts` |
 

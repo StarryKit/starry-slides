@@ -265,6 +265,33 @@ test("sidebar slide actions add duplicate hide and delete slides", async ({ page
   );
 });
 
+test("stage wheel switches slides when no element is selected", async ({ page }) => {
+  await gotoEditor(page);
+
+  const stageFrame = page.getByTestId("stage-frame");
+  const stageBox = await stageFrame.boundingBox();
+  if (!stageBox) {
+    throw new Error("Expected stage frame to have bounds.");
+  }
+
+  await expect(page.getByRole("button", { name: "Slide 1", exact: true })).toHaveAttribute(
+    "aria-current",
+    "true"
+  );
+  await page.mouse.move(stageBox.x + stageBox.width / 2, stageBox.y + stageBox.height / 2);
+  await page.mouse.wheel(0, 180);
+  await expect(page.getByRole("button", { name: "Slide 2", exact: true })).toHaveAttribute(
+    "aria-current",
+    "true"
+  );
+
+  await page.mouse.wheel(0, -180);
+  await expect(page.getByRole("button", { name: "Slide 1", exact: true })).toHaveAttribute(
+    "aria-current",
+    "true"
+  );
+});
+
 test("sidebar drag reorder persists slide order after refresh", async ({ page }) => {
   await gotoEditor(page);
 
@@ -406,14 +433,12 @@ test("double clicking a text child enters editing on the correct element", async
   const card = frame.locator('[data-editor-id="block-4"]');
   const title = frame.locator('[data-editor-id="text-6"]');
   const paragraph = frame.locator('[data-editor-id="text-7"]');
-  const { editingHint } = getHistoryControls(page);
 
   await expect(card).toBeVisible();
   await expect(paragraph).toHaveText(AGENDA_PARAGRAPH);
 
   await paragraph.dblclick();
 
-  await expect(editingHint).toBeVisible();
   await expect(paragraph).toHaveAttribute("contenteditable", "plaintext-only");
   await expect(card).not.toHaveAttribute("contenteditable", /.+/);
   await expect(title).not.toHaveAttribute("contenteditable", /.+/);

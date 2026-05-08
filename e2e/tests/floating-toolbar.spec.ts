@@ -10,7 +10,7 @@ import {
   getHistoryControls,
   getSlideElementRect,
   gotoEditor,
-  selectToolPanelOptionAndExpectInlineStyle,
+  selectFontFamilyOption,
 } from "./helpers";
 
 test("full floating editor applies typography and paragraph controls", async ({ page }) => {
@@ -22,14 +22,7 @@ test("full floating editor applies typography and paragraph controls", async ({ 
 
   await editableHeading.click();
   await expect(toolbar.getByLabel("Font", { exact: true })).toBeVisible();
-  await selectToolPanelOptionAndExpectInlineStyle(
-    page,
-    editableHeading,
-    "Font",
-    'Georgia, "Times New Roman", serif',
-    "font-family",
-    'Georgia, "Times New Roman", serif'
-  );
+  await selectFontFamilyOption(page, editableHeading, "Georgia", /Georgia|Times New Roman|serif/);
 
   const originalFontSize = Number.parseFloat(
     await getComputedStyleValue(editableHeading, "font-size")
@@ -87,7 +80,6 @@ test("full floating editor applies color and border controls", async ({ page }) 
   await toolbar.getByRole("button", { name: "Border style", exact: true }).click();
   await page.getByRole("button", { name: "Strong", exact: true }).click();
   await expectInlineStyle(editableHeading, "border", "2px solid rgba(15, 23, 42, 0.22)");
-
   await toolbar.getByRole("button", { name: "Border radius", exact: true }).click();
   await page.getByRole("button", { name: "Round", exact: true }).click();
   await expectInlineStyle(editableHeading, "border-radius", "18px");
@@ -99,6 +91,28 @@ test("full floating editor applies color and border controls", async ({ page }) 
   await toolbar.getByRole("button", { name: "Shadow", exact: true }).click();
   await page.getByRole("button", { name: "Lifted", exact: true }).click();
   await expectInlineStyle(editableHeading, "box-shadow", "rgba(15, 23, 42, 0.18) 0px 18px 42px");
+});
+
+test("floating toolbar font family select changes the selected text font", async ({ page }) => {
+  await gotoEditor(page);
+
+  const editableHeading = coverFrame(page).locator('[data-editor-id="text-1"]');
+  const toolbar = page.getByTestId("floating-toolbar-anchor");
+
+  await editableHeading.click();
+  await expect(toolbar).toBeVisible();
+  const beforeFont = await getComputedStyleValue(editableHeading, "font-family");
+
+  await selectFontFamilyOption(page, editableHeading, "Georgia", /Georgia|Times New Roman|serif/);
+
+  await expectInlineStyle(editableHeading, "font-family", 'Georgia, "Times New Roman", serif');
+  const afterFont = await getComputedStyleValue(editableHeading, "font-family");
+  expect(afterFont).not.toBe(beforeFont);
+
+  await page.keyboard.press(`${MODIFIER}+Z`);
+  await expectInlineStyle(editableHeading, "font-family", "");
+  await page.keyboard.press(`${MODIFIER}+Shift+Z`);
+  await expectInlineStyle(editableHeading, "font-family", 'Georgia, "Times New Roman", serif');
 });
 
 test("full floating editor applies other attributes through dialogs", async ({ page }) => {

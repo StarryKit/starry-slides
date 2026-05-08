@@ -2,7 +2,6 @@ import { expect, test } from "@playwright/test";
 import {
   HERO_KICKER,
   MODIFIER,
-  applyCustomCssProperty,
   coverFrame,
   expectInlineStyle,
   expectInlineStyleContains,
@@ -73,6 +72,60 @@ test("keyboard Alt arrows use the fine movement step", async ({ page }) => {
   await editableHeading.click();
   await page.keyboard.press("Alt+ArrowRight");
   await expectInlineStyleContains(editableHeading, "transform", "translate(1px, 0px)");
+});
+
+test("keyboard arrows switch slides when no element is selected", async ({ page }) => {
+  await gotoEditor(page);
+
+  const frame = coverFrame(page);
+  const editableHeading = frame.locator('[data-editor-id="text-1"]');
+  const stagePanel = page.getByTestId("stage-panel");
+  const { selectionOverlay } = getHistoryControls(page);
+
+  await expect(page.getByRole("button", { name: "Slide 1", exact: true })).toHaveAttribute(
+    "aria-current",
+    "true"
+  );
+  await page.keyboard.press("ArrowRight");
+  await expect(page.getByRole("button", { name: "Slide 2", exact: true })).toHaveAttribute(
+    "aria-current",
+    "true"
+  );
+
+  await page.keyboard.press("ArrowDown");
+  await expect(page.getByRole("button", { name: "Slide 3", exact: true })).toHaveAttribute(
+    "aria-current",
+    "true"
+  );
+
+  await page.keyboard.press("ArrowLeft");
+  await expect(page.getByRole("button", { name: "Slide 2", exact: true })).toHaveAttribute(
+    "aria-current",
+    "true"
+  );
+
+  await page.keyboard.press("ArrowUp");
+  await expect(page.getByRole("button", { name: "Slide 1", exact: true })).toHaveAttribute(
+    "aria-current",
+    "true"
+  );
+
+  await editableHeading.click();
+  await expect(selectionOverlay).toBeVisible();
+  await page.keyboard.press("ArrowRight");
+  await expect(page.getByRole("button", { name: "Slide 1", exact: true })).toHaveAttribute(
+    "aria-current",
+    "true"
+  );
+  await expectInlineStyleContains(editableHeading, "transform", "translate(5px, 0px)");
+
+  await stagePanel.click({ position: { x: 12, y: 12 } });
+  await expect(selectionOverlay).toBeHidden();
+  await page.keyboard.press("ArrowRight");
+  await expect(page.getByRole("button", { name: "Slide 2", exact: true })).toHaveAttribute(
+    "aria-current",
+    "true"
+  );
 });
 
 test("keyboard copy paste duplicates the selected element and selects the copy", async ({
@@ -148,7 +201,11 @@ test("keyboard paste keeps repeated copies inside the slide bounds", async ({ pa
   const movedRect = await getSlideElementRect(editableHeading);
   const targetRightEdge = movedRect.slideWidth - movedRect.width + 8;
   const additionalX = Math.max(0, Math.round(targetRightEdge - movedRect.x));
-  await applyCustomCssProperty(page, "transform", `translate(${additionalX}px, 0px)`);
+  await page.keyboard.press("Escape");
+  await editableHeading.evaluate((node, transform) => {
+    (node as HTMLElement).style.transform = transform;
+  }, `translate(${additionalX}px, 0px)`);
+  await editableHeading.evaluate((node) => (node as HTMLElement).click());
 
   await page.keyboard.press(`${MODIFIER}+C`);
 

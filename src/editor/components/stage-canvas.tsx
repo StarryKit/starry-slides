@@ -67,6 +67,7 @@ interface StageCanvasProps {
   onRotateHandleMouseDown: (event: ReactMouseEvent<HTMLButtonElement>) => void;
   onSelectionOverlayDoubleClick: (event: ReactMouseEvent<HTMLDivElement>) => void;
   onBackgroundClick: () => void;
+  onStageWheel: (event: WheelEvent) => void;
   onStyleChange: (propertyName: string, nextValue: string) => void;
   onAttributeChange: (attributeName: string, nextValue: string) => void;
   onAlignToSlide: (action: string) => void;
@@ -109,6 +110,7 @@ function StageCanvas({
   onRotateHandleMouseDown,
   onSelectionOverlayDoubleClick,
   onBackgroundClick,
+  onStageWheel,
   onStyleChange,
   onAttributeChange,
   onAlignToSlide,
@@ -145,6 +147,9 @@ function StageCanvas({
         }
       }}
       onMouseLeave={onStageMouseLeave}
+      onWheel={(event) => {
+        onStageWheel(event.nativeEvent);
+      }}
     >
       {selectionOverlay && !isManipulating && !isToolbarSuppressed && !isEditingText ? (
         <div
@@ -167,12 +172,6 @@ function StageCanvas({
             onUngroup={onUngroup}
           />
         </div>
-      ) : null}
-
-      {isEditingText ? (
-        <p className="absolute left-10 top-4 z-40 rounded-md border border-foreground/[0.06] bg-white px-3 py-2 text-[12px] leading-normal text-foreground/65 shadow-sm">
-          Editing text. Press Enter to save or Escape to cancel.
-        </p>
       ) : null}
 
       <div

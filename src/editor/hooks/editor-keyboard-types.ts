@@ -36,6 +36,7 @@ export interface UseEditorKeyboardShortcutsOptions {
   canUndo: boolean;
   canRedo: boolean;
   onEscapeSelection: () => boolean;
+  onNavigateSlide: (direction: "previous" | "next") => boolean;
   onCommitOperation: (
     operation:
       | ElementInsertOperation

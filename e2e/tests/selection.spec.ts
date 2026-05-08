@@ -12,18 +12,16 @@ test("plain click selects text only, and double click enters editing", async ({ 
 
   const frame = coverFrame(page);
   const editableHeading = frame.locator('[data-editor-id="text-1"]');
-  const { editingHint, selectionOverlay } = getHistoryControls(page);
+  const { selectionOverlay } = getHistoryControls(page);
   const { floatingToolbarAnchor } = getHeaderControls(page);
 
   await editableHeading.click();
 
   await expect(selectionOverlay).toBeVisible();
-  await expect(editingHint).toBeHidden();
   await expect(editableHeading).not.toHaveAttribute("contenteditable", /.+/);
 
   await editableHeading.dblclick();
 
-  await expect(editingHint).toBeVisible();
   await expect(floatingToolbarAnchor).toBeHidden();
   await expect(selectionOverlay).toBeHidden();
   await expect(editableHeading).toHaveAttribute("contenteditable", "plaintext-only");

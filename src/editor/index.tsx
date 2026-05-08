@@ -133,6 +133,7 @@ function SlidesEditor({
     iframeRef,
     onCommitOperation: commitOperation,
     onOpenSelectionContextMenu: openSelectionContextMenu,
+    onStageWheel: navigateSlideFromWheel,
   });
 
   const selectedElement = activeSlide?.elements.find((element) => element.id === selectedElementId);
@@ -412,6 +413,47 @@ function SlidesEditor({
     commitSelectionOperation(operations);
     if (operations.length) {
       setSelectedElementIds([]);
+    }
+  }
+
+  function selectSlideByDirection(direction: "previous" | "next") {
+    if (!activeSlide || slides.length <= 1) {
+      return false;
+    }
+
+    const activeIndex = slides.findIndex((slide) => slide.id === activeSlide.id);
+    if (activeIndex < 0) {
+      return false;
+    }
+
+    const nextIndex =
+      direction === "previous"
+        ? Math.max(0, activeIndex - 1)
+        : Math.min(slides.length - 1, activeIndex + 1);
+    const nextSlide = slides[nextIndex];
+    if (!nextSlide || nextSlide.id === activeSlide.id) {
+      return false;
+    }
+
+    setActiveSlideId(nextSlide.id);
+    setSelectedElementId(null);
+    return true;
+  }
+
+  function navigateSlideFromWheel(event: WheelEvent) {
+    if (selectedElementIds.length || isEditingText || isManipulating) {
+      return;
+    }
+
+    const dominantDelta =
+      Math.abs(event.deltaY) >= Math.abs(event.deltaX) ? event.deltaY : event.deltaX;
+    if (Math.abs(dominantDelta) < 24) {
+      return;
+    }
+
+    if (selectSlideByDirection(dominantDelta > 0 ? "next" : "previous")) {
+      event.preventDefault();
+      event.stopPropagation();
     }
   }
 
@@ -838,6 +880,7 @@ function SlidesEditor({
     onCommitOperation: commitOperation,
     onSelectElementIds: setSelectedElementIds,
     onEscapeSelection: clearSelection,
+    onNavigateSlide: selectSlideByDirection,
     onUndo: runUndo,
     onRedo: runRedo,
   });
@@ -1027,20 +1070,22 @@ function SlidesEditor({
                   if (activeGroupScopeId && iframeRef.current?.contentDocument) {
                     const iframeRect = iframeRef.current.getBoundingClientRect();
                     const doc = iframeRef.current.contentDocument;
-                    const scopedTarget = doc.elementFromPoint(
-                      event.clientX - iframeRect.left,
-                      event.clientY - iframeRect.top
-                    );
-                    const scopedEditable = scopedTarget?.closest<HTMLElement>(
-                      `[data-editable][${SELECTOR_ATTR}]`
+                    const iframeScaleX = iframeRect.width / iframeRef.current.clientWidth || 1;
+                    const iframeScaleY = iframeRect.height / iframeRef.current.clientHeight || 1;
+                    const iframePoint = {
+                      x: (event.clientX - iframeRect.left) / iframeScaleX,
+                      y: (event.clientY - iframeRect.top) / iframeScaleY,
+                    };
+                    const scopedEditable = getScopedTextTargetAtPoint(
+                      doc,
+                      activeGroupScopeId,
+                      iframePoint
                     );
 
-                    if (scopedEditable?.getAttribute("data-editable") === "text") {
-                      const scopedElementId = scopedEditable.getAttribute(SELECTOR_ATTR);
-                      if (scopedElementId) {
-                        beginTextEditing(scopedElementId);
-                        return;
-                      }
+                    const scopedElementId = scopedEditable?.getAttribute(SELECTOR_ATTR);
+                    if (scopedElementId) {
+                      beginTextEditing(scopedElementId);
+                      return;
                     }
                   }
 
@@ -1066,6 +1111,7 @@ function SlidesEditor({
                     clearSelection();
                   }
                 }}
+                onStageWheel={navigateSlideFromWheel}
                 onStyleChange={commitStyleChange}
                 onAttributeChange={commitAttributeChange}
                 onAlignToSlide={commitArrangeAction}
@@ -1166,6 +1212,51 @@ function isListWrapperWithEditableItems(node: Element): node is HTMLElement {
   return Array.from(node.children).some(
     (child) => child.tagName.toLowerCase() === "li" && child.hasAttribute("data-editable")
   );
+}
+
+function getScopedTextTargetAtPoint(
+  doc: Document,
+  activeGroupScopeId: string,
+  point: { x: number; y: number }
+): HTMLElement | null {
+  const activeGroup = querySlideElement<HTMLElement>(doc, activeGroupScopeId);
+  if (!activeGroup) {
+    return null;
+  }
+
+  const directTarget = doc.elementFromPoint(point.x, point.y);
+  const directText = directTarget?.closest<HTMLElement>(`[data-editable="text"][${SELECTOR_ATTR}]`);
+  if (directText && activeGroup.contains(directText)) {
+    return directText;
+  }
+
+  const candidates = Array.from(
+    activeGroup.querySelectorAll<HTMLElement>(`[data-editable="text"][${SELECTOR_ATTR}]`)
+  );
+  const directHit = candidates.find((candidate) => {
+    const rect = candidate.getBoundingClientRect();
+    return (
+      point.x >= rect.left && point.x <= rect.right && point.y >= rect.top && point.y <= rect.bottom
+    );
+  });
+
+  if (directHit) {
+    return directHit;
+  }
+
+  const nearest = candidates
+    .map((candidate) => {
+      const rect = candidate.getBoundingClientRect();
+      const clampedX = Math.min(Math.max(point.x, rect.left), rect.right);
+      const clampedY = Math.min(Math.max(point.y, rect.top), rect.bottom);
+      return {
+        candidate,
+        distance: Math.hypot(point.x - clampedX, point.y - clampedY),
+      };
+    })
+    .sort((left, right) => left.distance - right.distance)[0];
+
+  return nearest && nearest.distance <= 24 ? nearest.candidate : null;
 }
 
 export { SlidesEditor };

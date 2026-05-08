@@ -61,11 +61,10 @@ test("text editing commits on blur and keeps undo/redo disabled while editing", 
   const frame = coverFrame(page);
   const editableHeading = frame.locator('[data-editor-id="text-1"]');
   const blockCard = frame.locator('[data-editor-id="block-4"]');
-  const { editingHint } = getHistoryControls(page);
   const nextText = "Blur committed heading";
 
   await editableHeading.dblclick();
-  await expect(editingHint).toBeVisible();
+  await expect(editableHeading).toHaveAttribute("contenteditable", "plaintext-only");
 
   await page.keyboard.press(`${MODIFIER}+Z`);
   await expect(editableHeading).toHaveText(HERO_KICKER);
@@ -73,7 +72,7 @@ test("text editing commits on blur and keeps undo/redo disabled while editing", 
   await selectAllAndFill(editableHeading, nextText);
   await blockCard.click({ position: { x: 12, y: 12 } });
 
-  await expect(editingHint).toBeHidden();
+  await expect(editableHeading).not.toHaveAttribute("contenteditable", /.+/);
   await expect(editableHeading).toHaveText(nextText);
 
   await page.keyboard.press(`${MODIFIER}+Z`);
@@ -88,14 +87,47 @@ test("single clicking outside the active text element exits editing mode", async
   const frame = coverFrame(page);
   const editableHeading = frame.locator('[data-editor-id="text-1"]');
   const blockCard = frame.locator('[data-editor-id="block-4"]');
-  const { editingHint } = getHistoryControls(page);
 
   await editableHeading.dblclick();
-  await expect(editingHint).toBeVisible();
+  await expect(editableHeading).toHaveAttribute("contenteditable", "plaintext-only");
 
   await blockCard.click({ position: { x: 12, y: 12 } });
 
-  await expect(editingHint).toBeHidden();
+  await expect(editableHeading).not.toHaveAttribute("contenteditable", /.+/);
+});
+
+test("editing mode has no visible instruction prompt", async ({ page }) => {
+  await gotoEditor(page);
+
+  const editableHeading = coverFrame(page).locator('[data-editor-id="text-1"]');
+
+  await editableHeading.dblclick();
+
+  await expect(editableHeading).toHaveAttribute("contenteditable", "plaintext-only");
+  await expect(
+    page.getByText("Editing text. Press Enter to save or Escape to cancel.", { exact: true })
+  ).toHaveCount(0);
+});
+
+test("clicking the same text element after leaving editing by stage background selects it again", async ({
+  page,
+}) => {
+  await gotoEditor(page);
+
+  const frame = coverFrame(page);
+  const editableHeading = frame.locator('[data-editor-id="text-1"]');
+  const stagePanel = page.getByTestId("stage-panel");
+  const { selectionOverlay } = getHistoryControls(page);
+
+  await editableHeading.dblclick();
+  await expect(editableHeading).toHaveAttribute("contenteditable", "plaintext-only");
+
+  await stagePanel.click({ position: { x: 12, y: 12 } });
+  await expect(editableHeading).not.toHaveAttribute("contenteditable", /.+/);
+  await expect(selectionOverlay).toBeHidden();
+
+  await editableHeading.click();
+  await expect(selectionOverlay).toBeVisible();
   await expect(editableHeading).not.toHaveAttribute("contenteditable", /.+/);
 });
 
@@ -255,11 +287,10 @@ test("double clicking a word during text editing keeps editing active and allows
 
   const frame = coverFrame(page);
   const editableHeading = frame.locator('[data-editor-id="text-1"]');
-  const { editingHint } = getHistoryControls(page);
   const originalText = await editableHeading.textContent();
 
   await editableHeading.dblclick();
-  await expect(editingHint).toBeVisible();
+  await expect(editableHeading).toHaveAttribute("contenteditable", "plaintext-only");
 
   const box = await editableHeading.boundingBox();
   if (!box || !originalText) {
@@ -277,9 +308,9 @@ test("double clicking a word during text editing keeps editing active and allows
     return node.ownerDocument.getSelection()?.toString() ?? "";
   });
 
-  await expect(editingHint).toBeVisible();
+  await expect(editableHeading).toHaveAttribute("contenteditable", "plaintext-only");
   await editableHeading.press("Backspace");
-  await expect(editingHint).toBeVisible();
+  await expect(editableHeading).toHaveAttribute("contenteditable", "plaintext-only");
   await editableHeading.press("Enter");
 
   if (!selectedText) {

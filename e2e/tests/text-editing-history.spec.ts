@@ -35,15 +35,14 @@ test("pressing Enter without content changes exits editing without creating undo
 
   const frame = coverFrame(page);
   const editableHeading = frame.locator('[data-editor-id="text-1"]');
-  const { editingHint } = getHistoryControls(page);
   const originalText = HERO_KICKER;
 
   await editableHeading.dblclick();
-  await expect(editingHint).toBeVisible();
+  await expect(editableHeading).toHaveAttribute("contenteditable", "plaintext-only");
 
   await editableHeading.press("Enter");
 
-  await expect(editingHint).toBeHidden();
+  await expect(editableHeading).not.toHaveAttribute("contenteditable", /.+/);
   await expect(editableHeading).toHaveText(originalText);
   await page.keyboard.press(`${MODIFIER}+Z`);
   await expect(editableHeading).toHaveText(originalText);
@@ -54,7 +53,6 @@ test("text editing supports keyboard undo/redo after commit", async ({ page }) =
 
   const frame = coverFrame(page);
   const editableHeading = frame.locator('[data-editor-id="text-1"]');
-  const { editingHint } = getHistoryControls(page);
   const nextText = "Edited by Playwright";
 
   await expect(page.locator("header input").first()).toHaveValue(HERO_TITLE);
@@ -62,12 +60,12 @@ test("text editing supports keyboard undo/redo after commit", async ({ page }) =
   await expect(editableHeading).toHaveText(HERO_KICKER);
 
   await editableHeading.dblclick();
-  await expect(editingHint).toBeVisible();
+  await expect(editableHeading).toHaveAttribute("contenteditable", "plaintext-only");
 
   await selectAllAndFill(editableHeading, nextText);
   await editableHeading.press("Enter");
 
-  await expect(editingHint).toBeHidden();
+  await expect(editableHeading).not.toHaveAttribute("contenteditable", /.+/);
   await expect(editableHeading).toHaveText(nextText);
 
   await page.keyboard.press(`${MODIFIER}+Z`);

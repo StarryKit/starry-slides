@@ -205,6 +205,41 @@ function FloatingToolbar({
     }
   }, []);
 
+  useEffect(() => {
+    function closeOnOutsidePointer(event: MouseEvent) {
+      const target = event.target;
+      if (toolbarRef.current?.contains(event.target as Node)) {
+        return;
+      }
+
+      if (target instanceof Element && target.closest('[data-slot="select-content"]')) {
+        return;
+      }
+
+      setActivePopoverId(null);
+    }
+
+    document.addEventListener("mousedown", closeOnOutsidePointer);
+    return () => {
+      document.removeEventListener("mousedown", closeOnOutsidePointer);
+    };
+  }, []);
+
+  useEffect(() => {
+    function closeOnEscape(event: KeyboardEvent) {
+      if (event.key !== "Escape") {
+        return;
+      }
+
+      setActivePopoverId(null);
+    }
+
+    document.addEventListener("keydown", closeOnEscape);
+    return () => {
+      document.removeEventListener("keydown", closeOnEscape);
+    };
+  }, []);
+
   function commitFeature(feature: ElementToolFeature, nextValue: string) {
     if (feature.id === "distribute") {
       onDistribute(nextValue);

@@ -24,6 +24,7 @@ function useIframeTextEditing({
   iframeRef,
   onCommitOperation,
   onOpenSelectionContextMenu,
+  onStageWheel,
 }: UseIframeTextEditingOptions): UseIframeTextEditingResult {
   const [selectedElementIds, setSelectedElementIds] = useState<string[]>([]);
   const [preselectedElementId, setPreselectedElementId] = useState<string | null>(null);
@@ -33,7 +34,10 @@ function useIframeTextEditing({
   const activeGroupScopeIdRef = useRef<string | null>(null);
   const commitTextEditRef = useRef<(elementId: string, nextText: string) => void>(() => {});
   const cancelTextEditRef = useRef<() => void>(() => {});
+  const onStageWheelRef = useRef(onStageWheel);
   const selectedElementId = selectedElementIds[selectedElementIds.length - 1] ?? null;
+
+  onStageWheelRef.current = onStageWheel;
 
   const clearPreselection = useCallback(() => {
     setPreselectedElementId((currentId) => (currentId === null ? currentId : null));
@@ -153,7 +157,13 @@ function useIframeTextEditing({
 
   const clearSelection = useCallback(() => {
     if (textEditingRef.current) {
-      return false;
+      setSelectedElementIds((currentIds) => {
+        if (!currentIds.length) {
+          return currentIds;
+        }
+        return [];
+      });
+      return true;
     }
 
     const result = clearSelectionForEscape({
@@ -274,6 +284,7 @@ function useIframeTextEditing({
           const editingNode = querySlideElement<HTMLElement>(doc, textEditingRef.current.elementId);
           if (editingNode) {
             commitNodeText(editingNode);
+            setSelectedElementIds([]);
             return;
           }
         }
@@ -289,6 +300,7 @@ function useIframeTextEditing({
 
         if (editingNode && !editingNode.contains(target)) {
           commitNodeText(editingNode);
+          setSelectedElementIds([]);
           return;
         }
 
@@ -353,6 +365,28 @@ function useIframeTextEditing({
       clearPreselection();
     };
 
+    const onWheel = (event: WheelEvent) => {
+      onStageWheelRef.current?.(event);
+    };
+    doc.addEventListener("wheel", onWheel, { passive: false });
+    const onDocumentDoubleClick = (event: MouseEvent) => {
+      const scopedTextTarget = getEditableTextTargetFromEvent(event, activeGroupScopeIdRef.current);
+      const scopedTextId = scopedTextTarget?.getAttribute(SELECTOR_ATTR);
+      if (!scopedTextId) {
+        return;
+      }
+
+      if (textEditingRef.current?.elementId === scopedTextId) {
+        event.stopPropagation();
+        return;
+      }
+
+      event.preventDefault();
+      event.stopPropagation();
+      beginTextEditing(scopedTextId);
+    };
+    doc.addEventListener("dblclick", onDocumentDoubleClick, true);
+
     const nodes = Array.from(
       doc.querySelectorAll<HTMLElement>(`[data-editable][${SELECTOR_ATTR}]`)
     );
@@ -391,6 +425,19 @@ function useIframeTextEditing({
       };
 
       node.ondblclick = (event) => {
+        const scopedTextTarget =
+          getEditableTextTargetFromEvent(event, activeGroupScopeIdRef.current) ??
+          getEditableSelectionTargetInScope(event.target as Element, activeGroupScopeIdRef.current);
+        if (scopedTextTarget?.getAttribute("data-editable") === "text") {
+          const scopedTextId = scopedTextTarget.getAttribute(SELECTOR_ATTR);
+          if (scopedTextId) {
+            event.preventDefault();
+            event.stopPropagation();
+            beginTextEditing(scopedTextId);
+            return;
+          }
+        }
+
         const elementId = node.getAttribute(SELECTOR_ATTR);
         const activeEditing = textEditingRef.current;
 
@@ -422,6 +469,11 @@ function useIframeTextEditing({
         }
       };
     }
+
+    return () => {
+      doc.removeEventListener("wheel", onWheel);
+      doc.removeEventListener("dblclick", onDocumentDoubleClick, true);
+    };
   }, [
     activeSlide,
     beginGroupEditingScope,
@@ -430,6 +482,49 @@ function useIframeTextEditing({
     iframeRef,
     openPointerSelectionContextMenu,
   ]);
+
+  function getEditableTextTargetFromEvent(
+    event: MouseEvent,
+    activeScopeId: string | null
+  ): HTMLElement | null {
+    const doc = iframeRef.current?.contentDocument;
+    if (!doc) {
+      return null;
+    }
+
+    const candidates = Array.from(
+      doc.querySelectorAll<HTMLElement>(`[data-editable="text"][${SELECTOR_ATTR}]`)
+    ).filter(
+      (candidate) => getEditableSelectionTargetInScope(candidate, activeScopeId) === candidate
+    );
+    const directHit = candidates.find((candidate) => {
+      const rect = candidate.getBoundingClientRect();
+      return (
+        event.clientX >= rect.left &&
+        event.clientX <= rect.right &&
+        event.clientY >= rect.top &&
+        event.clientY <= rect.bottom
+      );
+    });
+
+    if (directHit) {
+      return directHit;
+    }
+
+    const nearest = candidates
+      .map((candidate) => {
+        const rect = candidate.getBoundingClientRect();
+        const clampedX = Math.min(Math.max(event.clientX, rect.left), rect.right);
+        const clampedY = Math.min(Math.max(event.clientY, rect.top), rect.bottom);
+        return {
+          candidate,
+          distance: Math.hypot(event.clientX - clampedX, event.clientY - clampedY),
+        };
+      })
+      .sort((left, right) => left.distance - right.distance)[0];
+
+    return nearest && nearest.distance <= 24 ? nearest.candidate : null;
+  }
 
   useEffect(() => {
     const doc = iframeRef.current?.contentDocument;
@@ -463,6 +558,11 @@ function useIframeTextEditing({
     const originalInlineAlignItems = editableNode.style.alignItems;
     const originalInlineOverflow = editableNode.style.overflow;
     const originalInlineCursor = editableNode.style.cursor;
+    const originalOnBlur = editableNode.onblur;
+    const originalOnClick = editableNode.onclick;
+    const originalOnKeyDown = editableNode.onkeydown;
+    const originalOnMouseDown = editableNode.onmousedown;
+    const originalOnMouseUp = editableNode.onmouseup;
     const computedStyles = editableNode.ownerDocument.defaultView?.getComputedStyle(editableNode);
     const computedDisplay = computedStyles?.display ?? "";
 
@@ -550,6 +650,11 @@ function useIframeTextEditing({
     };
 
     return () => {
+      editableNode.ownerDocument.getSelection()?.removeAllRanges();
+      if (editableNode.ownerDocument.activeElement === editableNode) {
+        editableNode.blur();
+      }
+
       editableNode.removeAttribute("contenteditable");
       editableNode.removeAttribute("spellcheck");
       editableNode.removeAttribute("data-hse-editing");
@@ -557,11 +662,11 @@ function useIframeTextEditing({
       editableNode.style.display = originalInlineDisplay;
       editableNode.style.alignItems = originalInlineAlignItems;
       editableNode.style.overflow = originalInlineOverflow;
-      editableNode.onblur = null;
-      editableNode.onclick = null;
-      editableNode.onkeydown = null;
-      editableNode.onmousedown = null;
-      editableNode.onmouseup = null;
+      editableNode.onblur = originalOnBlur;
+      editableNode.onclick = originalOnClick;
+      editableNode.onkeydown = originalOnKeyDown;
+      editableNode.onmousedown = originalOnMouseDown;
+      editableNode.onmouseup = originalOnMouseUp;
     };
   }, [activeSlide, iframeRef, textEditing]);
 
