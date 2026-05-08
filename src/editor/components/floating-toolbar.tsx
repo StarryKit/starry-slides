@@ -1,5 +1,7 @@
 import {
   AlignCenter,
+  AlignLeft,
+  AlignRight,
   Bold,
   CaseSensitive,
   Circle,
@@ -10,6 +12,8 @@ import {
   Layers,
   Link2,
   Lock,
+  LockOpen,
+  Minus,
   Palette,
   Plus,
   Rows3,
@@ -293,9 +297,11 @@ function FloatingToolbar({
       style={{ marginLeft: toolbarOffsetX }}
     >
       <div
-        className="flex w-max items-center gap-0.5 overflow-x-auto overflow-y-hidden rounded-md border border-foreground/[0.08] bg-white px-1.5 py-1.5 shadow-[0_2px_12px_rgba(0,0,0,0.04),0_8px_32px_rgba(0,0,0,0.06)] max-[1200px]:min-w-[1120px]"
+        className="flex w-max items-center gap-1 overflow-x-auto overflow-y-hidden rounded-2xl border border-foreground/[0.08] bg-white/92 px-2 py-2 shadow-[0_8px_24px_rgba(0,0,0,0.08),0_18px_54px_rgba(0,0,0,0.12)] backdrop-blur-xl max-[1200px]:min-w-[1120px]"
         aria-label="Full editing toolbar"
       >
+        {renderLockSection()}
+        <Divider />
         {renderFontSection()}
         <Divider />
         {renderTextStyleSection()}
@@ -334,6 +340,21 @@ function FloatingToolbar({
     </div>
   );
 
+  function renderLockSection() {
+    const locked = Boolean(attributeValues.locked);
+    return (
+      <ToolbarSection>
+        <IconButton
+          label={locked ? "Unlock" : "Lock"}
+          active={locked}
+          onClick={() => commitFeature(getFeature("locked"), locked ? "" : "true")}
+        >
+          {locked ? <LockOpen className="size-3.5" /> : <Lock className="size-3.5" />}
+        </IconButton>
+      </ToolbarSection>
+    );
+  }
+
   function renderFontSection() {
     const fontFamilyFeature = getFeature("font-family");
     const fontSizeFeature = getFeature("font-size");
@@ -351,10 +372,10 @@ function FloatingToolbar({
           <SelectTrigger
             aria-label="Font"
             size="sm"
-            className="h-8 w-[150px] rounded-md border-transparent bg-foreground/[0.03] px-2 text-xs shadow-none hover:bg-foreground/[0.06]"
+            className="w-[156px] text-xs"
             data-value={fontFamilyValue}
           >
-            <Type className="size-3.5 text-foreground/45" />
+            <Type className="size-3.5 text-foreground/55" />
             <SelectValue placeholder={getFontFamilyLabel(fontFamilyValue)} />
           </SelectTrigger>
           <SelectContent>
@@ -373,19 +394,19 @@ function FloatingToolbar({
           </SelectContent>
         </Select>
 
-        <div className="flex items-center rounded-md border border-foreground/[0.08] bg-white">
+        <div className="flex items-center rounded-xl p-0.5">
           <IconButton
-            className="h-8 w-7 rounded-r-none border-0"
+            className="size-8 rounded-lg border-0 shadow-none hover:shadow-none"
             label="Decrease font size"
             onClick={() => commitFeature(fontSizeFeature, String(clamp(fontSizeValue - 2, 8, 200)))}
           >
-            <MinusIcon />
+            <Minus className="size-3.5" />
           </IconButton>
-          <span className="h-8 min-w-9 border-x border-foreground/[0.08] px-2 py-2 text-center text-[12px] font-medium leading-none tabular-nums text-foreground/70">
+          <span className="grid h-8 min-w-9 place-items-center px-2 text-center text-[12px] font-semibold leading-none tabular-nums text-foreground/75">
             {fontSizeValue}
           </span>
           <IconButton
-            className="h-8 w-7 rounded-l-none border-0"
+            className="size-8 rounded-lg border-0 shadow-none hover:shadow-none"
             label="Increase font size"
             onClick={() => commitFeature(fontSizeFeature, String(clamp(fontSizeValue + 2, 8, 200)))}
           >
@@ -570,7 +591,10 @@ function FloatingToolbar({
               size="icon-sm"
               aria-label="Other"
               title="Other"
-              className="h-8 w-8 rounded-md text-foreground/60 hover:text-foreground"
+              className={cn(
+                toolbarIconButtonClassName,
+                activePopoverId === "other" && toolbarIconButtonActiveClassName
+              )}
             >
               <Ellipsis className="size-4" />
             </Button>
@@ -609,17 +633,6 @@ function FloatingToolbar({
               <CaseSensitive className="size-3.5" />
               ARIA label
             </button>
-            <button
-              type="button"
-              className={menuItemClassName}
-              onClick={() => {
-                commitFeature(getFeature("locked"), attributeValues.locked ? "" : "true");
-                setActivePopoverId(null);
-              }}
-            >
-              <Lock className="size-3.5" />
-              {attributeValues.locked ? "Unlock" : "Lock"}
-            </button>
           </PopoverContent>
         </Popover>
       </ToolbarSection>
@@ -651,7 +664,10 @@ function FloatingToolbar({
             size="icon-sm"
             aria-label={label}
             title={label}
-            className="h-8 w-8 rounded-md text-foreground/60 hover:text-foreground"
+            className={cn(
+              toolbarIconButtonClassName,
+              activePopoverId === popoverId && toolbarIconButtonActiveClassName
+            )}
           >
             {icon}
           </Button>
@@ -685,6 +701,7 @@ function FloatingToolbar({
     popoverId: string;
   }) {
     const currentValue = getCurrentValue(feature);
+    const triggerIcon = feature.id === "text-align" ? getTextAlignIcon(currentValue) : icon;
     return (
       <Popover
         open={activePopoverId === popoverId}
@@ -697,9 +714,12 @@ function FloatingToolbar({
             size="icon-sm"
             aria-label={label}
             title={label}
-            className="h-8 w-8 rounded-md text-foreground/60 hover:text-foreground"
+            className={cn(
+              toolbarIconButtonClassName,
+              activePopoverId === popoverId && toolbarIconButtonActiveClassName
+            )}
           >
-            {icon}
+            {triggerIcon}
           </Button>
         </PopoverTrigger>
         <PopoverContent className="w-64 p-1.5">
@@ -885,11 +905,7 @@ function TextCommitControl({
 }
 
 function ToolbarSection({ children }: { children: ReactNode }) {
-  return (
-    <div className="flex items-center gap-0.5 rounded-md bg-foreground/[0.02] px-0.5">
-      {children}
-    </div>
-  );
+  return <div className="flex items-center gap-0.5 rounded-xl p-0.5">{children}</div>;
 }
 
 function OptionSwatch({
@@ -936,8 +952,14 @@ function getFeature(featureId: ElementToolFeature["id"]) {
   return feature;
 }
 
-function MinusIcon() {
-  return <span className="text-base leading-none">-</span>;
+function getTextAlignIcon(currentValue: string) {
+  if (currentValue === "left") {
+    return <AlignLeft className="size-3.5" />;
+  }
+  if (currentValue === "right") {
+    return <AlignRight className="size-3.5" />;
+  }
+  return <AlignCenter className="size-3.5" />;
 }
 
 function clamp(value: number, min: number, max: number) {
@@ -974,6 +996,12 @@ const attributeDialogConfig: Record<
 };
 
 const menuItemClassName =
-  "flex min-h-8 w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-[13px] text-foreground/70 hover:bg-foreground/[0.04] hover:text-foreground disabled:pointer-events-none disabled:opacity-40";
+  "flex min-h-9 w-full items-center gap-2 rounded-xl px-2.5 py-1.5 text-left text-[13px] text-foreground/70 outline-none transition-colors hover:bg-foreground/[0.05] hover:text-foreground focus-visible:bg-foreground/[0.06] focus-visible:text-foreground focus-visible:ring-[2px] focus-visible:ring-ring/25 disabled:pointer-events-none disabled:opacity-40";
+
+const toolbarIconButtonClassName =
+  "size-9 rounded-xl text-foreground/60 transition-all duration-200 hover:-translate-y-px hover:bg-foreground/[0.05] hover:text-foreground hover:shadow-[0_5px_14px_rgba(0,0,0,0.08)] active:translate-y-0 active:scale-[0.98]";
+
+const toolbarIconButtonActiveClassName =
+  "bg-foreground/[0.07] text-foreground shadow-[inset_0_1px_2px_rgba(0,0,0,0.08)] hover:bg-foreground/[0.08]";
 
 export { FloatingToolbar };

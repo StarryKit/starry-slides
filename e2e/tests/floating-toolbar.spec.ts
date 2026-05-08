@@ -123,9 +123,9 @@ test("full floating editor applies other attributes through dialogs", async ({ p
   const toolbar = page.getByTestId("floating-toolbar-anchor");
 
   await editableHeading.click();
-  await toolbar.getByRole("button", { name: "Other", exact: true }).click();
-  await page.getByRole("button", { name: "Lock", exact: true }).click();
+  await toolbar.getByRole("button", { name: "Lock", exact: true }).click();
   await expect(editableHeading).toHaveAttribute("data-editor-locked", "true");
+  await expect(toolbar.getByRole("button", { name: "Unlock", exact: true })).toBeVisible();
 
   await toolbar.getByRole("button", { name: "Other", exact: true }).click();
   await page.getByRole("button", { name: "Link", exact: true }).click();
