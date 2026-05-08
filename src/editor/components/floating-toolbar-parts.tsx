@@ -10,11 +10,13 @@ import { Separator } from "./ui/separator";
 export function ToolbarTrigger({
   children,
   active = false,
+  className,
   label,
   onClick,
 }: {
   children: ReactNode;
   active?: boolean;
+  className?: string;
   label: string;
   onClick: (event: ReactMouseEvent<HTMLButtonElement>) => void;
 }) {
@@ -24,7 +26,8 @@ export function ToolbarTrigger({
       size="icon-sm"
       className={cn(
         "h-8 w-8 rounded-md text-foreground/60 hover:text-foreground",
-        active && "bg-foreground/[0.06] text-foreground"
+        active && "bg-foreground/[0.06] text-foreground",
+        className
       )}
       type="button"
       aria-label={label}
@@ -39,11 +42,13 @@ export function ToolbarTrigger({
 export function IconButton({
   children,
   active = false,
+  className,
   label,
   onClick,
 }: {
   children: ReactNode;
   active?: boolean;
+  className?: string;
   label: string;
   onClick?: () => void;
 }) {
@@ -53,7 +58,8 @@ export function IconButton({
       size="icon-sm"
       className={cn(
         "h-8 w-8 rounded-md text-foreground/60 hover:text-foreground",
-        active && "bg-foreground/[0.06] text-foreground"
+        active && "bg-foreground/[0.06] text-foreground",
+        className
       )}
       type="button"
       aria-label={label}
@@ -179,6 +185,30 @@ export function FieldLabel({ children, htmlFor }: { children: ReactNode; htmlFor
 
 export function ToolbarIcon({ icon: Icon }: { icon: LucideIcon }) {
   return <Icon className="size-3.5" />;
+}
+
+export function ToolbarValueButton({
+  children,
+  label,
+  onClick,
+}: {
+  children: ReactNode;
+  label: string;
+  onClick: (event: ReactMouseEvent<HTMLButtonElement>) => void;
+}) {
+  return (
+    <Button
+      variant="ghost"
+      size="sm"
+      className="h-8 max-w-40 justify-between rounded-md px-2 text-foreground/70 hover:text-foreground"
+      type="button"
+      aria-label={label}
+      title={label}
+      onClick={onClick}
+    >
+      {children}
+    </Button>
+  );
 }
 
 export function ToolbarOption({

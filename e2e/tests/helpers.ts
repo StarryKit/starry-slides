@@ -265,11 +265,6 @@ export async function createGroupFromSnapCards(
   }
 
   await clickFloatingToolbarButton(page, "Group");
-  await page
-    .getByTestId("floating-toolbar-anchor")
-    .getByRole("menu")
-    .getByRole("button", { name: "Group", exact: true })
-    .click();
 
   const group = frame.locator('[data-editor-id="group-1"]');
   await expect(group).toBeVisible();
@@ -293,11 +288,6 @@ export async function createGroupFromGeometryCards(
   }
 
   await clickFloatingToolbarButton(page, "Group");
-  await page
-    .getByTestId("floating-toolbar-anchor")
-    .getByRole("menu")
-    .getByRole("button", { name: "Group", exact: true })
-    .click();
 
   const group = frame.locator('[data-editor-id="group-1"]');
   await expect(group).toBeVisible();

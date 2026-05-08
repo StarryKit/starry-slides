@@ -18,13 +18,14 @@ import {
   Columns3,
   Eye,
   Group,
-  Hash,
   Italic,
   Layers,
   Link2,
   Lock,
+  Minus,
   Palette,
   Pilcrow,
+  Plus,
   RotateCw,
   Rows3,
   Square,
@@ -75,6 +76,60 @@ export const DISTRIBUTE_OPTIONS: ElementToolOption[] = [
   { value: "vertical", icon: Rows3, label: "Distribute vertically" },
 ];
 
+export const FONT_SIZE_TOOL_OPTIONS: ElementToolOption[] = [
+  { value: "decrease", icon: Minus, label: "Decrease font size" },
+  { value: "increase", icon: Plus, label: "Increase font size" },
+];
+
+export const LINE_HEIGHT_OPTIONS: ElementToolOption[] = [
+  { value: "1", label: "Tight", description: "Compact text blocks" },
+  { value: "1.2", label: "Normal", description: "Balanced paragraph spacing" },
+  { value: "1.45", label: "Relaxed", description: "Readable body copy" },
+  { value: "1.7", label: "Airy", description: "Open editorial spacing" },
+];
+
+export const SIZE_PRESET_OPTIONS: ElementToolOption[] = [
+  { value: "compact", label: "Compact", description: "Small supporting element" },
+  { value: "wide", label: "Wide", description: "Primary text or media area" },
+  { value: "full", label: "Full width", description: "Span most of the slide" },
+  { value: "auto", label: "Auto fit", description: "Let content define the size" },
+];
+
+export const OPACITY_OPTIONS: ElementToolOption[] = [
+  { value: "1", label: "100%" },
+  { value: "0.75", label: "75%" },
+  { value: "0.5", label: "50%" },
+  { value: "0.25", label: "25%" },
+];
+
+export const ROTATION_OPTIONS: ElementToolOption[] = [
+  { value: "-15", label: "-15" },
+  { value: "0", label: "0" },
+  { value: "15", label: "15" },
+  { value: "45", label: "45" },
+];
+
+export const BORDER_STYLE_OPTIONS: ElementToolOption[] = [
+  { value: "none", label: "None" },
+  { value: "1px solid rgba(15, 23, 42, 0.16)", label: "Hairline" },
+  { value: "2px solid rgba(15, 23, 42, 0.22)", label: "Strong" },
+  { value: "1px dashed rgba(15, 23, 42, 0.3)", label: "Dashed" },
+];
+
+export const BORDER_RADIUS_OPTIONS: ElementToolOption[] = [
+  { value: "0px", label: "Sharp" },
+  { value: "8px", label: "Soft" },
+  { value: "18px", label: "Round" },
+  { value: "999px", label: "Pill" },
+];
+
+export const SHADOW_OPTIONS: ElementToolOption[] = [
+  { value: "none", label: "None" },
+  { value: "0 8px 22px rgba(15, 23, 42, 0.12)", label: "Soft" },
+  { value: "0 18px 42px rgba(15, 23, 42, 0.18)", label: "Lifted" },
+  { value: "0 28px 70px rgba(15, 23, 42, 0.24)", label: "Dramatic" },
+];
+
 export const ELEMENT_TOOL_GROUPS: ElementToolGroup[] = [
   {
     id: "typography",
@@ -97,12 +152,13 @@ export const ELEMENT_TOOL_GROUPS: ElementToolGroup[] = [
           {
             id: "font-size",
             label: "Font size",
-            controlType: "slider",
+            controlType: "action-group",
             target: "style",
             propertyName: "font-size",
+            options: FONT_SIZE_TOOL_OPTIONS,
             min: 8,
             max: 200,
-            step: 1,
+            step: 2,
             unit: "px",
           },
           {
@@ -143,12 +199,10 @@ export const ELEMENT_TOOL_GROUPS: ElementToolGroup[] = [
           {
             id: "line-height",
             label: "Line height",
-            controlType: "slider",
+            controlType: "action-group",
             target: "style",
             propertyName: "line-height",
-            min: 0.8,
-            max: 3,
-            step: 0.05,
+            options: LINE_HEIGHT_OPTIONS,
           },
           {
             id: "text-align",
@@ -196,26 +250,26 @@ export const ELEMENT_TOOL_GROUPS: ElementToolGroup[] = [
           {
             id: "border",
             label: "Border",
-            controlType: "text",
+            controlType: "action-group",
             target: "style",
             propertyName: "border",
-            placeholder: "1px solid #d1c1ae",
+            options: BORDER_STYLE_OPTIONS,
           },
           {
             id: "border-radius",
             label: "Border radius",
-            controlType: "text",
+            controlType: "action-group",
             target: "style",
             propertyName: "border-radius",
-            placeholder: "16px",
+            options: BORDER_RADIUS_OPTIONS,
           },
           {
             id: "box-shadow",
             label: "Shadow",
-            controlType: "text",
+            controlType: "action-group",
             target: "style",
             propertyName: "box-shadow",
-            placeholder: "0 12px 30px rgba(...)",
+            options: SHADOW_OPTIONS,
           },
         ],
       },
@@ -234,18 +288,18 @@ export const ELEMENT_TOOL_GROUPS: ElementToolGroup[] = [
           {
             id: "width",
             label: "Width",
-            controlType: "text",
+            controlType: "action-group",
             target: "style",
             propertyName: "width",
-            placeholder: "320px or auto",
+            options: SIZE_PRESET_OPTIONS,
           },
           {
             id: "height",
             label: "Height",
-            controlType: "text",
+            controlType: "action-group",
             target: "style",
             propertyName: "height",
-            placeholder: "240px or auto",
+            options: SIZE_PRESET_OPTIONS,
           },
         ],
       },
@@ -257,12 +311,10 @@ export const ELEMENT_TOOL_GROUPS: ElementToolGroup[] = [
           {
             id: "opacity",
             label: "Opacity",
-            controlType: "slider",
+            controlType: "action-group",
             target: "style",
             propertyName: "opacity",
-            min: 0,
-            max: 1,
-            step: 0.01,
+            options: OPACITY_OPTIONS,
           },
         ],
       },
@@ -274,12 +326,13 @@ export const ELEMENT_TOOL_GROUPS: ElementToolGroup[] = [
           {
             id: "rotation",
             label: "Rotation",
-            controlType: "number",
+            controlType: "action-group",
             target: "style",
             propertyName: "transform",
+            options: ROTATION_OPTIONS,
             min: -360,
             max: 360,
-            step: 1,
+            step: 15,
             unit: "deg",
           },
         ],
@@ -403,19 +456,6 @@ export const ELEMENT_TOOL_GROUPS: ElementToolGroup[] = [
             target: "attribute",
             attributeName: "aria-label",
             placeholder: "aria-label",
-          },
-        ],
-      },
-      {
-        id: "css",
-        label: "CSS",
-        icon: Hash,
-        features: [
-          {
-            id: "custom-css",
-            label: "Custom CSS property",
-            controlType: "custom-css",
-            target: "style",
           },
         ],
       },
