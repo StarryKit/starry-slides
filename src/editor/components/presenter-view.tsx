@@ -1,5 +1,5 @@
 import { Maximize2, Pen, X, Zap } from "lucide-react";
-import type { PointerEvent as ReactPointerEvent, WheelEvent as ReactWheelEvent } from "react";
+import type { PointerEvent as ReactPointerEvent } from "react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   PRESENTATION_PEN_COLORS,
@@ -34,7 +34,6 @@ function PresenterView({ slides, startSlideId, onExit }: PresenterViewProps) {
   const frameRef = useRef<HTMLDivElement>(null);
   const inkPathRef = useRef<{ color: string; points: string } | null>(null);
   const hideTimerRef = useRef<number | null>(null);
-  const lastWheelAtRef = useRef(0);
   const previousActiveIndexRef = useRef(activeIndex);
 
   const presentationSlides = useMemo(() => planPresentationSlides(slides), [slides]);
@@ -163,24 +162,6 @@ function PresenterView({ slides, startSlideId, onExit }: PresenterViewProps) {
     goNext();
   }
 
-  function handleWheel(event: ReactWheelEvent<HTMLDivElement>) {
-    if (tool !== "none") {
-      return;
-    }
-
-    if (Math.abs(event.deltaY) < Math.abs(event.deltaX) || event.deltaY <= 8) {
-      return;
-    }
-
-    const now = Date.now();
-    if (now - lastWheelAtRef.current < 360) {
-      return;
-    }
-    lastWheelAtRef.current = now;
-    event.preventDefault();
-    goNext();
-  }
-
   function beginInk(event: ReactPointerEvent<HTMLDivElement>) {
     if (
       tool !== "pen" ||
@@ -290,7 +271,6 @@ function PresenterView({ slides, startSlideId, onExit }: PresenterViewProps) {
       onPointerDown={beginInk}
       onPointerUp={handlePointerUp}
       onPointerLeave={endInk}
-      onWheel={handleWheel}
     >
       <div
         ref={frameRef}

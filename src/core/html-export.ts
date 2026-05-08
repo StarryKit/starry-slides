@@ -172,7 +172,6 @@ const STANDALONE_PRESENTER_SCRIPT = `
   let hideTimer = 0;
   let drawing = null;
   let penColor = penColors[0];
-  let lastWheelAt = 0;
 
   function activeSlide() {
     return deck.slides[Math.min(Math.max(index, 0), Math.max(deck.slides.length - 1, 0))];
@@ -344,15 +343,6 @@ const STANDALONE_PRESENTER_SCRIPT = `
     if (!frame.contains(event.target)) return;
     goNext();
   });
-  window.addEventListener("wheel", (event) => {
-    if (tool !== "none") return;
-    if (Math.abs(event.deltaY) < Math.abs(event.deltaX) || event.deltaY <= 8) return;
-    const now = Date.now();
-    if (now - lastWheelAt < 360) return;
-    lastWheelAt = now;
-    event.preventDefault();
-    goNext();
-  }, { passive: false });
   window.addEventListener("pointerup", () => {
     drawing = null;
   });

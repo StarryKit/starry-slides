@@ -63,13 +63,13 @@ Required behavior coverage:
 - commands being unavailable when text editing should use native browser
   behavior
 - selection and command behavior after switching slides
-- deck-level slide navigation by stage wheel and by ArrowUp/ArrowDown/
-  ArrowLeft/ArrowRight when no element is selected
+- deck-level slide navigation by ArrowUp/ArrowDown/ArrowLeft/ArrowRight when no
+  element is selected
 
 Invocation surfaces:
 
 - stage click, double-click, background click, keyboard Enter/Escape, blur, and
-  slide switching, stage wheel, and no-selection arrow keys
+  slide switching plus no-selection arrow keys
 
 Current coverage is partially present in:
 
@@ -85,7 +85,7 @@ Known gaps:
 - toolbar suppression during rotation is not explicitly covered
 - command unavailability during native text editing is not consistently covered
   for all shortcut and toolbar paths
-- stage wheel and no-selection arrow-key slide navigation are not covered
+- no-selection arrow-key slide navigation is not covered
 
 #### Text content editing and native text clipboard
 

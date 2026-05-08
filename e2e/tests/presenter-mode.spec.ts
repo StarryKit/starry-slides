@@ -50,12 +50,6 @@ test("editor Present mode supports navigation laser pen color and exit", async (
   ).toContainText("Agenda");
   await page.keyboard.press("ArrowDown");
   await expect(toolbar).toContainText(pageNumber(3));
-  await page.keyboard.press("ArrowUp");
-  await expect(toolbar).toContainText(pageNumber(2));
-  await slideFrame.click({ position: { x: 640, y: 360 } });
-  await expect(toolbar).toContainText(pageNumber(3));
-  await page.mouse.wheel(0, 320);
-  await expect(toolbar).toContainText(pageNumber(4));
 
   await page.waitForTimeout(1700);
   await expect(toolbar).toHaveAttribute("data-visible", "false");

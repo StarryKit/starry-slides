@@ -265,33 +265,6 @@ test("sidebar slide actions add duplicate hide and delete slides", async ({ page
   );
 });
 
-test("stage wheel switches slides when no element is selected", async ({ page }) => {
-  await gotoEditor(page);
-
-  const stageFrame = page.getByTestId("stage-frame");
-  const stageBox = await stageFrame.boundingBox();
-  if (!stageBox) {
-    throw new Error("Expected stage frame to have bounds.");
-  }
-
-  await expect(page.getByRole("button", { name: "Slide 1", exact: true })).toHaveAttribute(
-    "aria-current",
-    "true"
-  );
-  await page.mouse.move(stageBox.x + stageBox.width / 2, stageBox.y + stageBox.height / 2);
-  await page.mouse.wheel(0, 180);
-  await expect(page.getByRole("button", { name: "Slide 2", exact: true })).toHaveAttribute(
-    "aria-current",
-    "true"
-  );
-
-  await page.mouse.wheel(0, -180);
-  await expect(page.getByRole("button", { name: "Slide 1", exact: true })).toHaveAttribute(
-    "aria-current",
-    "true"
-  );
-});
-
 test("sidebar drag reorder persists slide order after refresh", async ({ page }) => {
   await gotoEditor(page);
 

@@ -144,7 +144,6 @@ function SlidesEditor({
     iframeRef,
     onCommitOperation: commitOperation,
     onOpenSelectionContextMenu: openSelectionContextMenu,
-    onStageWheel: navigateSlideFromWheel,
     onBeginPointerMove: useCallback(
       (
         elementId: string,
@@ -475,23 +474,6 @@ function SlidesEditor({
     setActiveSlideId(nextSlide.id);
     setSelectedElementId(null);
     return true;
-  }
-
-  function navigateSlideFromWheel(event: WheelEvent) {
-    if (selectedElementIds.length || isEditingText || isManipulating) {
-      return;
-    }
-
-    const dominantDelta =
-      Math.abs(event.deltaY) >= Math.abs(event.deltaX) ? event.deltaY : event.deltaX;
-    if (Math.abs(dominantDelta) < 24) {
-      return;
-    }
-
-    if (selectSlideByDirection(dominantDelta > 0 ? "next" : "previous")) {
-      event.preventDefault();
-      event.stopPropagation();
-    }
   }
 
   function addSlideAtIndex(insertIndex: number) {
@@ -1156,7 +1138,6 @@ function SlidesEditor({
                     clearSelection();
                   }
                 }}
-                onStageWheel={navigateSlideFromWheel}
                 onStyleChange={commitStyleChange}
                 onAttributeChange={commitAttributeChange}
                 onAlignToSlide={commitArrangeAction}

@@ -12,7 +12,6 @@ export interface UseIframeTextEditingOptions {
   iframeRef: RefObject<HTMLIFrameElement | null>;
   onCommitOperation: (operation: TextUpdateOperation) => void;
   onOpenSelectionContextMenu?: (clientX: number, clientY: number) => void;
-  onStageWheel?: (event: WheelEvent) => void;
   onBeginPointerMove?: (
     elementId: string,
     clientX: number,

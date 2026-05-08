@@ -15,7 +15,7 @@ supported editor-facing command or state route to browser-level coverage.
 | Chrome visibility during selected, dragging, resizing, rotating, text editing, and group editing | Stage, manipulation handles, keyboard | Regression deck | Toolbar and manipulation chrome hide/show at correct times | Active mode suppresses irrelevant chrome | N/A | N/A | `editor-chrome.spec.ts`; `block-manipulation.spec.ts`; `floating-toolbar.spec.ts` |
 | Object commands unavailable during native text editing | Keyboard shortcuts, toolbar paths | Regression deck slide 1 | Native text edit changes text only | Object selection and object clipboard unchanged | Native undo remains separate from object commands | Text state persists after commit | `text-editing.spec.ts`; `text-editing-history.spec.ts`; `keyboard-and-multiselect.spec.ts` |
 | Slide switching resets command routing | Sidebar slide switch | Regression deck slides 1, 2 | Commands target the newly active slide | Previous slide selection does not leak | N/A | N/A | `editor-chrome.spec.ts`; `selection.spec.ts` |
-| Slide navigation with no selection | Stage wheel, ArrowUp/ArrowDown/ArrowLeft/ArrowRight | Regression deck slides 1-3 | Active slide changes to previous or next slide | Requires no active selection; selected elements keep arrow movement behavior | N/A | N/A | `keyboard-and-multiselect.spec.ts`; `editor-chrome.spec.ts` |
+| Slide navigation with no selection | ArrowUp/ArrowDown/ArrowLeft/ArrowRight | Regression deck slides 1-3 | Active slide changes to previous or next slide | Requires no active selection; selected elements keep arrow movement behavior | N/A | N/A | `keyboard-and-multiselect.spec.ts`; `editor-chrome.spec.ts` |
 
 ## Deck-Level Slide Operations
 

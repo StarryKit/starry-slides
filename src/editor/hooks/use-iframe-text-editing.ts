@@ -24,7 +24,6 @@ function useIframeTextEditing({
   iframeRef,
   onCommitOperation,
   onOpenSelectionContextMenu,
-  onStageWheel,
   onBeginPointerMove,
 }: UseIframeTextEditingOptions): UseIframeTextEditingResult {
   const [selectedElementIds, setSelectedElementIds] = useState<string[]>([]);
@@ -35,10 +34,7 @@ function useIframeTextEditing({
   const activeGroupScopeIdRef = useRef<string | null>(null);
   const commitTextEditRef = useRef<(elementId: string, nextText: string) => void>(() => {});
   const cancelTextEditRef = useRef<() => void>(() => {});
-  const onStageWheelRef = useRef(onStageWheel);
   const selectedElementId = selectedElementIds[selectedElementIds.length - 1] ?? null;
-
-  onStageWheelRef.current = onStageWheel;
 
   const clearPreselection = useCallback(() => {
     setPreselectedElementId((currentId) => (currentId === null ? currentId : null));
@@ -366,10 +362,6 @@ function useIframeTextEditing({
       clearPreselection();
     };
 
-    const onWheel = (event: WheelEvent) => {
-      onStageWheelRef.current?.(event);
-    };
-    doc.addEventListener("wheel", onWheel, { passive: false });
     const onDocumentDoubleClick = (event: MouseEvent) => {
       const scopedTextTarget = getEditableTextTargetFromEvent(event, activeGroupScopeIdRef.current);
       const scopedTextId = scopedTextTarget?.getAttribute(SELECTOR_ATTR);
@@ -544,7 +536,6 @@ function useIframeTextEditing({
     }
 
     return () => {
-      doc.removeEventListener("wheel", onWheel);
       doc.removeEventListener("dblclick", onDocumentDoubleClick, true);
     };
   }, [
