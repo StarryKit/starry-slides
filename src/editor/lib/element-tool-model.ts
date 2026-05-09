@@ -374,27 +374,6 @@ export const ELEMENT_TOOL_GROUPS: ElementToolGroup[] = [
           },
         ],
       },
-      {
-        id: "grouping",
-        label: "Group",
-        icon: Group,
-        features: [
-          {
-            id: "group",
-            label: "Group selection",
-            controlType: "action-group",
-            target: "operation",
-            options: [{ value: "group", icon: Group, label: "Group" }],
-          },
-          {
-            id: "ungroup",
-            label: "Ungroup selected group",
-            controlType: "action-group",
-            target: "operation",
-            options: [{ value: "ungroup", icon: Ungroup, label: "Ungroup" }],
-          },
-        ],
-      },
     ],
   },
   {
@@ -413,6 +392,20 @@ export const ELEMENT_TOOL_GROUPS: ElementToolGroup[] = [
             controlType: "toggle",
             target: "attribute",
             attributeName: "data-editor-locked",
+          },
+          {
+            id: "group",
+            label: "Group selection",
+            controlType: "action-group",
+            target: "operation",
+            options: [{ value: "group", icon: Group, label: "Group" }],
+          },
+          {
+            id: "ungroup",
+            label: "Ungroup selected group",
+            controlType: "action-group",
+            target: "operation",
+            options: [{ value: "ungroup", icon: Ungroup, label: "Ungroup" }],
           },
         ],
       },
