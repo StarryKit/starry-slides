@@ -299,7 +299,7 @@ function FloatingToolbar({
       style={{ marginLeft: toolbarOffsetX }}
     >
       <div
-        className="flex w-max items-center gap-1 overflow-x-auto overflow-y-hidden rounded-2xl border border-foreground/[0.08] bg-white/92 px-2 py-2 shadow-[0_8px_24px_rgba(0,0,0,0.08),0_18px_54px_rgba(0,0,0,0.12)] backdrop-blur-xl max-[1200px]:min-w-[1120px]"
+        className="flex w-max items-center gap-0.5 overflow-x-auto overflow-y-hidden rounded-2xl border border-foreground/[0.08] bg-white/92 px-1.5 py-1.5 shadow-[0_2px_12px_rgba(0,0,0,0.04),0_8px_32px_rgba(0,0,0,0.06)] backdrop-blur-xl max-[1200px]:min-w-[940px]"
         aria-label="Full editing toolbar"
       >
         {renderLockSection()}
@@ -354,11 +354,7 @@ function FloatingToolbar({
           active={isSelectedElementLocked}
           onClick={() => commitFeature(getFeature("locked"), isSelectedElementLocked ? "" : "true")}
         >
-          {isSelectedElementLocked ? (
-            <LockOpen className="size-3.5" />
-          ) : (
-            <Lock className="size-3.5" />
-          )}
+          {isSelectedElementLocked ? <LockOpen className="size-3" /> : <Lock className="size-3" />}
         </IconButton>
       </ToolbarSection>
     );
@@ -381,10 +377,10 @@ function FloatingToolbar({
           <SelectTrigger
             aria-label="Font"
             size="sm"
-            className="w-[156px] text-xs"
+            className="h-7.5 w-[126px] gap-1.5 rounded-xl px-2 text-[12px] transition-colors hover:translate-y-0 hover:shadow-none"
             data-value={fontFamilyValue}
           >
-            <Type className="size-3.5 text-foreground/55" />
+            <Type className="size-3 text-foreground/55" />
             <SelectValue placeholder={getFontFamilyLabel(fontFamilyValue)} />
           </SelectTrigger>
           <SelectContent>
@@ -403,23 +399,23 @@ function FloatingToolbar({
           </SelectContent>
         </Select>
 
-        <div className="flex items-center rounded-xl p-0.5">
+        <div className="flex items-center rounded-xl">
           <IconButton
-            className="size-8 rounded-lg border-0 shadow-none hover:shadow-none"
+            className="size-6.5 rounded-lg border-0 shadow-none hover:shadow-none"
             label="Decrease font size"
             onClick={() => commitFeature(fontSizeFeature, String(clamp(fontSizeValue - 2, 8, 200)))}
           >
-            <Minus className="size-3.5" />
+            <Minus className="size-3" />
           </IconButton>
-          <span className="grid h-8 min-w-9 place-items-center px-2 text-center text-[12px] font-semibold leading-none tabular-nums text-foreground/75">
+          <span className="grid h-6.5 min-w-7 place-items-center px-1 text-center text-[11px] font-semibold leading-none tabular-nums text-foreground/75">
             {fontSizeValue}
           </span>
           <IconButton
-            className="size-8 rounded-lg border-0 shadow-none hover:shadow-none"
+            className="size-6.5 rounded-lg border-0 shadow-none hover:shadow-none"
             label="Increase font size"
             onClick={() => commitFeature(fontSizeFeature, String(clamp(fontSizeValue + 2, 8, 200)))}
           >
-            <Plus className="size-3.5" />
+            <Plus className="size-3" />
           </IconButton>
         </div>
       </ToolbarSection>
@@ -443,7 +439,7 @@ function FloatingToolbar({
               active={active}
               onClick={() => commitFeature(feature, active ? "" : "true")}
             >
-              <Icon className="size-3.5" />
+              <Icon className="size-3" />
             </IconButton>
           );
         })}
@@ -456,14 +452,14 @@ function FloatingToolbar({
       <ToolbarSection>
         {renderColorPopover({
           feature: getFeature("text-color"),
-          icon: <Palette className="size-3.5" />,
+          icon: <Palette className="size-3" />,
           includeGradients: true,
           label: "Text color",
           popoverId: "text-color",
         })}
         {renderColorPopover({
           feature: getFeature("background-color"),
-          icon: <Square className="size-3.5" />,
+          icon: <Square className="size-3" />,
           includeGradients: true,
           label: "Background color",
           popoverId: "background-color",
@@ -484,14 +480,14 @@ function FloatingToolbar({
             />
           ),
           feature: getFeature("line-height"),
-          icon: <Rows3 className="size-3.5" />,
+          icon: <Rows3 className="size-3" />,
           label: "Line height",
           options: LINE_HEIGHT_OPTIONS,
           popoverId: "line-height",
         })}
         {renderOptionsPopover({
           feature: getFeature("text-align"),
-          icon: <AlignCenter className="size-3.5" />,
+          icon: <AlignCenter className="size-3" />,
           label: "Text align",
           options: TEXT_ALIGN_OPTIONS,
           popoverId: "text-align",
@@ -505,7 +501,7 @@ function FloatingToolbar({
       <ToolbarSection>
         {renderOptionsPopover({
           feature: getFeature("border"),
-          icon: <CircleDashed className="size-3.5" />,
+          icon: <CircleDashed className="size-3" />,
           label: "Border style",
           options: BORDER_STYLE_OPTIONS,
           popoverId: "border",
@@ -520,7 +516,7 @@ function FloatingToolbar({
             />
           ),
           feature: getFeature("border-radius"),
-          icon: <Circle className="size-3.5" />,
+          icon: <Circle className="size-3" />,
           label: "Border radius",
           options: BORDER_RADIUS_OPTIONS,
           popoverId: "border-radius",
@@ -534,7 +530,7 @@ function FloatingToolbar({
             />
           ),
           feature: getFeature("box-shadow"),
-          icon: <Square className="size-3.5 drop-shadow" />,
+          icon: <Square className="size-3 drop-shadow" />,
           label: "Shadow",
           options: SHADOW_OPTIONS,
           popoverId: "box-shadow",
@@ -548,21 +544,21 @@ function FloatingToolbar({
       <ToolbarSection>
         {renderOptionsPopover({
           feature: getFeature("align-to-slide"),
-          icon: <AlignCenter className="size-3.5" />,
+          icon: <AlignCenter className="size-3" />,
           label: "Align",
           options: ALIGN_TO_SLIDE_OPTIONS,
           popoverId: "align",
         })}
         {renderOptionsPopover({
           feature: getFeature("layer-order"),
-          icon: <Layers className="size-3.5" />,
+          icon: <Layers className="size-3" />,
           label: "Layer",
           options: LAYER_ORDER_OPTIONS,
           popoverId: "layer",
         })}
         {renderOptionsPopover({
           feature: getFeature("distribute"),
-          icon: <Rows3 className="size-3.5" />,
+          icon: <Rows3 className="size-3" />,
           label: "Distribute",
           options: DISTRIBUTE_OPTIONS,
           popoverId: "distribute",
@@ -580,7 +576,7 @@ function FloatingToolbar({
           label={canUngroup ? "Ungroup" : "Group"}
           onClick={() => commitFeature(feature, canUngroup ? "ungroup" : "group")}
         >
-          {canUngroup ? <Ungroup className="size-3.5" /> : <Group className="size-3.5" />}
+          {canUngroup ? <Ungroup className="size-3" /> : <Group className="size-3" />}
         </IconButton>
       </ToolbarSection>
     );
@@ -605,7 +601,7 @@ function FloatingToolbar({
                 activePopoverId === "other" && toolbarIconButtonActiveClassName
               )}
             >
-              <Ellipsis className="size-4" />
+              <Ellipsis className="size-3.5" />
             </Button>
           </PopoverTrigger>
           <PopoverContent align="end" className="w-56 p-1.5">
@@ -617,7 +613,7 @@ function FloatingToolbar({
                 setActiveAttributeDialog("other-link");
               }}
             >
-              <Link2 className="size-3.5" />
+              <Link2 className="size-3" />
               Link
             </button>
             <button
@@ -628,7 +624,7 @@ function FloatingToolbar({
                 setActiveAttributeDialog("other-alt-text");
               }}
             >
-              <CaseSensitive className="size-3.5" />
+              <CaseSensitive className="size-3" />
               Alt text
             </button>
             <button
@@ -639,7 +635,7 @@ function FloatingToolbar({
                 setActiveAttributeDialog("other-aria-label");
               }}
             >
-              <CaseSensitive className="size-3.5" />
+              <CaseSensitive className="size-3" />
               ARIA label
             </button>
           </PopoverContent>
@@ -914,7 +910,7 @@ function TextCommitControl({
 }
 
 function ToolbarSection({ children }: { children: ReactNode }) {
-  return <div className="flex items-center gap-0.5 rounded-xl p-0.5">{children}</div>;
+  return <div className="flex items-center gap-px rounded-xl">{children}</div>;
 }
 
 function OptionSwatch({
@@ -963,12 +959,12 @@ function getFeature(featureId: ElementToolFeature["id"]) {
 
 function getTextAlignIcon(currentValue: string) {
   if (currentValue === "left") {
-    return <AlignLeft className="size-3.5" />;
+    return <AlignLeft className="size-3" />;
   }
   if (currentValue === "right") {
-    return <AlignRight className="size-3.5" />;
+    return <AlignRight className="size-3" />;
   }
-  return <AlignCenter className="size-3.5" />;
+  return <AlignCenter className="size-3" />;
 }
 
 function clamp(value: number, min: number, max: number) {
@@ -1005,10 +1001,10 @@ const attributeDialogConfig: Record<
 };
 
 const menuItemClassName =
-  "flex min-h-9 w-full items-center gap-2 rounded-xl px-2.5 py-1.5 text-left text-[13px] text-foreground/70 outline-none transition-colors hover:bg-foreground/[0.05] hover:text-foreground focus-visible:bg-foreground/[0.06] focus-visible:text-foreground focus-visible:ring-[2px] focus-visible:ring-ring/25 disabled:pointer-events-none disabled:opacity-40";
+  "flex min-h-7 w-full items-center gap-1.5 rounded-md px-2 py-1 text-left text-[12px] text-foreground/70 outline-none transition-colors hover:bg-foreground/[0.05] hover:text-foreground focus-visible:bg-foreground/[0.06] focus-visible:text-foreground focus-visible:ring-[2px] focus-visible:ring-ring/25 disabled:pointer-events-none disabled:opacity-40";
 
 const toolbarIconButtonClassName =
-  "size-9 rounded-xl text-foreground/60 transition-all duration-200 hover:-translate-y-px hover:bg-foreground/[0.05] hover:text-foreground hover:shadow-[0_5px_14px_rgba(0,0,0,0.08)] active:translate-y-0 active:scale-[0.98]";
+  "size-7.5 rounded-xl text-foreground/60 transition-colors hover:bg-foreground/[0.05] hover:text-foreground active:scale-[0.98]";
 
 const toolbarIconButtonActiveClassName =
   "bg-foreground/[0.07] text-foreground shadow-[inset_0_1px_2px_rgba(0,0,0,0.08)] hover:bg-foreground/[0.08]";
