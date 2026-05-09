@@ -256,7 +256,10 @@ export async function selectFontFamilyOption(
   });
   await expect(fontSelect).toBeVisible();
   await fontSelect.click();
-  await page.getByRole("option", { name: optionLabel, exact: true }).click();
+  await page
+    .getByTestId("floating-font-menu")
+    .getByRole("button", { name: optionLabel, exact: true })
+    .click();
   await expect(target).toHaveCSS("font-family", expectedCssPattern);
 }
 

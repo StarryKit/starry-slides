@@ -100,12 +100,44 @@ test("floating toolbar font family select changes the selected text font", async
 
   const editableHeading = coverFrame(page).locator('[data-editor-id="text-1"]');
   const toolbar = page.getByTestId("floating-toolbar-anchor");
+  const fontInput = toolbar.getByLabel("Font", { exact: true });
+  const fontMenu = page.getByTestId("floating-font-menu");
+  const fontMenuScroll = page.getByTestId("floating-font-menu-scroll");
 
   await editableHeading.click();
   await expect(toolbar).toBeVisible();
+  await expect(fontInput).toBeVisible();
+  const fontInputBox = await fontInput.boundingBox();
+  expect(fontInputBox?.width).toBeLessThanOrEqual(140);
   const beforeFont = await getComputedStyleValue(editableHeading, "font-family");
 
-  await selectFontFamilyOption(page, editableHeading, "Georgia", /Georgia|Times New Roman|serif/);
+  await fontInput.click();
+  await expect(fontMenu).toBeVisible();
+  await expect(fontMenuScroll).toHaveCSS("height", "224px");
+
+  const toolbarBox = await toolbar.boundingBox();
+  const menuBox = await fontMenu.boundingBox();
+  expect(toolbarBox).not.toBeNull();
+  expect(menuBox).not.toBeNull();
+  if (!toolbarBox || !menuBox) {
+    throw new Error("Expected toolbar and font menu bounds.");
+  }
+  expect(
+    menuBox.y >= toolbarBox.y + toolbarBox.height || menuBox.y + menuBox.height <= toolbarBox.y
+  ).toBeTruthy();
+
+  await fontInput.fill("Geo");
+  const georgiaOption = fontMenu.getByRole("button", { name: "Georgia", exact: true });
+  await expect(georgiaOption).toBeVisible();
+  await expect(fontMenu.getByRole("button", { name: "Inter", exact: true })).toBeHidden();
+  await georgiaOption.hover();
+  await expect(fontInput).toHaveValue("Georgia");
+  await expectInlineStyle(editableHeading, "font-family", 'Georgia, "Times New Roman", serif');
+  await page.mouse.move(menuBox.x + menuBox.width + 12, menuBox.y + 12);
+  await expect(fontInput).toHaveValue("Geo");
+  await expectInlineStyle(editableHeading, "font-family", "");
+  await georgiaOption.hover();
+  await georgiaOption.click();
 
   await expectInlineStyle(editableHeading, "font-family", 'Georgia, "Times New Roman", serif');
   const afterFont = await getComputedStyleValue(editableHeading, "font-family");

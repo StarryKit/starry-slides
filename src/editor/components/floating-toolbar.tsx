@@ -4,6 +4,7 @@ import {
   AlignRight,
   Bold,
   CaseSensitive,
+  ChevronDown,
   Circle,
   CircleDashed,
   Ellipsis,
@@ -23,7 +24,14 @@ import {
   Underline,
   Ungroup,
 } from "lucide-react";
-import { type ReactNode, useEffect, useLayoutEffect, useRef, useState } from "react";
+import {
+  type KeyboardEvent as ReactKeyboardEvent,
+  type ReactNode,
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+} from "react";
 import type { EditableType } from "../../core";
 import type { CssPropertyRow } from "../lib/collect-css-properties";
 import { commitElementToolFeature } from "../lib/element-tool-commit";
@@ -61,15 +69,7 @@ import {
   DialogTitle,
 } from "./ui/dialog";
 import { Input } from "./ui/input";
-import { Popover, PopoverContent, PopoverTrigger } from "./ui/popover";
-import {
-  Select,
-  SelectContent,
-  SelectGroup,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "./ui/select";
+import { Popover, PopoverAnchor, PopoverContent, PopoverTrigger } from "./ui/popover";
 import { Textarea } from "./ui/textarea";
 
 interface FloatingToolbarProps {
@@ -79,6 +79,7 @@ interface FloatingToolbarProps {
   isSelectedElementLocked: boolean;
   attributeValues: AttributeValues;
   onStyleChange: (propertyName: string, nextValue: string) => void;
+  onStylePreview: (propertyName: string, nextValue: string | null) => void;
   onAttributeChange: (attributeName: string, nextValue: string) => void;
   onAlignToSlide: (action: string) => void;
   onDistribute: (action: string) => void;
@@ -135,6 +136,7 @@ function FloatingToolbar({
   isSelectedElementLocked,
   attributeValues,
   onStyleChange,
+  onStylePreview,
   onAttributeChange,
   onAlignToSlide,
   onDistribute,
@@ -372,36 +374,12 @@ function FloatingToolbar({
 
     return (
       <ToolbarSection>
-        <Select
-          value={fontFamilyValue || "__empty__"}
-          onValueChange={(nextValue) =>
-            commitFeature(fontFamilyFeature, nextValue === "__empty__" ? "" : nextValue)
-          }
-        >
-          <SelectTrigger
-            aria-label="Font"
-            size="sm"
-            className="w-[156px] text-xs"
-            data-value={fontFamilyValue}
-          >
-            <Type className="size-3.5 text-foreground/55" />
-            <SelectValue placeholder={getFontFamilyLabel(fontFamilyValue)} />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectGroup>
-              {FONT_FAMILY_OPTIONS.map((font) => (
-                <SelectItem
-                  key={font.value}
-                  value={font.value}
-                  data-value={font.value}
-                  style={{ fontFamily: font.value }}
-                >
-                  {font.label}
-                </SelectItem>
-              ))}
-            </SelectGroup>
-          </SelectContent>
-        </Select>
+        <FontFamilyCombobox
+          currentValue={fontFamilyValue}
+          onCommit={(nextValue) => commitFeature(fontFamilyFeature, nextValue)}
+          onOpen={() => setActivePopoverId(null)}
+          onPreview={(nextValue) => onStylePreview("font-family", nextValue)}
+        />
 
         <FontSizeControl
           currentValue={fontSizeValue}
@@ -814,6 +792,161 @@ function AttributeDialog({
         </DialogFooter>
       </DialogContent>
     </Dialog>
+  );
+}
+
+function FontFamilyCombobox({
+  currentValue,
+  onCommit,
+  onOpen,
+  onPreview,
+}: {
+  currentValue: string;
+  onCommit: (nextValue: string) => void;
+  onOpen: () => void;
+  onPreview: (nextValue: string | null) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const [query, setQuery] = useState("");
+  const [previewLabel, setPreviewLabel] = useState("");
+  const selectedLabel = getFontFamilyLabel(currentValue);
+  const normalizedQuery = query.trim().toLowerCase();
+  const filteredFonts = normalizedQuery
+    ? FONT_FAMILY_OPTIONS.filter((font) =>
+        `${font.label} ${font.value}`.toLowerCase().includes(normalizedQuery)
+      )
+    : FONT_FAMILY_OPTIONS;
+  const visibleValue = previewLabel || (open ? query : selectedLabel);
+
+  useEffect(() => {
+    if (!open) {
+      setQuery("");
+      setPreviewLabel("");
+      onPreview(null);
+    }
+  }, [onPreview, open]);
+
+  function commitFont(nextValue: string) {
+    setPreviewLabel("");
+    onPreview(null);
+    onCommit(nextValue);
+    setOpen(false);
+  }
+
+  function previewFont(label: string, nextValue: string) {
+    setPreviewLabel(label);
+    onPreview(nextValue);
+  }
+
+  function clearPreview() {
+    setPreviewLabel("");
+    onPreview(null);
+  }
+
+  function openMenu() {
+    onOpen();
+    setOpen(true);
+  }
+
+  function handleKeyDown(event: ReactKeyboardEvent<HTMLInputElement>) {
+    if (event.key === "ArrowDown") {
+      event.preventDefault();
+      openMenu();
+      return;
+    }
+
+    if (event.key === "Enter") {
+      event.preventDefault();
+      const exactMatch = filteredFonts.find((font) => font.label.toLowerCase() === normalizedQuery);
+      const nextFont = exactMatch ?? filteredFonts[0];
+      if (nextFont) {
+        commitFont(nextFont.value);
+      }
+      return;
+    }
+
+    if (event.key === "Escape") {
+      setOpen(false);
+    }
+  }
+
+  return (
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverAnchor asChild>
+        <div className="relative flex h-9 w-[140px] items-center rounded-xl border border-transparent bg-transparent text-foreground/75 transition-all duration-200 hover:-translate-y-px hover:bg-foreground/[0.05] hover:shadow-[0_5px_14px_rgba(0,0,0,0.08)] focus-within:border-foreground/20 focus-within:bg-white focus-within:ring-[2px] focus-within:ring-ring/35">
+          <Type className="pointer-events-none absolute left-2.5 size-3.5 text-foreground/55" />
+          <Input
+            aria-controls="floating-font-menu"
+            aria-expanded={open}
+            aria-label="Font"
+            autoComplete="off"
+            className="h-full min-w-0 border-0 bg-transparent px-8 text-xs shadow-none outline-none ring-0 placeholder:text-foreground/45 focus-visible:ring-0"
+            data-value={currentValue}
+            onChange={(event) => {
+              setPreviewLabel("");
+              setQuery(event.target.value);
+              openMenu();
+            }}
+            onClick={openMenu}
+            onFocus={openMenu}
+            onKeyDown={handleKeyDown}
+            placeholder="Font"
+            role="combobox"
+            value={visibleValue}
+          />
+          <button
+            type="button"
+            className="absolute right-1 grid size-7 place-items-center rounded-lg text-foreground/45 transition-colors hover:bg-foreground/[0.06] hover:text-foreground"
+            aria-label="Show fonts"
+            onClick={() => {
+              if (open) {
+                setOpen(false);
+                return;
+              }
+              openMenu();
+            }}
+          >
+            <ChevronDown className="size-3.5" aria-hidden="true" />
+          </button>
+        </div>
+      </PopoverAnchor>
+      <PopoverContent
+        align="start"
+        avoidCollisions
+        className="w-[240px] p-1.5"
+        data-testid="floating-font-menu"
+        id="floating-font-menu"
+        onOpenAutoFocus={(event) => event.preventDefault()}
+        side="bottom"
+        sideOffset={18}
+      >
+        <div className="h-56 overflow-y-auto pr-1" data-testid="floating-font-menu-scroll">
+          {filteredFonts.length ? (
+            filteredFonts.map((font) => (
+              <button
+                type="button"
+                key={font.value}
+                className={cn(
+                  menuItemClassName,
+                  currentValue === font.value && "bg-foreground/[0.06]"
+                )}
+                data-value={font.value}
+                onBlur={clearPreview}
+                onClick={() => commitFont(font.value)}
+                onFocus={() => previewFont(font.label, font.value)}
+                onMouseEnter={() => previewFont(font.label, font.value)}
+                onMouseLeave={clearPreview}
+                style={{ fontFamily: font.value }}
+              >
+                <span className="truncate">{font.label}</span>
+              </button>
+            ))
+          ) : (
+            <div className="px-2.5 py-2 text-[13px] text-foreground/45">No fonts found</div>
+          )}
+        </div>
+      </PopoverContent>
+    </Popover>
   );
 }
 

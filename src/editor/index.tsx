@@ -292,6 +292,38 @@ function SlidesEditor({
     }
   }
 
+  function previewStyleChange(propertyName: string, nextValue: string | null) {
+    const doc = iframeRef.current?.contentDocument;
+    if (!doc) {
+      return;
+    }
+
+    const selectedNode = querySlideElement<HTMLElement>(doc, selectedTargetElementId);
+    if (!selectedNode) {
+      return;
+    }
+
+    const previewAttribute = `data-editor-preview-${propertyName}`;
+    const previewOriginalValue = selectedNode.getAttribute(previewAttribute);
+    if (nextValue === null) {
+      if (previewOriginalValue === null) {
+        return;
+      }
+
+      selectedNode.style.setProperty(propertyName, previewOriginalValue);
+      selectedNode.removeAttribute(previewAttribute);
+      return;
+    }
+
+    if (previewOriginalValue === null) {
+      selectedNode.setAttribute(
+        previewAttribute,
+        selectedNode.style.getPropertyValue(propertyName)
+      );
+    }
+    selectedNode.style.setProperty(propertyName, nextValue);
+  }
+
   function commitAttributeChange(attributeName: string, nextValue: string) {
     if (!activeSlide) {
       return;
@@ -1190,6 +1222,7 @@ function SlidesEditor({
                   }
                 }}
                 onStyleChange={commitStyleChange}
+                onStylePreview={previewStyleChange}
                 onAttributeChange={commitAttributeChange}
                 onAlignToSlide={commitArrangeAction}
                 onDistribute={distributeSelection}
