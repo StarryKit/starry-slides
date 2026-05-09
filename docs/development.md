@@ -60,16 +60,11 @@ skills/
 
 Start here before making changes:
 
-1. Read `CONTEXT-MAP.md`.
-2. Read the relevant context docs:
-   - `src/core/CONTEXT.md` for slide parsing, operations, history, and
-     validation.
-   - `src/editor/CONTEXT.md` for editor UI and interactions.
-   - `src/node/CONTEXT.md` for local deck loading, save/reset behavior, and
-     CLI runtime integration.
-3. Read `CONTEXT.md` before changing architecture, persistence, collaboration,
-   package boundaries, history, or editor pipeline semantics.
-4. For deck generation work, use `skills/starry-slides/SKILL.md` and its
+1. Read `CONTEXT.md`.
+2. Read relevant ADRs from `docs/adr/README.md` before changing architecture,
+   persistence, collaboration, package boundaries, history, editor pipeline
+   semantics, or E2E documentation policy.
+3. For deck generation work, use `skills/starry-slides/SKILL.md` and its
    bundled scripts.
 
 Rules that matter in this repo:

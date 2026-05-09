@@ -101,7 +101,7 @@ selection path because component visibility alone cannot prove this interaction.
   - `src/editor/components/stage-canvas.tsx`
   - `src/editor/index.tsx`
   - `e2e/tests/selection.spec.ts`
-  - `docs/editing-e2e-coverage-matrix.md`
+  - `docs/e2e.md`
   - `docs/adr/README.md`
 
 - **Pattern**:

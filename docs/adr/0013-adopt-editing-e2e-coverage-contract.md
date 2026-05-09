@@ -1,7 +1,8 @@
 # ADR-0013: Adopt editing E2E coverage contract
 
-- Status: proposed
+- Status: superseded
 - Date: 2026-05-06
+- Superseded by: [ADR-0025](./0025-adopt-docs-e2e-md-as-the-e2e-source-of-truth.md)
 
 ## Context
 

@@ -6,13 +6,7 @@ core operations.
 
 ## Before You Change Code
 
-Read the relevant context:
-
-- `CONTEXT-MAP.md`
-- `src/core/CONTEXT.md`
-- `src/editor/CONTEXT.md`
-- `src/node/CONTEXT.md`
-- `CONTEXT.md` for architectural decision pointers
+Read `CONTEXT.md`.
 
 Use ADRs for changes that alter architecture, persistence, collaboration,
 package boundaries, history semantics, or editor pipeline semantics.

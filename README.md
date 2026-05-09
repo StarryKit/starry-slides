@@ -102,7 +102,7 @@ npx skills add StarryKit/starry-slides --skill starry-slides
 | Agent-backed slide modification | Planned | Proposed AI edits with preview, accept/reject, validation, undo/redo, and persistence. |
 | Productized deployment | Planned | Runtime, storage, security, and deployment model beyond the local workflow. |
 
-Detailed planning lives in [ROADMAP.md](./ROADMAP.md).
+Detailed planning lives in [docs/roadmap/README.md](./docs/roadmap/README.md).
 
 ## Documentation
 
@@ -112,7 +112,8 @@ Detailed planning lives in [ROADMAP.md](./ROADMAP.md).
   verification, and review.
 - [Slide Contract guide](./docs/slide-contract.md): deck package shape and
   required HTML attributes.
-- [Context map](./CONTEXT-MAP.md): where to read before changing a subsystem.
+- [Repository context](./CONTEXT.md): repo rules, boundaries, testing
+  expectations, and shared terminology.
 - [Architecture decisions](./docs/adr/): accepted ADRs and ADR template.
 - [Agent-facing skill](./skills/starry-slides/SKILL.md): generation
   workflow and protocol tools for agents.

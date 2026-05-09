@@ -57,9 +57,9 @@ to apply and invert the existing operation type.
 
 ## Implementation Plan
 
-- Update `docs/editing-e2e-coverage-matrix.md` and ADR-0013 so Group/Ungroup
-  coverage includes Block Flatten and no longer states that Ungroup is
-  unavailable for normal blocks with direct editable children.
+- Update `docs/e2e.md` so Group/Ungroup coverage includes Block Flatten and no
+  longer states that Ungroup is unavailable for normal blocks with direct
+  editable children.
 - Add E2E coverage in `e2e/tests/context-menu.spec.ts` for selecting a normal
   block with direct child editable elements, invoking Context Menu Ungroup, and
   asserting that the block and promoted child elements become siblings without

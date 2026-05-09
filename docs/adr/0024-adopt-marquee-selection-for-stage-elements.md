@@ -85,7 +85,7 @@ background, which draws a marquee.
   - `src/editor/components/editor-workspace.tsx`
   - `src/editor/index.tsx`
   - `e2e/tests/selection.spec.ts`
-  - `docs/editing-e2e-coverage-matrix.md`
+  - `docs/e2e.md`
   - `docs/adr/README.md`
 
 - **Pattern**:
