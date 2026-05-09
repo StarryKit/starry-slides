@@ -184,6 +184,33 @@ export function getResizeParentElementId(
   return null;
 }
 
+function usesOutOfFlowGeometry(snapshot: { position: string | null }): boolean {
+  return snapshot.position === "absolute" || snapshot.position === "fixed";
+}
+
+function formatMargin({
+  top,
+  right,
+  bottom,
+  left,
+}: {
+  top: number;
+  right: number;
+  bottom: number;
+  left: number;
+}): string | null {
+  if (
+    Math.abs(top) <= 0.01 &&
+    Math.abs(right) <= 0.01 &&
+    Math.abs(bottom) <= 0.01 &&
+    Math.abs(left) <= 0.01
+  ) {
+    return null;
+  }
+
+  return `${px(top)} ${px(right)} ${px(bottom)} ${px(left)}`;
+}
+
 export function applyGeometryScaledResize(
   session: ManipulationSession,
   nextSelectionRect: StageRect,
@@ -230,13 +257,87 @@ export function applyGeometryScaledResize(
     }
 
     const transformParts = parseTransformParts(previousStyle.transform);
+    const nextWidth = px(nextRect.width / geometry.scale);
+    const nextHeight = px(nextRect.height / geometry.scale);
+    const stageRectToViewportRect = (rect: StageRect) => ({
+      x: (rect.x - geometry.offsetX) / geometry.scale,
+      y: (rect.y - geometry.offsetY) / geometry.scale,
+      width: rect.width / geometry.scale,
+      height: rect.height / geometry.scale,
+    });
+
+    if (!usesOutOfFlowGeometry(previousStyle)) {
+      applyLayoutSnapshot(node, {
+        ...previousStyle,
+        width: nextWidth,
+        maxWidth: "none",
+        height: nextHeight,
+        margin: previousStyle.margin,
+        transform: composeTransform(
+          transformParts.translateX,
+          transformParts.translateY,
+          transformParts.rotate
+        ),
+        transformOrigin: previousStyle.transformOrigin,
+      });
+      const desiredRect = stageRectToViewportRect(nextRect);
+      const nextMargins = {
+        ...(session.startComputedMargins[elementId] ?? {
+          top: 0,
+          right: 0,
+          bottom: 0,
+          left: 0,
+        }),
+      };
+
+      for (let index = 0; index < 6; index += 1) {
+        const actualRect = node.getBoundingClientRect();
+        const correctionX = desiredRect.x - actualRect.left;
+        const correctionY = desiredRect.y - actualRect.top;
+        if (Math.abs(correctionX) <= 0.5 && Math.abs(correctionY) <= 0.5) {
+          break;
+        }
+
+        nextMargins.left += correctionX;
+        nextMargins.top += correctionY;
+        applyLayoutSnapshot(node, {
+          ...previousStyle,
+          width: nextWidth,
+          maxWidth: "none",
+          height: nextHeight,
+          margin: formatMargin(nextMargins),
+          transform: composeTransform(
+            transformParts.translateX,
+            transformParts.translateY,
+            transformParts.rotate
+          ),
+          transformOrigin: previousStyle.transformOrigin,
+        });
+      }
+
+      applyLayoutSnapshot(node, {
+        ...previousStyle,
+        width: nextWidth,
+        maxWidth: "none",
+        height: nextHeight,
+        margin: formatMargin(nextMargins),
+        transform: composeTransform(
+          transformParts.translateX,
+          transformParts.translateY,
+          transformParts.rotate
+        ),
+        transformOrigin: previousStyle.transformOrigin,
+      });
+      continue;
+    }
+
     applyLayoutSnapshot(node, {
       ...previousStyle,
-      position: previousStyle.position || "absolute",
       left: px((nextRect.x - parentRect.x) / geometry.scale),
       top: px((nextRect.y - parentRect.y) / geometry.scale),
-      width: px(nextRect.width / geometry.scale),
-      height: px(nextRect.height / geometry.scale),
+      width: nextWidth,
+      maxWidth: previousStyle.maxWidth,
+      height: nextHeight,
       transform: composeTransform(0, 0, transformParts.rotate),
       transformOrigin: previousStyle.transformOrigin || "center center",
     });
