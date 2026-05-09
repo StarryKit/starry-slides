@@ -52,7 +52,7 @@ export const toolbarIconMutedClassName = "size-3.5 text-foreground/55";
 export const toolbarIconDropShadowClassName = "size-3.5 drop-shadow";
 export const ICON_STROKE_WIDTH = 2.5;
 export const menuItemClassName =
-  "flex min-h-7 w-full items-center gap-1.5 rounded-md px-2 py-1 text-left text-[12px] text-foreground/70 outline-none transition-colors hover:bg-foreground/[0.05] hover:text-foreground focus-visible:bg-foreground/[0.06] focus-visible:text-foreground focus-visible:ring-[2px] focus-visible:ring-ring/25 disabled:pointer-events-none disabled:opacity-40";
+  "flex min-h-7 w-full items-center justify-between gap-2 rounded-md px-2 py-1 text-left text-[12px] text-foreground/70 outline-none transition-colors hover:bg-foreground/[0.05] hover:text-foreground focus-visible:bg-foreground/[0.06] focus-visible:text-foreground focus-visible:ring-[2px] focus-visible:ring-ring/25 disabled:pointer-events-none disabled:opacity-40";
 export const toolbarIconButtonClassName =
   "size-7.5 rounded-xl text-foreground/60 transition-colors hover:bg-foreground/[0.05] hover:text-foreground active:scale-[0.98]";
 export const toolbarIconButtonActiveClassName =

@@ -278,7 +278,7 @@ function ColorPicker({
     setActiveTab("gradient");
   }, [parsedGradient]);
 
-  function commitColor(nextHex: string, nextAlpha = parsedColor.alpha) {
+  function commitColor(nextHex: string, nextAlpha = includeOpacity ? parsedColor.alpha : 1) {
     onChange(formatColorValue(nextHex, nextAlpha));
   }
 

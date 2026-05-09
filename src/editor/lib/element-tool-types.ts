@@ -13,6 +13,8 @@ export type ElementToolFeatureId =
   | "text-color"
   | "background-color"
   | "border"
+  | "border-color"
+  | "border-width"
   | "border-radius"
   | "box-shadow"
   | "width"

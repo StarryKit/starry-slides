@@ -74,13 +74,146 @@ export function getElementToolValue({
     return rawValue;
   }
   if (feature.controlType === "color") {
-    return getColorInputValue(rawValue);
+    return getColorInputValue(
+      getNormalizedBorderFeatureValue(feature.id, inspectedStyles) || rawValue
+    );
+  }
+  const normalizedBorderValue = getNormalizedBorderFeatureValue(feature.id, inspectedStyles);
+  if (normalizedBorderValue) {
+    return normalizedBorderValue;
   }
   if (feature.id === "text-align" && rawValue === "start") {
     return "left";
   }
 
   return rawValue;
+}
+
+function getNormalizedBorderFeatureValue(
+  featureId: ElementToolFeature["id"],
+  inspectedStyles: CssPropertyRow[]
+): string {
+  if (featureId === "border") {
+    return normalizeBorderStyleValue(
+      getStyleValue(inspectedStyles, "border-style") ||
+        getStyleValue(inspectedStyles, "border-top-style") ||
+        parseBorderShorthand(inspectedStyles).style
+    );
+  }
+
+  if (featureId === "border-width") {
+    const borderParts = parseBorderShorthand(inspectedStyles);
+    const borderStyle = normalizeBorderStyleValue(
+      getStyleValue(inspectedStyles, "border-style") ||
+        getStyleValue(inspectedStyles, "border-top-style") ||
+        borderParts.style
+    );
+    const borderWidth = normalizeBorderWidthValue(
+      getStyleValue(inspectedStyles, "border-width") ||
+        getStyleValue(inspectedStyles, "border-top-width") ||
+        borderParts.width
+    );
+
+    if (borderStyle === "none" && borderWidth === "0px") {
+      return "3px";
+    }
+
+    return borderWidth;
+  }
+
+  if (featureId === "border-color") {
+    return (
+      getStyleValue(inspectedStyles, "border-color") ||
+      getStyleValue(inspectedStyles, "border-top-color") ||
+      parseBorderShorthand(inspectedStyles).color
+    );
+  }
+
+  if (featureId === "border-radius") {
+    return normalizeSingleCssValue(
+      getStyleValue(inspectedStyles, "border-radius") ||
+        getStyleValue(inspectedStyles, "border-top-left-radius")
+    );
+  }
+
+  if (featureId === "box-shadow") {
+    return getStyleValue(inspectedStyles, "box-shadow") || "none";
+  }
+
+  return "";
+}
+
+function parseBorderShorthand(inspectedStyles: CssPropertyRow[]) {
+  const borderValue = getStyleValue(inspectedStyles, "border");
+  return {
+    color: parseBorderColor(borderValue),
+    style: parseBorderStyle(borderValue),
+    width: parseBorderWidth(borderValue),
+  };
+}
+
+function normalizeBorderStyleValue(value: string): string {
+  const normalizedValue = value.trim().toLowerCase();
+  if (normalizedValue.includes("dashed")) {
+    return "dashed";
+  }
+  if (normalizedValue.includes("dotted")) {
+    return "dotted";
+  }
+  if (normalizedValue.includes("solid")) {
+    return "solid";
+  }
+  if (normalizedValue.includes("none") || !normalizedValue) {
+    return "none";
+  }
+
+  return normalizedValue.split(/\s+/)[0] ?? "none";
+}
+
+function normalizeBorderWidthValue(value: string): string {
+  return normalizeSingleCssValue(value) || "3px";
+}
+
+function normalizeSingleCssValue(value: string): string {
+  const firstValue = value.trim().split(/\s+/)[0] ?? "";
+  return firstValue;
+}
+
+function parseBorderStyle(value: string): string {
+  return (
+    value
+      .trim()
+      .split(/\s+/)
+      .find((token) =>
+        [
+          "none",
+          "hidden",
+          "dotted",
+          "dashed",
+          "solid",
+          "double",
+          "groove",
+          "ridge",
+          "inset",
+          "outset",
+        ].includes(token.toLowerCase())
+      ) ?? ""
+  );
+}
+
+function parseBorderWidth(value: string): string {
+  return (
+    value
+      .trim()
+      .split(/\s+/)
+      .find((token) => /^(?:\d+(?:\.\d+)?px|thin|medium|thick)$/i.test(token)) ?? ""
+  );
+}
+
+function parseBorderColor(value: string): string {
+  return (
+    value.trim().match(/(?:rgba?\([^)]+\)|hsla?\([^)]+\)|#[0-9a-f]{3,8}\b|(?:[a-z]+))/i)?.[0] ?? ""
+  );
 }
 
 export function normalizeFeatureCommitValue(
@@ -92,6 +225,15 @@ export function normalizeFeatureCommitValue(
     const clampedValue = Math.min(
       200,
       Math.max(8, Number.isFinite(currentValue) ? currentValue : 8)
+    );
+    return `${clampedValue}px`;
+  }
+
+  if (feature.id === "border-width" && nextValue.trim()) {
+    const currentValue = Number.parseFloat(nextValue);
+    const clampedValue = Math.min(
+      24,
+      Math.max(0, Number.isFinite(currentValue) ? currentValue : 0)
     );
     return `${clampedValue}px`;
   }

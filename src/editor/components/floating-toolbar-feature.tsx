@@ -267,7 +267,9 @@ function OptionGroup({
       "height",
       "opacity",
       "border",
+      "border-color",
       "border-radius",
+      "border-width",
       "box-shadow",
     ].includes(feature.id);
 
@@ -283,6 +285,7 @@ function OptionGroup({
               : false;
           const active = isStyleOptionActive(feature, currentValue, option);
           const shouldClose = feature.target === "operation";
+          const showOptionPreviewAfterLabel = shouldShowOptionPreviewAfterLabel(feature);
 
           return (
             <ToolbarOption
@@ -299,12 +302,21 @@ function OptionGroup({
                 }
               }}
             >
-              {Icon ? (
-                <ToolbarIcon icon={Icon} />
+              {showOptionPreviewAfterLabel ? (
+                <>
+                  <span className="min-w-0 truncate">{option.label}</span>
+                  <OptionPreview feature={feature} option={option} />
+                </>
               ) : (
-                <OptionPreview feature={feature} option={option} />
+                <>
+                  {Icon ? (
+                    <ToolbarIcon icon={Icon} />
+                  ) : (
+                    <OptionPreview feature={feature} option={option} />
+                  )}
+                  <span className="truncate">{option.label}</span>
+                </>
               )}
-              <span className="truncate">{option.label}</span>
               {active ? <span className="ml-auto size-1.5 rounded-full bg-foreground/70" /> : null}
             </ToolbarOption>
           );
@@ -323,19 +335,27 @@ function OptionPreview({
 }) {
   if (feature.id === "box-shadow") {
     return (
-      <span
-        className="size-4 rounded border border-foreground/10 bg-white"
-        style={{ boxShadow: option.value === "none" ? undefined : option.value }}
-        aria-hidden="true"
-      />
+      <span className="flex h-5 w-10 shrink-0 items-center justify-center" aria-hidden="true">
+        <span
+          className="h-3.5 w-8 rounded border border-foreground/10 bg-white"
+          data-testid="floating-toolbar-option-preview"
+          style={{ boxShadow: option.value === "none" ? undefined : option.value }}
+        />
+      </span>
     );
   }
 
   if (feature.id === "border") {
     return (
       <span
-        className="size-4 rounded bg-white"
-        style={{ border: option.value === "none" ? "1px solid rgba(15,23,42,.12)" : option.value }}
+        className="h-4 w-9 shrink-0 rounded bg-white"
+        data-testid="floating-toolbar-option-preview"
+        style={{
+          borderColor: "rgba(15,23,42,.5)",
+          borderStyle: option.value === "none" ? "solid" : option.value,
+          borderWidth: option.value === "none" ? "1px" : "2px",
+          opacity: option.value === "none" ? 0.32 : 1,
+        }}
         aria-hidden="true"
       />
     );
@@ -344,14 +364,39 @@ function OptionPreview({
   if (feature.id === "border-radius") {
     return (
       <span
-        className="size-4 border border-foreground/15 bg-foreground/[0.04]"
+        className="h-4 w-9 shrink-0 border border-foreground/15 bg-foreground/[0.04]"
+        data-testid="floating-toolbar-option-preview"
         style={{ borderRadius: option.value }}
         aria-hidden="true"
       />
     );
   }
 
+  if (feature.id === "border-width") {
+    return (
+      <span className="flex h-4 w-9 shrink-0 items-center justify-center" aria-hidden="true">
+        <span
+          className="w-full rounded-full bg-foreground/65"
+          data-testid="floating-toolbar-option-preview"
+          style={{
+            height: option.value === "0px" ? "1px" : option.value,
+            opacity: option.value === "0px" ? 0.22 : 1,
+          }}
+        />
+      </span>
+    );
+  }
+
   return <span className="size-1.5 rounded-full bg-foreground/30" aria-hidden="true" />;
+}
+
+function shouldShowOptionPreviewAfterLabel(feature: ElementToolFeature) {
+  return (
+    feature.id === "border" ||
+    feature.id === "border-radius" ||
+    feature.id === "border-width" ||
+    feature.id === "box-shadow"
+  );
 }
 
 function isStyleOptionActive(

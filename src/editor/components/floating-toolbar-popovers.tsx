@@ -5,6 +5,7 @@ import {
   type ReactNode,
   type SetStateAction,
   useEffect,
+  useRef,
   useState,
 } from "react";
 import type { ElementToolFeature, ElementToolOption } from "../lib/element-tool-model";
@@ -58,7 +59,12 @@ function ColorPopover({
       onOpenChange={(open) => setActivePopoverId(open ? popoverId : null)}
     >
       <PopoverTrigger asChild>
-        <ToolbarPopoverButton active={activePopoverId === popoverId} icon={icon} label={label} />
+        <ToolbarPopoverButton
+          active={activePopoverId === popoverId}
+          data-testid={`floating-${popoverId}-trigger`}
+          icon={icon}
+          label={label}
+        />
       </PopoverTrigger>
       <PopoverContent className="w-80 max-h-[calc(100vh-40px)] overflow-y-auto p-2">
         <ColorPicker
@@ -66,6 +72,7 @@ function ColorPopover({
           ariaLabelPrefix={label}
           includeGradients={includeGradients}
           onChange={(nextValue) => commitFeature(feature, nextValue)}
+          onCommit={() => setActivePopoverId(null)}
         />
       </PopoverContent>
     </Popover>
@@ -96,21 +103,28 @@ function OptionsPopover({
   const currentValue = getCurrentValue(feature);
   const triggerIcon = feature.id === "text-align" ? getTextAlignIcon(currentValue) : icon;
   const canPreview = feature.target === "style" && Boolean(feature.propertyName);
+  const isStylePreviewMenu = shouldShowOptionPreviewAfterLabel(feature);
+  const skipNextPreviewClearRef = useRef(false);
 
-  function previewOption(nextValue: string | null) {
-    if (!canPreview || !feature.propertyName) {
+  function clearOptionPreview() {
+    if (skipNextPreviewClearRef.current) {
       return;
     }
 
-    onStylePreview(feature.propertyName, nextValue);
+    if (canPreview && feature.propertyName) {
+      onStylePreview(feature.propertyName, null);
+    }
   }
 
   return (
     <Popover
       open={activePopoverId === popoverId}
       onOpenChange={(open) => {
+        if (open) {
+          skipNextPreviewClearRef.current = false;
+        }
         if (!open) {
-          previewOption(null);
+          clearOptionPreview();
         }
         setActivePopoverId(open ? popoverId : null);
       }}
@@ -118,22 +132,25 @@ function OptionsPopover({
       <PopoverTrigger asChild>
         <ToolbarPopoverButton
           active={activePopoverId === popoverId}
+          data-testid={`floating-${popoverId}-trigger`}
           icon={triggerIcon}
           label={label}
         />
       </PopoverTrigger>
       <PopoverContent
-        className="w-64 p-1.5"
+        className={cn("p-1.5", isStylePreviewMenu ? "w-40" : "w-64")}
         onMouseDown={(event) => event.stopPropagation()}
         onPointerDown={(event) => event.stopPropagation()}
       >
-        <div className="grid gap-1">
+        <div className={cn("grid", isStylePreviewMenu ? "gap-0.5" : "gap-1")}>
           {options.map((option) => {
             const Icon = option.icon;
             const disabled =
               feature.target === "operation" &&
               feature.id === "distribute" &&
               !selectionCommandAvailability.group;
+            const showOptionPreviewAfterLabel = shouldShowOptionPreviewAfterLabel(feature);
+
             return (
               <button
                 key={option.value}
@@ -142,23 +159,48 @@ function OptionsPopover({
                   menuItemClassName,
                   currentValue === option.value && "bg-foreground/[0.06]"
                 )}
+                aria-pressed={currentValue === option.value}
+                data-value={option.value}
                 disabled={disabled}
-                onBlur={() => previewOption(null)}
+                onBlur={clearOptionPreview}
                 onClick={() => {
-                  previewOption(null);
+                  skipNextPreviewClearRef.current = true;
                   commitFeature(feature, option.value);
                   setActivePopoverId(null);
                 }}
-                onFocus={() => previewOption(option.value)}
-                onMouseEnter={() => previewOption(option.value)}
-                onMouseLeave={() => previewOption(null)}
+                onFocus={() => {
+                  if (feature.propertyName) {
+                    onStylePreview(feature.propertyName, option.value);
+                  }
+                }}
+                onMouseDown={() => {
+                  skipNextPreviewClearRef.current = true;
+                }}
+                onMouseEnter={() => {
+                  if (feature.propertyName) {
+                    onStylePreview(feature.propertyName, option.value);
+                  }
+                }}
+                onMouseLeave={clearOptionPreview}
+                onPointerDown={() => {
+                  skipNextPreviewClearRef.current = true;
+                }}
               >
-                {Icon ? (
-                  <ToolbarIcon icon={Icon} />
+                {showOptionPreviewAfterLabel ? (
+                  <>
+                    <span className="min-w-0 truncate">{option.label}</span>
+                    <OptionSwatch feature={feature} option={option} />
+                  </>
                 ) : (
-                  <OptionSwatch feature={feature} option={option} />
+                  <>
+                    {Icon ? (
+                      <ToolbarIcon icon={Icon} />
+                    ) : (
+                      <OptionSwatch feature={feature} option={option} />
+                    )}
+                    <span className="truncate">{option.label}</span>
+                  </>
                 )}
-                <span className="truncate">{option.label}</span>
               </button>
             );
           })}
@@ -314,30 +356,64 @@ function OptionSwatch({
   if (feature.id === "border") {
     return (
       <span
-        className="size-4 rounded bg-white"
+        className="h-4 w-9 shrink-0 rounded bg-white"
+        data-testid="floating-toolbar-option-preview"
         style={{
-          border: option.value === "none" ? "1px solid rgba(15,23,42,.12)" : option.value,
+          borderColor: "rgba(15,23,42,.5)",
+          borderStyle: option.value === "none" ? "solid" : option.value,
+          borderWidth: option.value === "none" ? "1px" : "2px",
+          opacity: option.value === "none" ? 0.32 : 1,
         }}
+        aria-hidden="true"
       />
     );
   }
   if (feature.id === "border-radius") {
     return (
       <span
-        className="size-4 border border-foreground/15 bg-foreground/[0.04]"
+        className="h-4 w-9 shrink-0 border border-foreground/15 bg-foreground/[0.04]"
+        data-testid="floating-toolbar-option-preview"
         style={{ borderRadius: option.value }}
+        aria-hidden="true"
       />
+    );
+  }
+  if (feature.id === "border-width") {
+    return (
+      <span className="flex h-4 w-9 shrink-0 items-center justify-center" aria-hidden="true">
+        <span
+          className="w-full rounded-full bg-foreground/65"
+          data-testid="floating-toolbar-option-preview"
+          style={{
+            height: option.value === "0px" ? "1px" : option.value,
+            opacity: option.value === "0px" ? 0.22 : 1,
+          }}
+        />
+      </span>
     );
   }
   if (feature.id === "box-shadow") {
     return (
-      <span
-        className="size-4 rounded border border-foreground/10 bg-white"
-        style={{ boxShadow: option.value === "none" ? undefined : option.value }}
-      />
+      <span className="flex h-5 w-10 shrink-0 items-center justify-center" aria-hidden="true">
+        <span
+          className="h-3.5 w-8 rounded border border-foreground/10 bg-white"
+          data-testid="floating-toolbar-option-preview"
+          style={{ boxShadow: option.value === "none" ? undefined : option.value }}
+        />
+      </span>
     );
   }
   return <span className="size-1.5 rounded-full bg-foreground/35" />;
+}
+
+function shouldShowOptionPreviewAfterLabel(feature: ElementToolFeature) {
+  return (
+    feature.id === "border" ||
+    feature.id === "border-color" ||
+    feature.id === "border-radius" ||
+    feature.id === "border-width" ||
+    feature.id === "box-shadow"
+  );
 }
 
 function getTextAlignIcon(currentValue: string) {

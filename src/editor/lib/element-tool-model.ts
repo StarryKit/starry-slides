@@ -112,16 +112,22 @@ export const ROTATION_OPTIONS: ElementToolOption[] = [
 
 export const BORDER_STYLE_OPTIONS: ElementToolOption[] = [
   { value: "none", label: "None" },
-  { value: "1px solid rgba(15, 23, 42, 0.16)", label: "Hairline" },
-  { value: "2px solid rgba(15, 23, 42, 0.22)", label: "Strong" },
-  { value: "1px dashed rgba(15, 23, 42, 0.3)", label: "Dashed" },
+  { value: "solid", label: "Solid" },
+  { value: "dashed", label: "Dashed" },
+  { value: "dotted", label: "Dotted" },
+];
+
+export const BORDER_WIDTH_OPTIONS: ElementToolOption[] = [
+  { value: "0px", label: "None" },
+  { value: "1px", label: "Thin" },
+  { value: "2px", label: "Medium" },
+  { value: "4px", label: "Thick" },
 ];
 
 export const BORDER_RADIUS_OPTIONS: ElementToolOption[] = [
   { value: "0px", label: "Sharp" },
   { value: "8px", label: "Soft" },
   { value: "18px", label: "Round" },
-  { value: "999px", label: "Pill" },
 ];
 
 export const SHADOW_OPTIONS: ElementToolOption[] = [
@@ -250,11 +256,30 @@ export const ELEMENT_TOOL_GROUPS: ElementToolGroup[] = [
         features: [
           {
             id: "border",
-            label: "Border",
+            label: "Border style",
             controlType: "action-group",
             target: "style",
-            propertyName: "border",
+            propertyName: "border-style",
             options: BORDER_STYLE_OPTIONS,
+          },
+          {
+            id: "border-color",
+            label: "Border color",
+            controlType: "color",
+            target: "style",
+            propertyName: "border-color",
+          },
+          {
+            id: "border-width",
+            label: "Stroke width",
+            controlType: "action-group",
+            target: "style",
+            propertyName: "border-width",
+            options: BORDER_WIDTH_OPTIONS,
+            min: 0,
+            max: 24,
+            step: 1,
+            unit: "px",
           },
           {
             id: "border-radius",

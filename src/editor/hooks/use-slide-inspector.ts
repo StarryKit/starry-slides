@@ -101,6 +101,19 @@ function useSlideInspector({
         : nextInspectedStyles
     );
 
+    const observer = new MutationObserver(() => {
+      const latestInspectedStyles = collectCssProperties(inspectedNode);
+      setInspectedStyles((currentStyles) =>
+        areCssPropertyRowsEqual(currentStyles, latestInspectedStyles)
+          ? currentStyles
+          : latestInspectedStyles
+      );
+    });
+    observer.observe(inspectedNode, {
+      attributeFilter: ["class", "style"],
+      attributes: true,
+    });
+
     const rootRect = rootNode?.getBoundingClientRect();
     let nextSelectionRect: StageRect | null = null;
     if (!selectedElementIds.length || !rootNode || !rootRect) {
@@ -164,6 +177,8 @@ function useSlideInspector({
         ? currentState
         : { key: preselectionKey, rect: preselectionRect }
     );
+
+    return () => observer.disconnect();
   }, [
     activeSlide,
     iframeRef,
