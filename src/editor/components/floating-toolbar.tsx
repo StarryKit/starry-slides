@@ -31,6 +31,7 @@ function FloatingToolbar({
   onStylePreview,
   onAttributeChange,
   onAlignToSlide,
+  onCropImage,
   onDistribute,
   onGroup,
   onLayerOrder,
@@ -154,6 +155,10 @@ function FloatingToolbar({
     }
     if (feature.id === "ungroup") {
       onUngroup();
+      return;
+    }
+    if (feature.id === "image-crop") {
+      onCropImage();
       return;
     }
     if (feature.id === "other-link") {

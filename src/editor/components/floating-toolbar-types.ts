@@ -12,6 +12,7 @@ export interface FloatingToolbarProps {
   onStylePreview: (propertyName: string, nextValue: string | null) => void;
   onAttributeChange: (attributeName: string, nextValue: string) => void;
   onAlignToSlide: (action: string) => void;
+  onCropImage: () => void;
   onDistribute: (action: string) => void;
   onGroup: () => void;
   onLayerOrder: (action: string) => void;

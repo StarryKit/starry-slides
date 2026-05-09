@@ -2,7 +2,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { buildChartSlide } from "./regression-deck/chart-slide.mjs";
 import { buildClosingSlide } from "./regression-deck/closing-slide.mjs";
-import { buildImageSlide } from "./regression-deck/image-slide.mjs";
+import { buildCropImageSlide, buildImageSlide } from "./regression-deck/image-slide.mjs";
 import { buildAgendaSlide, buildHeroSlide } from "./regression-deck/intro-slides.mjs";
 import {
   buildComparisonSlide,
@@ -117,6 +117,11 @@ const slides = [
     file: "15-block-flatten.html",
     title: "Block flatten fixture",
     html: buildBlockFlattenSlide(),
+  },
+  {
+    file: "16-crop-image.html",
+    title: "Single image crop fixture",
+    html: buildCropImageSlide(),
   },
 ];
 

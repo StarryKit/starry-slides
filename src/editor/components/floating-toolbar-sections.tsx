@@ -121,14 +121,16 @@ function FloatingToolbarSections({
               <Divider />
             </>
           )}
-          <ColorSection
-            activePopoverId={activePopoverId}
-            commitFeature={commitFeature}
-            getCurrentValue={getCurrentValue}
-            getFeature={getFeature}
-            onStylePreview={onStylePreview}
-            setActivePopoverId={setActivePopoverId}
-          />
+          {!isImageSelection ? (
+            <ColorSection
+              activePopoverId={activePopoverId}
+              commitFeature={commitFeature}
+              getCurrentValue={getCurrentValue}
+              getFeature={getFeature}
+              onStylePreview={onStylePreview}
+              setActivePopoverId={setActivePopoverId}
+            />
+          ) : null}
           {!isImageSelection ? (
             <>
               <Divider />

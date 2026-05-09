@@ -164,3 +164,43 @@ export function buildImageSlide() {
     `
   );
 }
+
+export function buildCropImageSlide() {
+  return wrapHtml(
+    `${baseStyles("#f8fafc")}
+    .slide-container {
+      padding: 0;
+      background: #f8fafc;
+    }
+    .crop-fixture-image {
+      position: absolute;
+      left: 320px;
+      top: 180px;
+      width: 1280px;
+      height: 720px;
+      display: block;
+      object-fit: cover;
+      border-radius: 48px;
+    }`,
+    `
+      <img
+        class="crop-fixture-image"
+        data-editable="image"
+        data-editor-id="crop-image"
+        alt="Crop fixture gradient"
+        src="data:image/svg+xml;utf8,${encodeURIComponent(`
+          <svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1280 720'>
+            <rect width='1280' height='720' fill='#0f172a'/>
+            <rect x='0' y='0' width='320' height='180' fill='#ef4444'/>
+            <rect x='960' y='0' width='320' height='180' fill='#f59e0b'/>
+            <rect x='960' y='540' width='320' height='180' fill='#22c55e'/>
+            <rect x='0' y='540' width='320' height='180' fill='#3b82f6'/>
+            <rect x='420' y='210' width='440' height='300' rx='48' fill='#f8fafc'/>
+            <text x='640' y='380' text-anchor='middle' font-family='Arial, sans-serif' font-size='72' font-weight='700' fill='#0f172a'>CROP</text>
+            <path d='M0 360H1280M640 0V720' stroke='#f8fafc' stroke-width='8' opacity='0.7'/>
+          </svg>
+        `)}"
+      />
+    `
+  );
+}

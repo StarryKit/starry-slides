@@ -8,6 +8,7 @@ import {
   getComputedStyleValue,
   getHeaderControls,
   getHistoryControls,
+  getInlineStyle,
   getSlideElementRect,
   gotoEditor,
   selectFontFamilyOption,
@@ -212,7 +213,7 @@ test("full floating editor applies color and border controls", async ({ page }) 
   const customRadius = page.getByLabel("Custom radius", { exact: true });
   await expect(customRadius).toBeVisible();
   await customRadius.fill("24");
-  await page.getByRole("button", { name: "Apply", exact: true }).click();
+  await customRadius.press("Enter");
   await expectInlineStyle(editableHeading, "border-radius", "24px");
 
   await toolbar.getByRole("button", { name: "Shadow", exact: true }).click();
@@ -234,17 +235,17 @@ async function getBackgroundIconStyle(toolbar: Locator) {
   });
 }
 
-test("image floating toolbar hides text tools and exposes crop plus appearance controls", async ({
+test("image floating toolbar hides text and color tools and supports crop handles", async ({
   page,
 }) => {
   await gotoEditor(page);
-  await page.getByLabel("Slide 7").click();
+  await page.getByLabel("Slide 16").click();
 
   const frame = coverFrame(page);
-  const editableImage = frame.locator('[data-editor-id="image-5"]');
+  const editableImage = frame.locator('[data-editor-id="crop-image"]');
   const toolbar = page.getByTestId("floating-toolbar-anchor");
 
-  await editableImage.click({ position: { x: 24, y: 24 } });
+  await editableImage.click();
   await expect(toolbar).toBeVisible();
   await expect(toolbar.getByLabel("Font", { exact: true })).toBeHidden();
   await expect(
@@ -256,9 +257,8 @@ test("image floating toolbar hides text tools and exposes crop plus appearance c
   await expect(toolbar.getByRole("button", { name: "Text align", exact: true })).toBeHidden();
 
   await expect(toolbar.getByRole("button", { name: "Crop image", exact: true })).toBeVisible();
-  await expect(
-    toolbar.getByRole("button", { name: "Background color", exact: true })
-  ).toBeVisible();
+  await expect(toolbar.getByRole("button", { name: "Background color", exact: true })).toBeHidden();
+  await expect(toolbar.getByRole("button", { name: "Text color", exact: true })).toBeHidden();
   await expect(toolbar.getByRole("button", { name: "Border style", exact: true })).toBeVisible();
   await expect(toolbar.getByRole("button", { name: "Border radius", exact: true })).toBeVisible();
   await expect(toolbar.getByRole("button", { name: "Shadow", exact: true })).toBeVisible();
@@ -266,7 +266,109 @@ test("image floating toolbar hides text tools and exposes crop plus appearance c
 
   await toolbar.getByRole("button", { name: "Crop image", exact: true }).click();
   await expectInlineStyle(editableImage, "object-fit", "cover");
+  await expect(page.getByTestId("image-crop-overlay")).toBeVisible();
+  await expect(page.getByTestId("image-crop-overlay")).toHaveCSS("border-radius", "48px");
+  await expect(page.getByTestId("block-rotate-handle")).toBeHidden();
+  await expect(page.getByTestId("block-resize-handle-top-left")).toBeHidden();
+
+  const cropHandle = page.getByTestId("image-crop-handle-top-left");
+  const handleBox = await cropHandle.boundingBox();
+  if (!handleBox) {
+    throw new Error("Expected crop handle to have bounds.");
+  }
+  await expect(cropHandle).toHaveCSS("cursor", /data:image\/svg\+xml.*nwse-resize/);
+  const initialCropOverlay = await page.getByTestId("image-crop-overlay").boundingBox();
+  if (!initialCropOverlay) {
+    throw new Error("Expected crop overlay to have initial bounds.");
+  }
+
+  const handleCenter = {
+    x: handleBox.x + handleBox.width / 2,
+    y: handleBox.y + handleBox.height / 2,
+  };
+
+  await page.mouse.move(handleCenter.x, handleCenter.y);
+  await page.mouse.down();
+  await page.mouse.move(handleCenter.x + 72, handleCenter.y + 48, { steps: 6 });
+  await expect
+    .poll(
+      async () => {
+        const previewBox = await page.getByTestId("image-crop-overlay").boundingBox();
+        return Boolean(
+          previewBox &&
+            previewBox.x > initialCropOverlay.x &&
+            previewBox.y > initialCropOverlay.y &&
+            previewBox.width < initialCropOverlay.width &&
+            previewBox.height < initialCropOverlay.height
+        );
+      },
+      { timeout: 1000 }
+    )
+    .toBe(true);
+  const previewCropOverlay = await page.getByTestId("image-crop-overlay").boundingBox();
+  if (!previewCropOverlay) {
+    throw new Error("Expected crop overlay to update while dragging.");
+  }
+  expect(previewCropOverlay.x).toBeGreaterThan(initialCropOverlay.x);
+  expect(previewCropOverlay.y).toBeGreaterThan(initialCropOverlay.y);
+  expect(previewCropOverlay.width).toBeLessThan(initialCropOverlay.width);
+  expect(previewCropOverlay.height).toBeLessThan(initialCropOverlay.height);
+  await expect(page.getByText("saving...")).toBeHidden();
+  await page.mouse.up();
+  await expect(page.getByText("saving...")).toBeVisible();
+  await expectInlineStyle(editableImage, "clip-path", "");
+  await expect(page.getByTestId("image-crop-mask")).toBeVisible();
+  await expect
+    .poll(async () => parseInsetPercentages(await getInlineStyle(editableImage, "clip-path")), {
+      timeout: 500,
+    })
+    .toBeNull();
+  await frame.locator("[data-slide-root]").click({ position: { x: 24, y: 24 } });
+  await expect(page.getByTestId("image-crop-overlay")).toBeHidden();
+  await expect
+    .poll(async () => parseInsetPercentages(await getInlineStyle(editableImage, "clip-path")), {
+      timeout: 2500,
+    })
+    .toEqual({
+      top: expect.any(Number),
+      right: 0,
+      bottom: 0,
+      left: expect.any(Number),
+    });
+  const topLeftCrop = parseInsetPercentages(await getInlineStyle(editableImage, "clip-path"));
+  const croppedClipPath = await getInlineStyle(editableImage, "clip-path");
+  expect(croppedClipPath).toContain("round 48px");
+  expect(topLeftCrop.top).toBeGreaterThan(4);
+  expect(topLeftCrop.left).toBeGreaterThan(4);
+  await editableImage.click();
+  await expect(toolbar).toBeVisible();
+  await toolbar.getByRole("button", { name: "Crop image", exact: true }).click();
+  await expect(page.getByTestId("image-crop-overlay")).toBeVisible();
+  await page.keyboard.press("Enter");
+  await expect(page.getByTestId("image-crop-overlay")).toBeHidden();
+  await expect(page.getByTestId("selection-overlay")).toBeVisible();
+
+  await page.keyboard.press(`${MODIFIER}+Z`);
+  await expectInlineStyle(editableImage, "clip-path", "");
+  await page.keyboard.press(`${MODIFIER}+Shift+Z`);
+  await expectInlineStyle(editableImage, "clip-path", croppedClipPath);
 });
+
+function parseInsetPercentages(value: string) {
+  const match = value.match(
+    /^inset\((-?\d+(?:\.\d+)?)% (-?\d+(?:\.\d+)?)% (-?\d+(?:\.\d+)?)% (-?\d+(?:\.\d+)?)%(?: round .+)?\)$/
+  );
+  if (!match) {
+    return null;
+  }
+
+  return {
+    top: Number.parseFloat(match[1] ?? "0"),
+    right: Number.parseFloat(match[2] ?? "0"),
+    bottom: Number.parseFloat(match[3] ?? "0"),
+    left: Number.parseFloat(match[4] ?? "0"),
+  };
+}
 
 test("floating toolbar font family select changes the selected text font", async ({ page }) => {
   await gotoEditor(page);
