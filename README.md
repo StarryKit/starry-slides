@@ -1,35 +1,22 @@
 # Starry Slides
 
+## Overview
+
 Starry Slides is a local-first, agent-native slide workflow for HTML slide
 decks. Agents generate Contract-compatible deck packages, Starry Slides
 validates them, and the browser editor lets people revise the same HTML files
 without converting them into a proprietary slide model.
 
-The project rule is simple: HTML stays the source of truth.
+The project rule is simple: HTML stays the source of truth. A deck remains a
+set of files on disk rather than data trapped inside a separate editor model,
+which makes it easier for people and agents to collaborate in the same
+workflow. Validation helps generated decks stay compatible with the expected
+slide contract, while the local editor focuses on making direct, reversible
+changes to those same source files.
 
-## Usage
-
-Run the published CLI with npm:
-
-```bash
-npx starry-slides path/to/deck
-npx starry-slides verify path/to/deck
-npx starry-slides view path/to/deck --all
-```
-
-Install the CLI globally:
-
-```bash
-npm install -g starry-slides
-starry-slides open path/to/deck
-```
-
-Rendered verification, preview, and PDF export use Playwright Chromium. On a
-fresh machine, install the browser runtime once:
-
-```bash
-npx playwright install chromium
-```
+In practice, Starry Slides sits between generation, validation, editing, and
+export. It is designed for teams who want slide decks to behave more like code:
+inspectable, versionable, scriptable, and safe to evolve incrementally.
 
 ## Development
 
@@ -96,21 +83,6 @@ The equivalent standard installer command is:
 ```bash
 npx skills add StarryKit/starry-slides --skill starry-slides
 ```
-
-## Publishing
-
-Before publishing:
-
-```bash
-npm view starry-slides name version --json
-pnpm lint
-pnpm build
-pnpm test:packaged-cli
-npm pack --dry-run --json
-```
-
-The package is published as `starry-slides` and exposes the `starry-slides`
-binary.
 
 ## Roadmap
 
