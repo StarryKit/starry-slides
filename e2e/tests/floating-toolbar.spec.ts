@@ -29,6 +29,8 @@ test("full floating editor applies typography and paragraph controls", async ({ 
   );
   await toolbar.getByRole("button", { name: "Increase font size", exact: true }).click();
   await expectInlineStyle(editableHeading, "font-size", `${originalFontSize + 2}px`);
+  await toolbar.getByLabel("Font size", { exact: true }).fill("44");
+  await expectInlineStyle(editableHeading, "font-size", "44px");
 
   await toolbar.getByRole("button", { name: "Bold", exact: true }).click();
   await expectInlineStyle(editableHeading, "font-weight", "400");
@@ -332,4 +334,37 @@ test("floating toolbar font size buttons do not remount the toolbar", async ({ p
   await expectInlineStyle(editableHeading, "font-size", expectedFontSize);
   await editableHeading.click();
   await expect(toolbar.getByLabel("Font", { exact: true })).toBeVisible();
+});
+
+test("floating toolbar font size input clamps manual values and keeps step buttons working", async ({
+  page,
+}) => {
+  await gotoEditor(page);
+
+  const editableHeading = coverFrame(page).locator('[data-editor-id="text-1"]');
+  const toolbar = page.getByTestId("floating-toolbar-anchor");
+  const fontSizeInput = toolbar.getByLabel("Font size", { exact: true });
+
+  await editableHeading.click();
+  await expect(fontSizeInput).toBeVisible();
+
+  await fontSizeInput.fill("12");
+  await expectInlineStyle(editableHeading, "font-size", "12px");
+
+  await toolbar.getByRole("button", { name: "Decrease font size", exact: true }).click();
+  await expectInlineStyle(editableHeading, "font-size", "10px");
+
+  await fontSizeInput.fill("2");
+  await fontSizeInput.press("Enter");
+  await expectInlineStyle(editableHeading, "font-size", "8px");
+  await expect(fontSizeInput).toHaveValue("8");
+
+  await fontSizeInput.fill("240");
+  await fontSizeInput.press("Enter");
+  await expectInlineStyle(editableHeading, "font-size", "200px");
+  await expect(fontSizeInput).toHaveValue("200");
+
+  await toolbar.getByRole("button", { name: "Increase font size", exact: true }).click();
+  await expectInlineStyle(editableHeading, "font-size", "200px");
+  await expect(fontSizeInput).toHaveValue("200");
 });

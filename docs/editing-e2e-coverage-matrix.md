@@ -41,7 +41,7 @@ supported editor-facing command or state route to browser-level coverage.
 
 | Command or behavior | Surfaces | Fixture | Expected effect | Selection/focus | History | Persistence | Test coverage |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| Font family and size | Floating Toolbar Font | Regression deck slide 1 | Inline `font-family` changes to an explicitly different option and `font-size` updates | Selected text element remains selected | Undo/redo covered for representative formatting | Refresh persistence covered | `floating-toolbar.spec.ts` |
+| Font family and size | Floating Toolbar Font | Regression deck slide 1 | Inline `font-family` changes to an explicitly different option and `font-size` updates from both manual input and increment/decrement buttons | Selected text element remains selected | Undo/redo covered for representative formatting | Refresh persistence covered | `floating-toolbar.spec.ts` |
 | Bold, italic, underline, strikethrough | Floating Toolbar Font | Regression deck slide 1 | Inline font weight/style/text decoration update | Toolbar remains stable | Undo/redo covered for representative formatting | Refresh persistence covered | `floating-toolbar.spec.ts` |
 | Line height, alignment, text color | Floating Toolbar Paragraph/Fill | Regression deck slide 1 | Inline style or color attribute updates | Selected text element remains selected | Undo/redo covered for representative formatting | Refresh persistence covered | `floating-toolbar.spec.ts` |
 

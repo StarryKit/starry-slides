@@ -368,7 +368,7 @@ function FloatingToolbar({
     const fontFamilyFeature = getFeature("font-family");
     const fontSizeFeature = getFeature("font-size");
     const fontFamilyValue = getCurrentValue(fontFamilyFeature);
-    const fontSizeValue = Number.parseFloat(getCurrentValue(fontSizeFeature)) || 32;
+    const fontSizeValue = getCurrentValue(fontSizeFeature);
 
     return (
       <ToolbarSection>
@@ -403,25 +403,11 @@ function FloatingToolbar({
           </SelectContent>
         </Select>
 
-        <div className="flex items-center rounded-xl p-0.5">
-          <IconButton
-            className="size-8 rounded-lg border-0 shadow-none hover:shadow-none"
-            label="Decrease font size"
-            onClick={() => commitFeature(fontSizeFeature, String(clamp(fontSizeValue - 2, 8, 200)))}
-          >
-            <Minus className="size-3.5" />
-          </IconButton>
-          <span className="grid h-8 min-w-9 place-items-center px-2 text-center text-[12px] font-semibold leading-none tabular-nums text-foreground/75">
-            {fontSizeValue}
-          </span>
-          <IconButton
-            className="size-8 rounded-lg border-0 shadow-none hover:shadow-none"
-            label="Increase font size"
-            onClick={() => commitFeature(fontSizeFeature, String(clamp(fontSizeValue + 2, 8, 200)))}
-          >
-            <Plus className="size-3.5" />
-          </IconButton>
-        </div>
+        <FontSizeControl
+          currentValue={fontSizeValue}
+          feature={fontSizeFeature}
+          onCommitFeature={commitFeature}
+        />
       </ToolbarSection>
     );
   }
@@ -913,6 +899,121 @@ function TextCommitControl({
   );
 }
 
+function FontSizeControl({
+  currentValue,
+  feature,
+  onCommitFeature,
+}: {
+  currentValue: string;
+  feature: ElementToolFeature;
+  onCommitFeature: (feature: ElementToolFeature, nextValue: string) => void;
+}) {
+  const [draft, setDraft] = useState(() => getFontSizeDraftValue(currentValue));
+  const [isFocused, setIsFocused] = useState(false);
+  const committedDraftRef = useRef(getFontSizeDraftValue(currentValue));
+
+  useEffect(() => {
+    const nextDraft = getFontSizeDraftValue(currentValue);
+    committedDraftRef.current = nextDraft;
+    if (!isFocused) {
+      setDraft(nextDraft);
+    }
+  }, [currentValue, isFocused]);
+
+  useEffect(() => {
+    if (!isFocused || !draft.trim() || draft.trim() === committedDraftRef.current) {
+      return;
+    }
+
+    const timeoutId = window.setTimeout(() => {
+      commitDraftValue(draft, false);
+    }, FONT_SIZE_INPUT_DEBOUNCE_MS);
+
+    return () => window.clearTimeout(timeoutId);
+  }, [draft, isFocused]);
+
+  const currentFontSize = parseFontSizeValue(currentValue);
+
+  function commitDraft() {
+    commitDraftValue(draft, true);
+  }
+
+  function commitDraftValue(nextDraft: string, syncDraft: boolean) {
+    const trimmedDraft = nextDraft.trim();
+    if (!trimmedDraft) {
+      setDraft(getFontSizeDraftValue(currentValue));
+      return;
+    }
+
+    const nextValue = normalizeFontSizeInput(nextDraft);
+    if (nextValue === committedDraftRef.current) {
+      if (syncDraft) {
+        setDraft(nextValue);
+      }
+      return;
+    }
+
+    committedDraftRef.current = nextValue;
+    onCommitFeature(feature, nextValue);
+    if (syncDraft) {
+      setDraft(nextValue);
+    }
+  }
+
+  function commitStep(direction: "decrease" | "increase") {
+    const draftValue = Number.parseFloat(draft);
+    const baseValue = Number.isFinite(draftValue) ? draftValue : currentFontSize;
+    const sign = direction === "increase" ? 1 : -1;
+    const nextValue = String(clamp(baseValue + sign * (feature.step ?? 2), 8, 200));
+    onCommitFeature(feature, nextValue);
+    setDraft(nextValue);
+  }
+
+  return (
+    <div className="flex items-center rounded-xl p-0.5">
+      <IconButton
+        className="size-8 rounded-lg border-0 shadow-none hover:shadow-none"
+        label="Decrease font size"
+        onClick={() => commitStep("decrease")}
+      >
+        <Minus className="size-3.5" />
+      </IconButton>
+      <Input
+        aria-label="Font size"
+        className="h-8 w-12 rounded-lg border-0 bg-transparent px-1 text-center text-[12px] font-semibold leading-none tabular-nums text-foreground/75 shadow-none [appearance:textfield] hover:bg-foreground/[0.04] focus-visible:bg-white [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+        inputMode="decimal"
+        min={feature.min ?? 8}
+        max={feature.max ?? 200}
+        step={feature.step ?? 2}
+        type="number"
+        value={draft}
+        onBlur={() => {
+          commitDraft();
+          setIsFocused(false);
+        }}
+        onChange={(event) => setDraft(event.target.value)}
+        onFocus={() => setIsFocused(true)}
+        onKeyDown={(event) => {
+          if (event.key === "Enter") {
+            event.currentTarget.blur();
+          }
+          if (event.key === "Escape") {
+            setDraft(getFontSizeDraftValue(currentValue));
+            event.currentTarget.blur();
+          }
+        }}
+      />
+      <IconButton
+        className="size-8 rounded-lg border-0 shadow-none hover:shadow-none"
+        label="Increase font size"
+        onClick={() => commitStep("increase")}
+      >
+        <Plus className="size-3.5" />
+      </IconButton>
+    </div>
+  );
+}
+
 function ToolbarSection({ children }: { children: ReactNode }) {
   return <div className="flex items-center gap-0.5 rounded-xl p-0.5">{children}</div>;
 }
@@ -975,6 +1076,20 @@ function clamp(value: number, min: number, max: number) {
   return Math.min(max, Math.max(min, value));
 }
 
+function getFontSizeDraftValue(currentValue: string) {
+  return String(parseFontSizeValue(currentValue));
+}
+
+function normalizeFontSizeInput(value: string) {
+  const numericValue = Number.parseFloat(value);
+  return String(clamp(Number.isFinite(numericValue) ? numericValue : 8, 8, 200));
+}
+
+function parseFontSizeValue(value: string) {
+  const numericValue = Number.parseFloat(value);
+  return Number.isFinite(numericValue) ? numericValue : 32;
+}
+
 function getAttributeDialogValue(dialogId: EditableAttributeId, attributeValues: AttributeValues) {
   if (dialogId === "other-link") {
     return attributeValues.linkUrl;
@@ -1012,5 +1127,7 @@ const toolbarIconButtonClassName =
 
 const toolbarIconButtonActiveClassName =
   "bg-foreground/[0.07] text-foreground shadow-[inset_0_1px_2px_rgba(0,0,0,0.08)] hover:bg-foreground/[0.08]";
+
+const FONT_SIZE_INPUT_DEBOUNCE_MS = 500;
 
 export { FloatingToolbar };
