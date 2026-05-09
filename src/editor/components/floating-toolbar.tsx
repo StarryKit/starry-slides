@@ -129,6 +129,11 @@ const OTHER_FEATURES: Record<EditableAttributeId, ElementToolFeature> = {
   },
 };
 
+const toolbarIconClassName = "size-3.5";
+const toolbarIconMutedClassName = "size-3.5 text-foreground/55";
+const toolbarIconDropShadowClassName = "size-3.5 drop-shadow";
+const ICON_STROKE_WIDTH = 2.5;
+
 function FloatingToolbar({
   inspectedStyles,
   selectedElementType,
@@ -301,7 +306,7 @@ function FloatingToolbar({
       style={{ marginLeft: toolbarOffsetX }}
     >
       <div
-        className="flex w-max items-center gap-1 overflow-x-auto overflow-y-hidden rounded-2xl border border-foreground/[0.08] bg-white/92 px-2 py-2 shadow-[0_8px_24px_rgba(0,0,0,0.08),0_18px_54px_rgba(0,0,0,0.12)] backdrop-blur-xl max-[1200px]:min-w-[1120px]"
+        className="flex w-max items-center gap-0.5 overflow-x-auto overflow-y-hidden rounded-2xl border border-foreground/[0.08] bg-white/92 px-1.5 py-1.5 shadow-[0_2px_12px_rgba(0,0,0,0.04),0_8px_32px_rgba(0,0,0,0.06)] backdrop-blur-xl max-[1200px]:min-w-[940px]"
         aria-label="Full editing toolbar"
       >
         {renderLockSection()}
@@ -357,9 +362,9 @@ function FloatingToolbar({
           onClick={() => commitFeature(getFeature("locked"), isSelectedElementLocked ? "" : "true")}
         >
           {isSelectedElementLocked ? (
-            <LockOpen className="size-3.5" />
+            <LockOpen className={toolbarIconClassName} strokeWidth={ICON_STROKE_WIDTH} />
           ) : (
-            <Lock className="size-3.5" />
+            <Lock className={toolbarIconClassName} strokeWidth={ICON_STROKE_WIDTH} />
           )}
         </IconButton>
       </ToolbarSection>
@@ -407,7 +412,7 @@ function FloatingToolbar({
               active={active}
               onClick={() => commitFeature(feature, active ? "" : "true")}
             >
-              <Icon className="size-3.5" />
+              <Icon className={toolbarIconClassName} strokeWidth={ICON_STROKE_WIDTH} />
             </IconButton>
           );
         })}
@@ -420,14 +425,14 @@ function FloatingToolbar({
       <ToolbarSection>
         {renderColorPopover({
           feature: getFeature("text-color"),
-          icon: <Palette className="size-3.5" />,
+          icon: <Palette className={toolbarIconClassName} strokeWidth={ICON_STROKE_WIDTH} />,
           includeGradients: true,
           label: "Text color",
           popoverId: "text-color",
         })}
         {renderColorPopover({
           feature: getFeature("background-color"),
-          icon: <Square className="size-3.5" />,
+          icon: <Square className={toolbarIconClassName} strokeWidth={ICON_STROKE_WIDTH} />,
           includeGradients: true,
           label: "Background color",
           popoverId: "background-color",
@@ -448,14 +453,14 @@ function FloatingToolbar({
             />
           ),
           feature: getFeature("line-height"),
-          icon: <Rows3 className="size-3.5" />,
+          icon: <Rows3 className={toolbarIconClassName} strokeWidth={ICON_STROKE_WIDTH} />,
           label: "Line height",
           options: LINE_HEIGHT_OPTIONS,
           popoverId: "line-height",
         })}
         {renderOptionsPopover({
           feature: getFeature("text-align"),
-          icon: <AlignCenter className="size-3.5" />,
+          icon: <AlignCenter className={toolbarIconClassName} strokeWidth={ICON_STROKE_WIDTH} />,
           label: "Text align",
           options: TEXT_ALIGN_OPTIONS,
           popoverId: "text-align",
@@ -469,7 +474,7 @@ function FloatingToolbar({
       <ToolbarSection>
         {renderOptionsPopover({
           feature: getFeature("border"),
-          icon: <CircleDashed className="size-3.5" />,
+          icon: <CircleDashed className={toolbarIconClassName} strokeWidth={ICON_STROKE_WIDTH} />,
           label: "Border style",
           options: BORDER_STYLE_OPTIONS,
           popoverId: "border",
@@ -484,7 +489,7 @@ function FloatingToolbar({
             />
           ),
           feature: getFeature("border-radius"),
-          icon: <Circle className="size-3.5" />,
+          icon: <Circle className={toolbarIconClassName} strokeWidth={ICON_STROKE_WIDTH} />,
           label: "Border radius",
           options: BORDER_RADIUS_OPTIONS,
           popoverId: "border-radius",
@@ -498,7 +503,9 @@ function FloatingToolbar({
             />
           ),
           feature: getFeature("box-shadow"),
-          icon: <Square className="size-3.5 drop-shadow" />,
+          icon: (
+            <Square className={toolbarIconDropShadowClassName} strokeWidth={ICON_STROKE_WIDTH} />
+          ),
           label: "Shadow",
           options: SHADOW_OPTIONS,
           popoverId: "box-shadow",
@@ -512,21 +519,21 @@ function FloatingToolbar({
       <ToolbarSection>
         {renderOptionsPopover({
           feature: getFeature("align-to-slide"),
-          icon: <AlignCenter className="size-3.5" />,
+          icon: <AlignCenter className={toolbarIconClassName} strokeWidth={ICON_STROKE_WIDTH} />,
           label: "Align",
           options: ALIGN_TO_SLIDE_OPTIONS,
           popoverId: "align",
         })}
         {renderOptionsPopover({
           feature: getFeature("layer-order"),
-          icon: <Layers className="size-3.5" />,
+          icon: <Layers className={toolbarIconClassName} strokeWidth={ICON_STROKE_WIDTH} />,
           label: "Layer",
           options: LAYER_ORDER_OPTIONS,
           popoverId: "layer",
         })}
         {renderOptionsPopover({
           feature: getFeature("distribute"),
-          icon: <Rows3 className="size-3.5" />,
+          icon: <Rows3 className={toolbarIconClassName} strokeWidth={ICON_STROKE_WIDTH} />,
           label: "Distribute",
           options: DISTRIBUTE_OPTIONS,
           popoverId: "distribute",
@@ -544,7 +551,11 @@ function FloatingToolbar({
           label={canUngroup ? "Ungroup" : "Group"}
           onClick={() => commitFeature(feature, canUngroup ? "ungroup" : "group")}
         >
-          {canUngroup ? <Ungroup className="size-3.5" /> : <Group className="size-3.5" />}
+          {canUngroup ? (
+            <Ungroup className={toolbarIconClassName} strokeWidth={ICON_STROKE_WIDTH} />
+          ) : (
+            <Group className={toolbarIconClassName} strokeWidth={ICON_STROKE_WIDTH} />
+          )}
         </IconButton>
       </ToolbarSection>
     );
@@ -569,7 +580,7 @@ function FloatingToolbar({
                 activePopoverId === "other" && toolbarIconButtonActiveClassName
               )}
             >
-              <Ellipsis className="size-4" />
+              <Ellipsis className={toolbarIconClassName} strokeWidth={ICON_STROKE_WIDTH} />
             </Button>
           </PopoverTrigger>
           <PopoverContent align="end" className="w-56 p-1.5">
@@ -581,7 +592,7 @@ function FloatingToolbar({
                 setActiveAttributeDialog("other-link");
               }}
             >
-              <Link2 className="size-3.5" />
+              <Link2 className={toolbarIconClassName} strokeWidth={ICON_STROKE_WIDTH} />
               Link
             </button>
             <button
@@ -592,7 +603,7 @@ function FloatingToolbar({
                 setActiveAttributeDialog("other-alt-text");
               }}
             >
-              <CaseSensitive className="size-3.5" />
+              <CaseSensitive className={toolbarIconClassName} strokeWidth={ICON_STROKE_WIDTH} />
               Alt text
             </button>
             <button
@@ -603,7 +614,7 @@ function FloatingToolbar({
                 setActiveAttributeDialog("other-aria-label");
               }}
             >
-              <CaseSensitive className="size-3.5" />
+              <CaseSensitive className={toolbarIconClassName} strokeWidth={ICON_STROKE_WIDTH} />
               ARIA label
             </button>
           </PopoverContent>
@@ -873,14 +884,17 @@ function FontFamilyCombobox({
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverAnchor asChild>
-        <div className="relative flex h-9 w-[140px] items-center rounded-xl border border-transparent bg-transparent text-foreground/75 transition-all duration-200 hover:-translate-y-px hover:bg-foreground/[0.05] hover:shadow-[0_5px_14px_rgba(0,0,0,0.08)] focus-within:border-foreground/20 focus-within:bg-white focus-within:ring-[2px] focus-within:ring-ring/35">
-          <Type className="pointer-events-none absolute left-2.5 size-3.5 text-foreground/55" />
+        <div className="relative flex h-7.5 w-[126px] items-center rounded-xl border border-transparent bg-transparent text-foreground/75 transition-colors hover:bg-foreground/[0.05] focus-within:border-foreground/20 focus-within:bg-white focus-within:ring-[2px] focus-within:ring-ring/35">
+          <Type
+            className={cn(toolbarIconMutedClassName, "pointer-events-none absolute left-2")}
+            strokeWidth={ICON_STROKE_WIDTH}
+          />
           <Input
             aria-controls="floating-font-menu"
             aria-expanded={open}
             aria-label="Font"
             autoComplete="off"
-            className="h-full min-w-0 border-0 bg-transparent px-8 text-xs shadow-none outline-none ring-0 placeholder:text-foreground/45 focus-visible:ring-0"
+            className="h-full min-w-0 border-0 bg-transparent px-7 text-[12px] shadow-none outline-none ring-0 placeholder:text-foreground/45 focus-visible:ring-0"
             data-value={currentValue}
             onChange={(event) => {
               setPreviewLabel("");
@@ -896,7 +910,7 @@ function FontFamilyCombobox({
           />
           <button
             type="button"
-            className="absolute right-1 grid size-7 place-items-center rounded-lg text-foreground/45 transition-colors hover:bg-foreground/[0.06] hover:text-foreground"
+            className="absolute right-0.5 grid size-6.5 place-items-center rounded-lg text-foreground/45 transition-colors hover:bg-foreground/[0.06] hover:text-foreground"
             aria-label="Show fonts"
             onClick={() => {
               if (open) {
@@ -906,7 +920,11 @@ function FontFamilyCombobox({
               openMenu();
             }}
           >
-            <ChevronDown className="size-3.5" aria-hidden="true" />
+            <ChevronDown
+              className={toolbarIconClassName}
+              strokeWidth={ICON_STROKE_WIDTH}
+              aria-hidden="true"
+            />
           </button>
         </div>
       </PopoverAnchor>
@@ -1103,17 +1121,17 @@ function FontSizeControl({
   }
 
   return (
-    <div className="flex items-center rounded-xl p-0.5">
+    <div className="flex items-center rounded-xl">
       <IconButton
-        className="size-8 rounded-lg border-0 shadow-none hover:shadow-none"
+        className="size-6.5 rounded-lg border-0 shadow-none hover:shadow-none"
         label="Decrease font size"
         onClick={() => commitStep("decrease")}
       >
-        <Minus className="size-3.5" />
+        <Minus className={toolbarIconClassName} strokeWidth={ICON_STROKE_WIDTH} />
       </IconButton>
       <Input
         aria-label="Font size"
-        className="h-8 w-12 rounded-lg border-0 bg-transparent px-1 text-center text-[12px] font-semibold leading-none tabular-nums text-foreground/75 shadow-none [appearance:textfield] hover:bg-foreground/[0.04] focus-visible:bg-white [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+        className="h-6.5 w-10 rounded-lg border-0 bg-transparent px-1 text-center text-[11px] font-semibold leading-none tabular-nums text-foreground/75 shadow-none [appearance:textfield] hover:bg-foreground/[0.04] focus-visible:bg-white [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
         inputMode="decimal"
         min={feature.min ?? 8}
         max={feature.max ?? 200}
@@ -1137,18 +1155,18 @@ function FontSizeControl({
         }}
       />
       <IconButton
-        className="size-8 rounded-lg border-0 shadow-none hover:shadow-none"
+        className="size-6.5 rounded-lg border-0 shadow-none hover:shadow-none"
         label="Increase font size"
         onClick={() => commitStep("increase")}
       >
-        <Plus className="size-3.5" />
+        <Plus className={toolbarIconClassName} strokeWidth={ICON_STROKE_WIDTH} />
       </IconButton>
     </div>
   );
 }
 
 function ToolbarSection({ children }: { children: ReactNode }) {
-  return <div className="flex items-center gap-0.5 rounded-xl p-0.5">{children}</div>;
+  return <div className="flex items-center gap-px rounded-xl">{children}</div>;
 }
 
 function OptionSwatch({
@@ -1197,12 +1215,12 @@ function getFeature(featureId: ElementToolFeature["id"]) {
 
 function getTextAlignIcon(currentValue: string) {
   if (currentValue === "left") {
-    return <AlignLeft className="size-3.5" />;
+    return <AlignLeft className={toolbarIconClassName} strokeWidth={ICON_STROKE_WIDTH} />;
   }
   if (currentValue === "right") {
-    return <AlignRight className="size-3.5" />;
+    return <AlignRight className={toolbarIconClassName} strokeWidth={ICON_STROKE_WIDTH} />;
   }
-  return <AlignCenter className="size-3.5" />;
+  return <AlignCenter className={toolbarIconClassName} strokeWidth={ICON_STROKE_WIDTH} />;
 }
 
 function clamp(value: number, min: number, max: number) {
@@ -1253,10 +1271,10 @@ const attributeDialogConfig: Record<
 };
 
 const menuItemClassName =
-  "flex min-h-9 w-full items-center gap-2 rounded-xl px-2.5 py-1.5 text-left text-[13px] text-foreground/70 outline-none transition-colors hover:bg-foreground/[0.05] hover:text-foreground focus-visible:bg-foreground/[0.06] focus-visible:text-foreground focus-visible:ring-[2px] focus-visible:ring-ring/25 disabled:pointer-events-none disabled:opacity-40";
+  "flex min-h-7 w-full items-center gap-1.5 rounded-md px-2 py-1 text-left text-[12px] text-foreground/70 outline-none transition-colors hover:bg-foreground/[0.05] hover:text-foreground focus-visible:bg-foreground/[0.06] focus-visible:text-foreground focus-visible:ring-[2px] focus-visible:ring-ring/25 disabled:pointer-events-none disabled:opacity-40";
 
 const toolbarIconButtonClassName =
-  "size-9 rounded-xl text-foreground/60 transition-all duration-200 hover:-translate-y-px hover:bg-foreground/[0.05] hover:text-foreground hover:shadow-[0_5px_14px_rgba(0,0,0,0.08)] active:translate-y-0 active:scale-[0.98]";
+  "size-7.5 rounded-xl text-foreground/60 transition-colors hover:bg-foreground/[0.05] hover:text-foreground active:scale-[0.98]";
 
 const toolbarIconButtonActiveClassName =
   "bg-foreground/[0.07] text-foreground shadow-[inset_0_1px_2px_rgba(0,0,0,0.08)] hover:bg-foreground/[0.08]";

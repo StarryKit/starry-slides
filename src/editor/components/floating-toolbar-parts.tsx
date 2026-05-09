@@ -25,7 +25,7 @@ export function ToolbarTrigger({
       variant={active ? "secondary" : "ghost"}
       size="icon-sm"
       className={cn(
-        "size-9 rounded-xl text-foreground/60 transition-all duration-200 hover:-translate-y-px hover:bg-foreground/[0.05] hover:text-foreground hover:shadow-[0_5px_14px_rgba(0,0,0,0.08)] active:translate-y-0 active:scale-[0.98]",
+        "size-7.5 rounded-xl text-foreground/60 transition-colors hover:bg-foreground/[0.05] hover:text-foreground active:scale-[0.98]",
         active &&
           "bg-foreground/[0.07] text-foreground shadow-[inset_0_1px_2px_rgba(0,0,0,0.08)] hover:bg-foreground/[0.08]",
         className
@@ -58,7 +58,7 @@ export function IconButton({
       variant={active ? "secondary" : "ghost"}
       size="icon-sm"
       className={cn(
-        "size-9 rounded-xl text-foreground/60 transition-all duration-200 hover:-translate-y-px hover:bg-foreground/[0.05] hover:text-foreground hover:shadow-[0_5px_14px_rgba(0,0,0,0.08)] active:translate-y-0 active:scale-[0.98]",
+        "size-7.5 rounded-xl text-foreground/60 transition-colors hover:bg-foreground/[0.05] hover:text-foreground active:scale-[0.98]",
         active &&
           "bg-foreground/[0.07] text-foreground shadow-[inset_0_1px_2px_rgba(0,0,0,0.08)] hover:bg-foreground/[0.08]",
         className
@@ -134,7 +134,7 @@ export function ToolbarPanel({
   return (
     <div
       className={cn(
-        "absolute z-50 grid gap-1.5 rounded-2xl border border-foreground/[0.08] bg-white/95 p-2 text-popover-foreground shadow-[0_8px_26px_rgba(0,0,0,0.08),0_18px_58px_rgba(0,0,0,0.12)] backdrop-blur-xl max-[1200px]:max-w-[calc(100vw-40px)]",
+        "absolute z-50 grid gap-1.5 rounded-xl border border-foreground/[0.08] bg-white/95 p-1.5 text-popover-foreground shadow-[0_4px_20px_rgba(0,0,0,0.06),0_12px_40px_rgba(0,0,0,0.08)] backdrop-blur-xl max-[1200px]:max-w-[calc(100vw-40px)]",
         editorMotionClassName,
         editorPanelEnterClassName,
         widthClassName
@@ -163,7 +163,7 @@ export function shouldUpdateOffset(current: number, next: number) {
 }
 
 export function Divider() {
-  return <Separator orientation="vertical" className="mx-1 h-6 bg-foreground/10" />;
+  return <Separator orientation="vertical" className="mx-0.5 h-4 bg-foreground/10" />;
 }
 
 export function PanelTitle({ children }: { children: ReactNode }) {
@@ -185,8 +185,14 @@ export function FieldLabel({ children, htmlFor }: { children: ReactNode; htmlFor
   );
 }
 
-export function ToolbarIcon({ icon: Icon }: { icon: LucideIcon }) {
-  return <Icon className="size-3.5" />;
+export function ToolbarIcon({
+  icon: Icon,
+  strokeWidth = 2.5,
+}: {
+  icon: LucideIcon;
+  strokeWidth?: number;
+}) {
+  return <Icon className="size-3.5" strokeWidth={strokeWidth} />;
 }
 
 export function ToolbarValueButton({
@@ -202,7 +208,7 @@ export function ToolbarValueButton({
     <Button
       variant="ghost"
       size="sm"
-      className="h-9 max-w-40 justify-between rounded-xl px-2.5 text-foreground/70 transition-all duration-200 hover:-translate-y-px hover:bg-foreground/[0.05] hover:text-foreground"
+      className="h-7.5 max-w-36 justify-between rounded-xl px-2 text-[12px] text-foreground/70 transition-colors hover:bg-foreground/[0.05] hover:text-foreground"
       type="button"
       aria-label={label}
       title={label}
@@ -227,7 +233,7 @@ export function ToolbarOption({
   return (
     <Button
       variant="ghost"
-      className="min-h-9 w-full justify-start gap-2 rounded-xl px-2.5 py-1.5 text-left text-[13px] font-normal text-foreground/70 transition-all duration-200 hover:bg-foreground/[0.05] hover:text-foreground"
+      className="min-h-7.5 w-full justify-start gap-1.5 rounded-lg px-2 py-1 text-left text-[12px] font-normal text-foreground/70 transition-colors hover:bg-foreground/[0.05] hover:text-foreground"
       type="button"
       disabled={disabled}
       title={title}
