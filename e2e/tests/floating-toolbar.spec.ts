@@ -42,15 +42,21 @@ test("full floating editor applies typography and paragraph controls", async ({ 
   await expectInlineStyle(editableHeading, "text-decoration-line", "underline line-through");
 
   await toolbar.getByRole("button", { name: "Line height", exact: true }).click();
-  await page.getByRole("button", { name: "Relaxed", exact: true }).click();
+  const relaxedLineHeight = page.getByRole("button", { name: "Relaxed", exact: true });
+  await expect(relaxedLineHeight).toBeVisible();
+  await relaxedLineHeight.click();
   await expectInlineStyle(editableHeading, "line-height", "1.45");
   await toolbar.getByRole("button", { name: "Line height", exact: true }).click();
-  await page.getByLabel("Custom line height", { exact: true }).fill("1.33");
+  const customLineHeight = page.getByLabel("Custom line height", { exact: true });
+  await expect(customLineHeight).toBeVisible();
+  await customLineHeight.fill("1.33");
   await page.getByRole("button", { name: "Apply", exact: true }).click();
   await expectInlineStyle(editableHeading, "line-height", "1.33");
 
   await toolbar.getByRole("button", { name: "Text align", exact: true }).click();
-  await page.getByRole("button", { name: "Center", exact: true }).click();
+  const centerAlign = page.getByRole("button", { name: "Center", exact: true });
+  await expect(centerAlign).toBeVisible();
+  await centerAlign.click();
   await expectInlineStyle(editableHeading, "text-align", "center");
 
   await page.keyboard.press(`${MODIFIER}+Z`);
@@ -68,11 +74,21 @@ test("full floating editor applies color and border controls", async ({ page }) 
 
   await editableHeading.click();
   await toolbar.getByRole("button", { name: "Text color", exact: true }).click();
-  await page.getByRole("button", { name: "Use Text color #3B82F6", exact: true }).click();
+  const blueTextColor = page.getByRole("button", {
+    name: "Use Text color #3B82F6",
+    exact: true,
+  });
+  await expect(blueTextColor).toBeVisible();
+  await blueTextColor.click();
   await expectInlineStyle(editableHeading, "color", "rgb(59, 130, 246)");
 
   await toolbar.getByRole("button", { name: "Background color", exact: true }).click();
-  await page.getByRole("button", { name: "Use Background color gradient 1", exact: true }).click();
+  const backgroundGradient = page.getByRole("button", {
+    name: "Use Background color gradient 1",
+    exact: true,
+  });
+  await expect(backgroundGradient).toBeVisible();
+  await backgroundGradient.click();
   await expectInlineStyle(
     editableHeading,
     "background-image",
@@ -80,18 +96,26 @@ test("full floating editor applies color and border controls", async ({ page }) 
   );
 
   await toolbar.getByRole("button", { name: "Border style", exact: true }).click();
-  await page.getByRole("button", { name: "Strong", exact: true }).click();
+  const strongBorder = page.getByRole("button", { name: "Strong", exact: true });
+  await expect(strongBorder).toBeVisible();
+  await strongBorder.click();
   await expectInlineStyle(editableHeading, "border", "2px solid rgba(15, 23, 42, 0.22)");
   await toolbar.getByRole("button", { name: "Border radius", exact: true }).click();
-  await page.getByRole("button", { name: "Round", exact: true }).click();
+  const roundRadius = page.getByRole("button", { name: "Round", exact: true });
+  await expect(roundRadius).toBeVisible();
+  await roundRadius.click();
   await expectInlineStyle(editableHeading, "border-radius", "18px");
   await toolbar.getByRole("button", { name: "Border radius", exact: true }).click();
-  await page.getByLabel("Custom radius", { exact: true }).fill("24");
+  const customRadius = page.getByLabel("Custom radius", { exact: true });
+  await expect(customRadius).toBeVisible();
+  await customRadius.fill("24");
   await page.getByRole("button", { name: "Apply", exact: true }).click();
   await expectInlineStyle(editableHeading, "border-radius", "24px");
 
   await toolbar.getByRole("button", { name: "Shadow", exact: true }).click();
-  await page.getByRole("button", { name: "Lifted", exact: true }).click();
+  const liftedShadow = page.getByRole("button", { name: "Lifted", exact: true });
+  await expect(liftedShadow).toBeVisible();
+  await liftedShadow.click();
   await expectInlineStyle(editableHeading, "box-shadow", "rgba(15, 23, 42, 0.18) 0px 18px 42px");
 });
 
