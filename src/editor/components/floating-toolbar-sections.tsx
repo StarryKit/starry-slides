@@ -4,6 +4,7 @@ import {
   CaseSensitive,
   Circle,
   CircleDashed,
+  Crop,
   Ellipsis,
   Group,
   Italic,
@@ -62,6 +63,7 @@ interface FloatingToolbarSectionsProps {
   activePopoverId: string | null;
   isSelectedElementLocked: boolean;
   selectionCommandAvailability: SelectionCommandAvailability;
+  selectedElementType: "text" | "image" | "block" | "group" | "multi";
   showGroupTool: boolean;
   showMultiTools: boolean;
   commitFeature: (feature: ElementToolFeature, nextValue: string) => void;
@@ -76,6 +78,7 @@ function FloatingToolbarSections({
   activePopoverId,
   isSelectedElementLocked,
   selectionCommandAvailability,
+  selectedElementType,
   showGroupTool,
   showMultiTools,
   commitFeature,
@@ -85,6 +88,7 @@ function FloatingToolbarSections({
   setActiveAttributeDialog,
   setActivePopoverId,
 }: FloatingToolbarSectionsProps) {
+  const isImageSelection = selectedElementType === "image";
   return (
     <>
       <LockSection
@@ -95,20 +99,26 @@ function FloatingToolbarSections({
       {isSelectedElementLocked ? null : (
         <>
           <Divider />
-          <FontSection
-            commitFeature={commitFeature}
-            getCurrentValue={getCurrentValue}
-            getFeature={getFeature}
-            onStylePreview={onStylePreview}
-            setActivePopoverId={setActivePopoverId}
-          />
-          <Divider />
-          <TextStyleSection
-            commitFeature={commitFeature}
-            getCurrentValue={getCurrentValue}
-            getFeature={getFeature}
-          />
-          <Divider />
+          {isImageSelection ? (
+            <ImageSection commitFeature={commitFeature} getFeature={getFeature} />
+          ) : (
+            <>
+              <FontSection
+                commitFeature={commitFeature}
+                getCurrentValue={getCurrentValue}
+                getFeature={getFeature}
+                onStylePreview={onStylePreview}
+                setActivePopoverId={setActivePopoverId}
+              />
+              <Divider />
+              <TextStyleSection
+                commitFeature={commitFeature}
+                getCurrentValue={getCurrentValue}
+                getFeature={getFeature}
+              />
+              <Divider />
+            </>
+          )}
           <ColorSection
             activePopoverId={activePopoverId}
             commitFeature={commitFeature}
@@ -116,15 +126,19 @@ function FloatingToolbarSections({
             getFeature={getFeature}
             setActivePopoverId={setActivePopoverId}
           />
-          <Divider />
-          <ParagraphSection
-            activePopoverId={activePopoverId}
-            commitFeature={commitFeature}
-            getCurrentValue={getCurrentValue}
-            getFeature={getFeature}
-            selectionCommandAvailability={selectionCommandAvailability}
-            setActivePopoverId={setActivePopoverId}
-          />
+          {!isImageSelection ? (
+            <>
+              <Divider />
+              <ParagraphSection
+                activePopoverId={activePopoverId}
+                commitFeature={commitFeature}
+                getCurrentValue={getCurrentValue}
+                getFeature={getFeature}
+                selectionCommandAvailability={selectionCommandAvailability}
+                setActivePopoverId={setActivePopoverId}
+              />
+            </>
+          ) : null}
           <Divider />
           <BorderSection
             activePopoverId={activePopoverId}
@@ -166,6 +180,22 @@ function FloatingToolbarSections({
         </>
       )}
     </>
+  );
+}
+
+function ImageSection({
+  commitFeature,
+  getFeature,
+}: Pick<FloatingToolbarSectionsProps, "commitFeature" | "getFeature">) {
+  return (
+    <ToolbarSection>
+      <IconButton
+        label="Crop image"
+        onClick={() => commitFeature(getFeature("image-crop"), "cover")}
+      >
+        <Crop className={toolbarIconClassName} strokeWidth={ICON_STROKE_WIDTH} />
+      </IconButton>
+    </ToolbarSection>
   );
 }
 

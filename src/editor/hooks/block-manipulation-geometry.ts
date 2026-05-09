@@ -25,11 +25,21 @@ export function clampStageSize(value: number, scale: number): number {
 }
 
 export function isLayoutEditable(element: EditableElement | undefined): boolean {
-  return element?.type === "block" || element?.type === "text" || element?.type === "group";
+  return (
+    element?.type === "block" ||
+    element?.type === "text" ||
+    element?.type === "image" ||
+    element?.type === "group"
+  );
 }
 
 export function isManipulable(element: EditableElement | undefined): boolean {
-  return element?.type === "block" || element?.type === "text" || element?.type === "group";
+  return (
+    element?.type === "block" ||
+    element?.type === "text" ||
+    element?.type === "image" ||
+    element?.type === "group"
+  );
 }
 
 export function unionStageRects(rects: StageRect[]): StageRect {

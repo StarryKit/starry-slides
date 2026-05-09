@@ -172,6 +172,60 @@ test("selected text element can be moved by dragging the same selection overlay"
   await expect(page.getByTestId("selection-overlay")).toHaveCount(1);
 });
 
+test("selected image can be moved by dragging the same selection overlay", async ({ page }) => {
+  await gotoEditor(page);
+
+  const frame = coverFrame(page);
+  await page.getByLabel("Slide 7").click();
+  const imageElement = frame.locator('[data-editor-id="image-5"]');
+  const { selectionOverlay } = getHistoryControls(page);
+
+  await expect(imageElement).toBeVisible();
+  await imageElement.click({ position: { x: 24, y: 24 } });
+  await expect(selectionOverlay).toBeVisible();
+
+  const before = await imageElement.boundingBox();
+  const overlayBefore = await selectionOverlay.boundingBox();
+  expect(before).not.toBeNull();
+  expect(overlayBefore).not.toBeNull();
+
+  if (!before || !overlayBefore) {
+    throw new Error("Expected selected image and overlay to have bounds before dragging.");
+  }
+
+  const start = {
+    x: overlayBefore.x + overlayBefore.width / 2,
+    y: overlayBefore.y + overlayBefore.height / 2,
+  };
+  const end = {
+    x: start.x + 80,
+    y: start.y + 44,
+  };
+
+  await page.mouse.move(start.x, start.y);
+  await page.mouse.down();
+  await page.mouse.move(end.x, end.y, { steps: 8 });
+  await expect
+    .poll(async () => getComputedStyleValue(imageElement, "transform"), { timeout: 1000 })
+    .not.toBe("none");
+  await page.mouse.up();
+
+  const after = await imageElement.boundingBox();
+  const overlayAfter = await selectionOverlay.boundingBox();
+  expect(after).not.toBeNull();
+  expect(overlayAfter).not.toBeNull();
+
+  if (!after || !overlayAfter) {
+    throw new Error("Expected selected image and overlay to have bounds after dragging.");
+  }
+
+  expect(after.x).toBeGreaterThan(before.x + 30);
+  expect(after.y).toBeGreaterThan(before.y + 15);
+  expect(overlayAfter.x).toBeGreaterThan(overlayBefore.x + 30);
+  expect(overlayAfter.y).toBeGreaterThan(overlayBefore.y + 15);
+  await expect(page.getByTestId("selection-overlay")).toHaveCount(1);
+});
+
 test("dragging a selected block snaps its edge to a sibling edge guide", async ({ page }) => {
   await gotoEditor(page);
 

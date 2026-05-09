@@ -1,5 +1,5 @@
 import { AlignCenter, AlignLeft, AlignRight } from "lucide-react";
-import type { Dispatch, ReactNode, SetStateAction } from "react";
+import type { ComponentProps, Dispatch, ReactNode, SetStateAction } from "react";
 import type { ElementToolFeature, ElementToolOption } from "../lib/element-tool-model";
 import { cn } from "../lib/utils";
 import { ColorPicker } from "./color-picker";
@@ -162,21 +162,28 @@ function ToolbarSection({ children }: { children: ReactNode }) {
 
 function ToolbarPopoverButton({
   active,
+  className,
   icon,
   label,
-}: {
+  ...props
+}: ComponentProps<typeof Button> & {
   active: boolean;
   icon: ReactNode;
   label: string;
 }) {
   return (
     <Button
+      {...props}
       type="button"
       variant="ghost"
       size="icon-sm"
       aria-label={label}
       title={label}
-      className={cn(toolbarIconButtonClassName, active && toolbarIconButtonActiveClassName)}
+      className={cn(
+        toolbarIconButtonClassName,
+        active && toolbarIconButtonActiveClassName,
+        className
+      )}
     >
       {icon}
     </Button>

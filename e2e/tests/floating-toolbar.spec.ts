@@ -95,6 +95,40 @@ test("full floating editor applies color and border controls", async ({ page }) 
   await expectInlineStyle(editableHeading, "box-shadow", "rgba(15, 23, 42, 0.18) 0px 18px 42px");
 });
 
+test("image floating toolbar hides text tools and exposes crop plus appearance controls", async ({
+  page,
+}) => {
+  await gotoEditor(page);
+  await page.getByLabel("Slide 7").click();
+
+  const frame = coverFrame(page);
+  const editableImage = frame.locator('[data-editor-id="image-5"]');
+  const toolbar = page.getByTestId("floating-toolbar-anchor");
+
+  await editableImage.click({ position: { x: 24, y: 24 } });
+  await expect(toolbar).toBeVisible();
+  await expect(toolbar.getByLabel("Font", { exact: true })).toBeHidden();
+  await expect(
+    toolbar.getByRole("button", { name: "Increase font size", exact: true })
+  ).toBeHidden();
+  await expect(toolbar.getByRole("button", { name: "Bold", exact: true })).toBeHidden();
+  await expect(toolbar.getByRole("button", { name: "Italic", exact: true })).toBeHidden();
+  await expect(toolbar.getByRole("button", { name: "Line height", exact: true })).toBeHidden();
+  await expect(toolbar.getByRole("button", { name: "Text align", exact: true })).toBeHidden();
+
+  await expect(toolbar.getByRole("button", { name: "Crop image", exact: true })).toBeVisible();
+  await expect(
+    toolbar.getByRole("button", { name: "Background color", exact: true })
+  ).toBeVisible();
+  await expect(toolbar.getByRole("button", { name: "Border style", exact: true })).toBeVisible();
+  await expect(toolbar.getByRole("button", { name: "Border radius", exact: true })).toBeVisible();
+  await expect(toolbar.getByRole("button", { name: "Shadow", exact: true })).toBeVisible();
+  await expect(toolbar.getByRole("button", { name: "Other", exact: true })).toBeVisible();
+
+  await toolbar.getByRole("button", { name: "Crop image", exact: true }).click();
+  await expectInlineStyle(editableImage, "object-fit", "cover");
+});
+
 test("floating toolbar font family select changes the selected text font", async ({ page }) => {
   await gotoEditor(page);
 

@@ -20,7 +20,7 @@ export function isEditableElementTarget(target: EventTarget | null): boolean {
 }
 
 export function isLayoutEditable(element: EditableElement | undefined): boolean {
-  return element?.type === "block" || element?.type === "text";
+  return element?.type === "block" || element?.type === "text" || element?.type === "image";
 }
 
 export function getShortcutStep(event: KeyboardEvent): number {

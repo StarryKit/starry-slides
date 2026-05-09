@@ -112,7 +112,10 @@ function FloatingToolbar({
         return;
       }
 
-      if (target instanceof Element && target.closest('[data-slot="select-content"]')) {
+      if (
+        target instanceof Element &&
+        target.closest('[data-slot="select-content"], [data-slot="popover-content"]')
+      ) {
         return;
       }
 
@@ -200,6 +203,7 @@ function FloatingToolbar({
           activePopoverId={activePopoverId}
           isSelectedElementLocked={isSelectedElementLocked}
           selectionCommandAvailability={selectionCommandAvailability}
+          selectedElementType={selectedElementType}
           showGroupTool={showGroupTool}
           showMultiTools={showMultiTools}
           commitFeature={commitFeature}
