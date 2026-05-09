@@ -13,13 +13,23 @@
     "type": "git",
     "url": "git+https://github.com/StarryKit/starry-slides.git"
   },
-  "keywords": ["slides", "presentation", "html", "cli", "editor"],
+  "keywords": [
+    "slides",
+    "presentation",
+    "html",
+    "cli",
+    "editor"
+  ],
   "engines": {
     "node": ">=20.11"
   },
-  "files": ["dist", "README.md", "LICENSE"],
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
   "bin": {
-    "starry-slides": "./dist/cli/index.js"
+    "starry-slides": "dist/cli/index.js"
   },
   "exports": {
     ".": {
