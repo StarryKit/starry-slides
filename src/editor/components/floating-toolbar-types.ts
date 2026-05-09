@@ -20,7 +20,6 @@ export interface FloatingToolbarProps {
 
 export interface AttributeValues {
   locked: string;
-  altText: string;
   ariaLabel: string;
   linkUrl: string;
 }
@@ -30,18 +29,12 @@ export interface SelectionCommandAvailability {
   ungroup: boolean;
 }
 
-export type EditableAttributeId = "other-link" | "other-alt-text" | "other-aria-label";
+export type EditableAttributeId = "other-link" | "other-aria-label";
 
 export const OTHER_FEATURES: Record<EditableAttributeId, ElementToolFeature> = {
   "other-aria-label": {
     id: "other-aria-label",
     label: "ARIA label",
-    controlType: "text",
-    target: "operation",
-  },
-  "other-alt-text": {
-    id: "other-alt-text",
-    label: "Alt text",
     controlType: "text",
     target: "operation",
   },

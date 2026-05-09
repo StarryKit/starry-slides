@@ -49,7 +49,6 @@ function useEditorElementActions({
   const selectedTargetElementId = selectedElementId ?? "slide-root";
   const attributeValues = {
     locked: isSelectedElementLocked ? "true" : "",
-    altText: activeSlide ? getHtmlAttributeValue(activeSlide, selectedTargetElementId, "alt") : "",
     ariaLabel: activeSlide
       ? getHtmlAttributeValue(activeSlide, selectedTargetElementId, "aria-label")
       : "",

@@ -73,9 +73,6 @@ function getAttributeDialogValue(dialogId: EditableAttributeId, attributeValues:
   if (dialogId === "other-link") {
     return attributeValues.linkUrl;
   }
-  if (dialogId === "other-alt-text") {
-    return attributeValues.altText;
-  }
   return attributeValues.ariaLabel;
 }
 
@@ -86,11 +83,6 @@ const attributeDialogConfig: Record<
   "other-aria-label": {
     description: "Set the ARIA label used by assistive technologies.",
     title: "ARIA label",
-  },
-  "other-alt-text": {
-    description: "Describe the selected visual element.",
-    multiline: true,
-    title: "Alt text",
   },
   "other-link": {
     description: "Attach a URL to the selected element.",

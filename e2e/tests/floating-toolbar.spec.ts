@@ -164,12 +164,7 @@ test("full floating editor applies other attributes through dialogs", async ({ p
   await expect(editableHeading).toHaveAttribute("data-link-url", "https://example.com/deck");
 
   await toolbar.getByRole("button", { name: "Other", exact: true }).click();
-  await page.getByRole("button", { name: "Alt text", exact: true }).click();
-  await page.getByRole("dialog").getByRole("textbox").fill("Hero kicker text");
-  await page.getByRole("button", { name: "Save", exact: true }).click();
-  await expect(editableHeading).toHaveAttribute("alt", "Hero kicker text");
-
-  await toolbar.getByRole("button", { name: "Other", exact: true }).click();
+  await expect(page.getByRole("button", { name: "Alt text", exact: true })).toBeHidden();
   await page.getByRole("button", { name: "ARIA label", exact: true }).click();
   await page.getByRole("dialog").getByRole("textbox").fill("Hero kicker label");
   await page.getByRole("button", { name: "Save", exact: true }).click();
@@ -181,7 +176,6 @@ test("full floating editor applies other attributes through dialogs", async ({ p
   await page.reload();
   const reloadedHeading = coverFrame(page).locator('[data-editor-id="text-1"]');
   await expect(reloadedHeading).toHaveAttribute("data-link-url", "https://example.com/deck");
-  await expect(reloadedHeading).toHaveAttribute("alt", "Hero kicker text");
   await expect(reloadedHeading).toHaveAttribute("aria-label", "Hero kicker label");
 });
 

@@ -35,7 +35,6 @@ interface EditorWorkspaceProps {
   manipulationOverlay: BlockManipulationOverlayModel | null;
   attributeValues: {
     locked: string;
-    altText: string;
     ariaLabel: string;
     linkUrl: string;
   };

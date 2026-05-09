@@ -157,10 +157,6 @@ function FloatingToolbar({
       onAttributeChange("data-link-url", nextValue.trim());
       return;
     }
-    if (feature.id === "other-alt-text") {
-      onAttributeChange("alt", nextValue.trim());
-      return;
-    }
     if (feature.id === "other-aria-label") {
       onAttributeChange("aria-label", nextValue.trim());
       return;

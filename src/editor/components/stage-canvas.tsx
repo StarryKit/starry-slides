@@ -46,7 +46,6 @@ interface StageCanvasProps {
   } | null;
   attributeValues: {
     locked: string;
-    altText: string;
     ariaLabel: string;
     linkUrl: string;
   };

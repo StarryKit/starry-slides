@@ -15,7 +15,6 @@ interface ElementToolValueOptions {
   inspectedStyles: CssPropertyRow[];
   attributeValues: {
     locked: string;
-    altText: string;
     ariaLabel: string;
     linkUrl: string;
   };
@@ -30,17 +29,11 @@ export function getElementToolValue({
     if (feature.id === "other-link") {
       return attributeValues.linkUrl;
     }
-    if (feature.id === "other-alt-text") {
-      return attributeValues.altText;
-    }
     if (feature.id === "other-aria-label") {
       return attributeValues.ariaLabel;
     }
     if (feature.attributeName === "data-editor-locked") {
       return attributeValues.locked;
-    }
-    if (feature.attributeName === "alt") {
-      return attributeValues.altText;
     }
     if (feature.attributeName === "aria-label") {
       return attributeValues.ariaLabel;

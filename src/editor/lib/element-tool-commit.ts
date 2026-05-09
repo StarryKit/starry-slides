@@ -9,7 +9,6 @@ import {
 
 export interface ElementToolAttributeValues {
   locked: string;
-  altText: string;
   ariaLabel: string;
   linkUrl: string;
 }
@@ -79,11 +78,6 @@ export function commitElementToolFeature({
 
   if (feature.id === "other-link") {
     onAttributeChange("data-link-url", nextValue.trim());
-    return;
-  }
-
-  if (feature.id === "other-alt-text") {
-    onAttributeChange("alt", nextValue.trim());
     return;
   }
 

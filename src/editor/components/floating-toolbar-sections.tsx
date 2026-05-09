@@ -1,4 +1,5 @@
 import {
+  Accessibility,
   AlignCenter,
   Bold,
   CaseSensitive,
@@ -447,14 +448,7 @@ function OtherSection({
           />
           <AttributeMenuButton
             icon={
-              <CaseSensitive className={toolbarIconClassName} strokeWidth={ICON_STROKE_WIDTH} />
-            }
-            label="Alt text"
-            onClick={() => openAttributeDialog("other-alt-text")}
-          />
-          <AttributeMenuButton
-            icon={
-              <CaseSensitive className={toolbarIconClassName} strokeWidth={ICON_STROKE_WIDTH} />
+              <Accessibility className={toolbarIconClassName} strokeWidth={ICON_STROKE_WIDTH} />
             }
             label="ARIA label"
             onClick={() => openAttributeDialog("other-aria-label")}

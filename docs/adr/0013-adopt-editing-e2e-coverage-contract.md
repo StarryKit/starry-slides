@@ -150,7 +150,7 @@ Known gaps:
 Required behavior coverage:
 
 - background color, border, border radius, box shadow, opacity, lock state,
-  link URL, alt text, ARIA label, and custom CSS property add/update/remove
+  link URL, ARIA label, and custom CSS property add/update/remove
   behavior
 - each appearance or attribute change writes the expected generated HTML source
   state when persisted
@@ -169,7 +169,7 @@ Current coverage is partially present in:
 Known gaps:
 
 - box shadow is not covered
-- lock state, link URL, alt text, and ARIA label are not covered
+- lock state, link URL, and ARIA label are not covered
 - custom CSS removal or overwriting an existing custom property is not covered
 - style and attribute edits are not consistently verified after refresh
 

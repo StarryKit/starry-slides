@@ -430,21 +430,6 @@ export const ELEMENT_TOOL_GROUPS: ElementToolGroup[] = [
     icon: CaseSensitive,
     subgroups: [
       {
-        id: "text-alternatives",
-        label: "Text alternatives",
-        icon: CaseSensitive,
-        features: [
-          {
-            id: "alt-text",
-            label: "Alt text",
-            controlType: "text",
-            target: "attribute",
-            attributeName: "alt",
-            placeholder: "Describe this element",
-          },
-        ],
-      },
-      {
         id: "labels",
         label: "Labels",
         icon: CaseSensitive,
