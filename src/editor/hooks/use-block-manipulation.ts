@@ -156,6 +156,20 @@ function useBlockManipulation({
           captureElementLayoutStyleSnapshot(node),
         ])
       );
+      const startComputedMargins = Object.fromEntries(
+        Object.entries(targetNodes).map(([elementId, node]) => {
+          const computedStyle = window.getComputedStyle(node);
+          return [
+            elementId,
+            {
+              top: Number.parseFloat(computedStyle.marginTop || "0") || 0,
+              right: Number.parseFloat(computedStyle.marginRight || "0") || 0,
+              bottom: Number.parseFloat(computedStyle.marginBottom || "0") || 0,
+              left: Number.parseFloat(computedStyle.marginLeft || "0") || 0,
+            },
+          ] as const;
+        })
+      );
       const resizeParentElementIds = Object.fromEntries(
         Object.entries(targetNodes).map(([elementId, node]) => [
           elementId,
@@ -232,6 +246,7 @@ function useBlockManipulation({
         },
         previousStyle: previousStyles[targetElementId],
         previousStyles,
+        startComputedMargins,
         startElementStageRects,
         resizeParentElementIds,
         startParentStageRects,

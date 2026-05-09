@@ -34,6 +34,10 @@ export interface ManipulationSession {
   centerPoint: { x: number; y: number };
   previousStyle: ElementLayoutStyleSnapshot;
   previousStyles: Record<string, ElementLayoutStyleSnapshot>;
+  startComputedMargins: Record<
+    string,
+    { top: number; right: number; bottom: number; left: number }
+  >;
   startElementStageRects: Record<string, StageRect>;
   resizeParentElementIds: Record<string, string | null>;
   startParentStageRects: Record<string, StageRect>;

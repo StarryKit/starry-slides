@@ -10,7 +10,7 @@ import {
 describe("layout helpers", () => {
   test("captureElementLayoutStyleSnapshot preserves inline layout styles used by history", () => {
     const doc = new DOMParser().parseFromString(
-      `<!DOCTYPE html><html><body><div style="position:absolute;left:12px;top:24px;width:300px;height:160px;transform:rotate(12deg);transform-origin:center center;margin:0;z-index:4"></div></body></html>`,
+      `<!DOCTYPE html><html><body><div style="position:absolute;left:12px;top:24px;width:300px;max-width:none;height:160px;transform:rotate(12deg);transform-origin:center center;margin:0;z-index:4"></div></body></html>`,
       "text/html"
     );
     const node = doc.querySelector("div");
@@ -25,6 +25,7 @@ describe("layout helpers", () => {
       left: "12px",
       top: "24px",
       width: "300px",
+      maxWidth: "none",
       height: "160px",
       transform: "rotate(12deg)",
       transformOrigin: "center center",

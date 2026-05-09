@@ -9,6 +9,7 @@ import {
   getComputedStyleValue,
   getHeaderControls,
   getHistoryControls,
+  getInlineStyle,
   getRequiredBoundingBox,
   gotoEditor,
   selectAllAndFill,
@@ -477,4 +478,55 @@ test("all four resize handles are visible for a selected element", async ({ page
   await expect(page.getByTestId("block-resize-handle-top-right")).toBeVisible();
   await expect(page.getByTestId("block-resize-handle-bottom-right")).toBeVisible();
   await expect(page.getByTestId("block-resize-handle-bottom-left")).toBeVisible();
+});
+
+test("resizing a flow-layout title keeps it in document layout", async ({ page }) => {
+  await gotoEditor(page);
+
+  const frame = coverFrame(page);
+  const title = frame.locator('[data-editor-id="text-2"]');
+  const summary = frame.locator('[data-editor-id="text-3"]');
+  const resizeHandle = page.getByTestId("block-resize-handle-bottom-right");
+
+  await title.click({ position: { x: 16, y: 16 } });
+  await expect(resizeHandle).toBeVisible();
+
+  const titleBefore = await getRequiredBoundingBox(title, "title before resize");
+  const summaryBefore = await getRequiredBoundingBox(summary, "summary before resize");
+  const initialPositionStyle = await getInlineStyle(title, "position");
+  const handleBefore = await getRequiredBoundingBox(resizeHandle, "title resize handle");
+  const resizeStart = {
+    x: handleBefore.x + handleBefore.width / 2,
+    y: handleBefore.y + handleBefore.height / 2,
+  };
+
+  await resizeHandle.dispatchEvent("mousedown", {
+    bubbles: true,
+    cancelable: true,
+    clientX: resizeStart.x,
+    clientY: resizeStart.y,
+  });
+  await page.keyboard.down("Alt");
+  await page.mouse.move(resizeStart.x + 160, resizeStart.y + 60, { steps: 8 });
+  await page.keyboard.up("Alt");
+
+  const titleDuring = await getRequiredBoundingBox(title, "title during resize");
+  const summaryDuring = await getRequiredBoundingBox(summary, "summary during resize");
+  expect(await getInlineStyle(title, "position")).toBe(initialPositionStyle);
+  expect(Math.abs(titleDuring.x - titleBefore.x)).toBeLessThanOrEqual(2);
+  expect(Math.abs(titleDuring.y - titleBefore.y)).toBeLessThanOrEqual(2);
+  expect(summaryDuring.y).toBeGreaterThanOrEqual(summaryBefore.y - 2);
+
+  await page.mouse.up();
+
+  const titleAfter = await getRequiredBoundingBox(title, "title after resize");
+  const summaryAfter = await getRequiredBoundingBox(summary, "summary after resize");
+  expect(await getInlineStyle(title, "position")).toBe(initialPositionStyle);
+  expect(await getInlineStyle(title, "left")).toBe("");
+  expect(await getInlineStyle(title, "top")).toBe("");
+  expect(titleAfter.width).toBeGreaterThan(titleBefore.width + 50);
+  expect(titleAfter.height).toBeGreaterThan(titleBefore.height + 20);
+  expect(Math.abs(titleAfter.x - titleBefore.x)).toBeLessThanOrEqual(2);
+  expect(Math.abs(titleAfter.y - titleBefore.y)).toBeLessThanOrEqual(2);
+  expect(summaryAfter.y).toBeGreaterThanOrEqual(summaryBefore.y - 2);
 });

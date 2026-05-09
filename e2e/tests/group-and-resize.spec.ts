@@ -5,6 +5,7 @@ import {
   coverFrame,
   createGroupFromGeometryCards,
   createGroupFromSnapCards,
+  getHistoryControls,
   getRequiredBoundingBox,
   gotoEditor,
   selectAllAndFill,

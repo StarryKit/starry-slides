@@ -122,6 +122,7 @@ describe("HTML write-back", () => {
       left: "120px",
       top: "180px",
       width: "320px",
+      maxWidth: "none",
       height: "220px",
       transform: "rotate(18deg)",
       transformOrigin: "center center",
@@ -135,6 +136,7 @@ describe("HTML write-back", () => {
     expect(node?.style.left).toBe("120px");
     expect(node?.style.top).toBe("180px");
     expect(node?.style.width).toBe("320px");
+    expect(node?.style.maxWidth).toBe("none");
     expect(node?.style.height).toBe("220px");
     expect(node?.style.transform).toBe("rotate(18deg)");
     expect(node?.style.transformOrigin).toBe("center center");
