@@ -42,20 +42,31 @@ test("full floating editor applies typography and paragraph controls", async ({ 
   await expectInlineStyle(editableHeading, "text-decoration-line", "underline line-through");
 
   await toolbar.getByRole("button", { name: "Line height", exact: true }).click();
-  const relaxedLineHeight = page.getByRole("button", { name: "Relaxed", exact: true });
-  await expect(relaxedLineHeight).toBeVisible();
-  await relaxedLineHeight.click();
-  await expectInlineStyle(editableHeading, "line-height", "1.45");
+  const lineHeightSlider = page.getByRole("slider", { name: "Line height", exact: true });
+  await expect(lineHeightSlider).toBeVisible();
+  await expect(page.getByRole("button", { name: "Relaxed", exact: true })).toHaveCount(0);
+  await expect(page.getByLabel("Custom line height", { exact: true })).toHaveCount(0);
+  await expect(lineHeightSlider).toHaveAttribute("min", "0.8");
+  await expect(lineHeightSlider).toHaveAttribute("max", "2.4");
+  await expect(lineHeightSlider).toHaveAttribute("step", "0.01");
+  await expect(lineHeightSlider).not.toHaveValue("2.4");
+  await lineHeightSlider.fill("1.35");
+  await expectInlineStyle(editableHeading, "line-height", "1.35");
+  await lineHeightSlider.press("ArrowRight");
+  await expectInlineStyle(editableHeading, "line-height", "1.36");
+  await page.keyboard.press("Escape");
+  await expect(lineHeightSlider).toBeHidden();
   await toolbar.getByRole("button", { name: "Line height", exact: true }).click();
-  const customLineHeight = page.getByLabel("Custom line height", { exact: true });
-  await expect(customLineHeight).toBeVisible();
-  await customLineHeight.fill("1.33");
-  await page.getByRole("button", { name: "Apply", exact: true }).click();
-  await expectInlineStyle(editableHeading, "line-height", "1.33");
+  await expect(lineHeightSlider).toHaveValue("1.36");
 
   await toolbar.getByRole("button", { name: "Text align", exact: true }).click();
   const centerAlign = page.getByRole("button", { name: "Center", exact: true });
   await expect(centerAlign).toBeVisible();
+  await centerAlign.hover();
+  await expectInlineStyle(editableHeading, "text-align", "center");
+  await page.mouse.move(0, 0);
+  await expectInlineStyle(editableHeading, "text-align", "");
+  await centerAlign.hover();
   await centerAlign.click();
   await expectInlineStyle(editableHeading, "text-align", "center");
 
@@ -63,6 +74,27 @@ test("full floating editor applies typography and paragraph controls", async ({ 
   await expectInlineStyle(editableHeading, "text-align", "");
   await page.keyboard.press(`${MODIFIER}+Shift+Z`);
   await expectInlineStyle(editableHeading, "text-align", "center");
+});
+
+test("line height slider reflects computed and committed line-height state", async ({ page }) => {
+  await gotoEditor(page);
+
+  const frame = coverFrame(page);
+  const title = frame.locator('[data-editor-id="text-2"]');
+  const toolbar = page.getByTestId("floating-toolbar-anchor");
+
+  await title.click();
+  await toolbar.getByRole("button", { name: "Line height", exact: true }).click();
+  const lineHeightSlider = page.getByRole("slider", { name: "Line height", exact: true });
+  await expect(lineHeightSlider).toBeVisible();
+  await expect(lineHeightSlider).toHaveValue("0.92");
+
+  await lineHeightSlider.fill("1.3");
+  await expectInlineStyle(title, "line-height", "1.3");
+  await page.keyboard.press("Escape");
+  await expect(lineHeightSlider).toBeHidden();
+  await toolbar.getByRole("button", { name: "Line height", exact: true }).click();
+  await expect(lineHeightSlider).toHaveValue("1.3");
 });
 
 test("full floating editor applies color and border controls", async ({ page }) => {

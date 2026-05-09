@@ -40,8 +40,8 @@ export function collectCssProperties(element: HTMLElement): CssPropertyRow[] {
     }
 
     const value =
-      name === "transform" && element.style.transform
-        ? element.style.transform.trim()
+      (name === "transform" || name === "line-height") && element.style.getPropertyValue(name)
+        ? element.style.getPropertyValue(name).trim()
         : styles.getPropertyValue(name).trim();
     if (value.length === 0) {
       continue;

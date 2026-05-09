@@ -181,15 +181,43 @@ function NumericCommitControl({
   feature,
   label,
   onCommitFeature,
+  onPreview,
   unit = "",
 }: {
   feature: ElementToolFeature;
   label: string;
   onCommitFeature: (feature: ElementToolFeature, nextValue: string) => void;
+  onPreview?: (nextValue: string | null) => void;
   unit?: string;
 }) {
   const [draft, setDraft] = useState("");
   const inputId = `floating-${feature.id}-custom`;
+
+  useEffect(() => {
+    const trimmedDraft = draft.trim();
+    if (!trimmedDraft || !onPreview) {
+      onPreview?.(null);
+      return;
+    }
+
+    const timeoutId = window.setTimeout(() => {
+      onPreview(`${trimmedDraft}${unit}`);
+    }, NUMERIC_INPUT_DEBOUNCE_MS);
+
+    return () => window.clearTimeout(timeoutId);
+  }, [draft, onPreview, unit]);
+
+  function commitDraft() {
+    const trimmedDraft = draft.trim();
+    if (!trimmedDraft) {
+      return;
+    }
+
+    onPreview?.(null);
+    onCommitFeature(feature, `${trimmedDraft}${unit}`);
+    setDraft("");
+  }
+
   return (
     <div className="grid gap-1.5">
       <label
@@ -205,19 +233,23 @@ function NumericCommitControl({
           inputMode="decimal"
           value={draft}
           onChange={(event) => setDraft(event.target.value)}
-        />
-        <Button
-          type="button"
-          variant="outline"
-          size="sm"
-          disabled={!draft.trim()}
-          onClick={() => {
-            onCommitFeature(feature, `${draft.trim()}${unit}`);
-            setDraft("");
+          onKeyDown={(event) => {
+            if (event.key === "Enter") {
+              event.preventDefault();
+              commitDraft();
+            }
+            if (event.key === "Escape") {
+              onPreview?.(null);
+              setDraft("");
+            }
           }}
+        />
+        <div
+          className="grid h-8 min-w-11 place-items-center rounded-md border border-input bg-muted/30 px-2 text-[12px] font-medium text-foreground/45"
+          aria-label={unit ? `Unit ${unit}` : "Unitless value"}
         >
-          Apply
-        </Button>
+          {unit || "x"}
+        </div>
       </div>
     </div>
   );
@@ -393,5 +425,6 @@ function parseFontSizeValue(value: string) {
 }
 
 const FONT_SIZE_INPUT_DEBOUNCE_MS = 500;
+const NUMERIC_INPUT_DEBOUNCE_MS = 500;
 
 export { FontFamilyCombobox, FontSizeControl, NumericCommitControl, TextCommitControl };

@@ -11,11 +11,13 @@ import {
   Italic,
   Layers,
   Link2,
+  ListPlus,
   Lock,
   LockOpen,
   Rows3,
   Square,
   Strikethrough,
+  TextAlignJustify,
   Underline,
   Ungroup,
 } from "lucide-react";
@@ -27,7 +29,6 @@ import {
   DISTRIBUTE_OPTIONS,
   type ElementToolFeature,
   LAYER_ORDER_OPTIONS,
-  LINE_HEIGHT_OPTIONS,
   SHADOW_OPTIONS,
   TEXT_ALIGN_OPTIONS,
 } from "../lib/element-tool-model";
@@ -43,6 +44,7 @@ import { Divider, IconButton } from "./floating-toolbar-parts";
 import {
   AttributeMenuButton,
   ColorPopover,
+  LineHeightPopover,
   OptionsPopover,
   type OptionsSectionProps,
   type PopoverSectionProps,
@@ -124,6 +126,7 @@ function FloatingToolbarSections({
             commitFeature={commitFeature}
             getCurrentValue={getCurrentValue}
             getFeature={getFeature}
+            onStylePreview={onStylePreview}
             setActivePopoverId={setActivePopoverId}
           />
           {!isImageSelection ? (
@@ -134,6 +137,7 @@ function FloatingToolbarSections({
                 commitFeature={commitFeature}
                 getCurrentValue={getCurrentValue}
                 getFeature={getFeature}
+                onStylePreview={onStylePreview}
                 selectionCommandAvailability={selectionCommandAvailability}
                 setActivePopoverId={setActivePopoverId}
               />
@@ -145,6 +149,7 @@ function FloatingToolbarSections({
             commitFeature={commitFeature}
             getCurrentValue={getCurrentValue}
             getFeature={getFeature}
+            onStylePreview={onStylePreview}
             selectionCommandAvailability={selectionCommandAvailability}
             setActivePopoverId={setActivePopoverId}
           />
@@ -156,6 +161,7 @@ function FloatingToolbarSections({
                 commitFeature={commitFeature}
                 getCurrentValue={getCurrentValue}
                 getFeature={getFeature}
+                onStylePreview={onStylePreview}
                 selectionCommandAvailability={selectionCommandAvailability}
                 setActivePopoverId={setActivePopoverId}
               />
@@ -348,25 +354,17 @@ function getColorIndicatorBackground(value: string) {
 function ParagraphSection(props: OptionsSectionProps) {
   return (
     <ToolbarSection>
-      <OptionsPopover
+      <LineHeightPopover
         {...props}
-        custom={
-          <NumericCommitControl
-            feature={props.getFeature("line-height")}
-            label="Custom line height"
-            onCommitFeature={props.commitFeature}
-          />
-        }
         feature={props.getFeature("line-height")}
-        icon={<Rows3 className={toolbarIconClassName} strokeWidth={ICON_STROKE_WIDTH} />}
+        icon={<ListPlus className={toolbarIconClassName} strokeWidth={ICON_STROKE_WIDTH} />}
         label="Line height"
-        options={LINE_HEIGHT_OPTIONS}
         popoverId="line-height"
       />
       <OptionsPopover
         {...props}
         feature={props.getFeature("text-align")}
-        icon={<AlignCenter className={toolbarIconClassName} strokeWidth={ICON_STROKE_WIDTH} />}
+        icon={<TextAlignJustify className={toolbarIconClassName} strokeWidth={ICON_STROKE_WIDTH} />}
         label="Text align"
         options={TEXT_ALIGN_OPTIONS}
         popoverId="text-align"

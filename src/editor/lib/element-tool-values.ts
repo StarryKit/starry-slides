@@ -58,8 +58,11 @@ export function getElementToolValue({
   if (feature.id === "font-size" && rawValue.endsWith("px")) {
     return rawValue.slice(0, -2);
   }
-  if (feature.id === "line-height" || feature.id === "opacity") {
-    return rawValue || (feature.id === "opacity" ? "1" : "");
+  if (feature.id === "line-height") {
+    return normalizeLineHeightValue(rawValue, inspectedStyles);
+  }
+  if (feature.id === "opacity") {
+    return rawValue || "1";
   }
   if (feature.id === "rotation") {
     return String(parseTransformParts(rawValue).rotate);
@@ -192,6 +195,24 @@ export function getFeatureOptions(
 
 function getStyleValue(styles: CssPropertyRow[], propertyName: string): string {
   return styles.find((property) => property.name === propertyName)?.value ?? "";
+}
+
+function normalizeLineHeightValue(rawValue: string, inspectedStyles: CssPropertyRow[]): string {
+  if (!rawValue) {
+    return "";
+  }
+
+  if (!rawValue.endsWith("px")) {
+    return rawValue;
+  }
+
+  const lineHeight = Number.parseFloat(rawValue);
+  const fontSize = Number.parseFloat(getStyleValue(inspectedStyles, "font-size"));
+  if (!Number.isFinite(lineHeight) || !Number.isFinite(fontSize) || fontSize <= 0) {
+    return rawValue;
+  }
+
+  return String(Math.round((lineHeight / fontSize) * 100) / 100);
 }
 
 function normalizeSizePreset(featureId: ElementToolFeature["id"], nextValue: string): string {
