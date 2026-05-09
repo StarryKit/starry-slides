@@ -164,8 +164,13 @@ function FloatingToolbar({
       onAttributeChange("aria-label", nextValue.trim());
       return;
     }
-    if (feature.id === "background-color" && nextValue.startsWith("linear-gradient")) {
-      onStyleChange("background-image", nextValue);
+    if (feature.id === "background-color") {
+      if (nextValue.startsWith("linear-gradient")) {
+        onStyleChange("background-image", nextValue);
+      } else {
+        onStyleChange("background-color", nextValue);
+        onStyleChange("background-image", "");
+      }
       return;
     }
 

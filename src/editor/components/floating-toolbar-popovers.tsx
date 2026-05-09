@@ -60,17 +60,12 @@ function ColorPopover({
       <PopoverTrigger asChild>
         <ToolbarPopoverButton active={activePopoverId === popoverId} icon={icon} label={label} />
       </PopoverTrigger>
-      <PopoverContent
-        className="w-80 max-h-[calc(100vh-40px)] overflow-y-auto p-2"
-        onMouseDown={(event) => event.stopPropagation()}
-        onPointerDown={(event) => event.stopPropagation()}
-      >
+      <PopoverContent className="w-80 max-h-[calc(100vh-40px)] overflow-y-auto p-2">
         <ColorPicker
           value={getCurrentValue(feature)}
           ariaLabelPrefix={label}
           includeGradients={includeGradients}
           onChange={(nextValue) => commitFeature(feature, nextValue)}
-          onCommit={() => setActivePopoverId(null)}
         />
       </PopoverContent>
     </Popover>

@@ -1,4 +1,4 @@
-import { expect, test } from "@playwright/test";
+import { type Locator, expect, test } from "@playwright/test";
 import {
   MODIFIER,
   clickFloatingToolbarButton,
@@ -104,16 +104,46 @@ test("full floating editor applies color and border controls", async ({ page }) 
   const editableHeading = frame.locator('[data-editor-id="text-1"]');
   const toolbar = page.getByTestId("floating-toolbar-anchor");
 
+  await editableHeading.evaluate((node) => {
+    (node as HTMLElement).style.color = "rgba(59, 130, 246, 0.5)";
+  });
   await editableHeading.click();
   await toolbar.getByRole("button", { name: "Text color", exact: true }).click();
   await expect(page.getByRole("tab", { name: "Gradient", exact: true })).toHaveCount(0);
+  const textColorPanel = page.locator('[data-slot="popover-content"]');
+  await expect(textColorPanel.getByRole("textbox")).toHaveValue("3B82F6");
+  await expect(textColorPanel.getByRole("slider", { name: "Opacity", exact: true })).toHaveValue(
+    "50"
+  );
+
+  const opacitySlider = textColorPanel.getByRole("slider", { name: "Opacity", exact: true });
+  const opacityBox = await opacitySlider.boundingBox();
+  expect(opacityBox).not.toBeNull();
+  if (!opacityBox) {
+    throw new Error("Expected opacity slider to have bounds.");
+  }
+  await page.mouse.move(
+    opacityBox.x + opacityBox.width * 0.5,
+    opacityBox.y + opacityBox.height / 2
+  );
+  await page.mouse.down();
+  await page.mouse.move(
+    opacityBox.x + opacityBox.width * 0.25,
+    opacityBox.y + opacityBox.height / 2
+  );
+  await page.mouse.up();
+  await expect.poll(async () => getColorAlpha(editableHeading)).toBeLessThan(0.3);
+  await expect.poll(async () => getColorAlpha(editableHeading)).toBeGreaterThan(0.2);
+
   const blueTextColor = page.getByRole("button", {
     name: "Use Text color #3B82F6",
     exact: true,
   });
   await expect(blueTextColor).toBeVisible();
   await blueTextColor.click();
-  await expectInlineStyle(editableHeading, "color", "rgb(59, 130, 246)");
+  await expect(page.locator('[data-slot="popover-content"]')).toBeVisible();
+  await expect.poll(async () => getColorAlpha(editableHeading)).toBeLessThan(0.3);
+  await expect.poll(async () => getColorAlpha(editableHeading)).toBeGreaterThan(0.2);
 
   await toolbar.getByRole("button", { name: "Background color", exact: true }).click();
   await expect(page.getByRole("tab", { name: "Color", exact: true })).toBeVisible();
@@ -137,11 +167,35 @@ test("full floating editor applies color and border controls", async ({ page }) 
   });
   await expect(backgroundGradient).toBeVisible();
   await backgroundGradient.click();
-  await expect(page.getByRole("tab", { name: "Gradient", exact: true })).toBeHidden();
+  await expect(page.getByRole("tab", { name: "Gradient", exact: true })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Apply gradient", exact: true })).toHaveCount(0);
   await expectInlineStyle(
     editableHeading,
     "background-image",
     "linear-gradient(135deg, rgb(168, 85, 247), rgb(236, 72, 153))"
+  );
+  await expect
+    .poll(async () => getBackgroundIconStyle(toolbar))
+    .toContain("linear-gradient(135deg, rgb(168, 85, 247), rgb(236, 72, 153))");
+
+  const gradientAngle = page.getByRole("slider", { name: "Gradient angle", exact: true });
+  await expect(gradientAngle).toHaveValue("135");
+  await gradientAngle.fill("220");
+  await expectInlineStyle(
+    editableHeading,
+    "background-image",
+    "linear-gradient(220deg, rgb(168, 85, 247), rgb(236, 72, 153))"
+  );
+  await expect
+    .poll(async () => getBackgroundIconStyle(toolbar))
+    .toContain("linear-gradient(220deg, rgb(168, 85, 247), rgb(236, 72, 153))");
+
+  const gradientStart = page.getByLabel("Gradient start", { exact: true });
+  await gradientStart.fill("10B981");
+  await expectInlineStyle(
+    editableHeading,
+    "background-image",
+    "linear-gradient(220deg, rgb(16, 185, 129), rgb(236, 72, 153))"
   );
 
   await toolbar.getByRole("button", { name: "Border style", exact: true }).click();
@@ -167,6 +221,18 @@ test("full floating editor applies color and border controls", async ({ page }) 
   await liftedShadow.click();
   await expectInlineStyle(editableHeading, "box-shadow", "rgba(15, 23, 42, 0.18) 0px 18px 42px");
 });
+
+async function getColorAlpha(locator: Locator) {
+  const color = await locator.evaluate((node) => (node as HTMLElement).style.color);
+  const match = /rgba?\([^,]+,[^,]+,[^,]+,\s*([\d.]+)\)/i.exec(color);
+  return match ? Number.parseFloat(match[1] ?? "1") : 1;
+}
+
+async function getBackgroundIconStyle(toolbar: Locator) {
+  return toolbar.getByTestId("floating-toolbar-background-color-icon").evaluate((node) => {
+    return (node as HTMLElement).style.background;
+  });
+}
 
 test("image floating toolbar hides text tools and exposes crop plus appearance controls", async ({
   page,

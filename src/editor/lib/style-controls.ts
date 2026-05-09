@@ -125,11 +125,19 @@ export function parseTextDecorationLines(value: string): Set<string> {
 }
 
 export function getColorInputValue(value: string): string {
+  if (isRgbColor(value)) {
+    return value.trim();
+  }
+
   if (isHexColor(value)) {
     return value.trim();
   }
 
-  return rgbToHex(value) ?? "#000000";
+  if (value.trim().toLowerCase() === "transparent") {
+    return "rgba(0, 0, 0, 0)";
+  }
+
+  return "#000000";
 }
 
 export function isHexColor(value: string): boolean {
@@ -152,21 +160,8 @@ function normalizeFontName(value: string): string {
   return value.toLowerCase().replace(/["']/g, "").trim();
 }
 
-function toHexChannel(value: string): string {
-  const numericValue = Math.max(0, Math.min(255, Number.parseInt(value, 10) || 0));
-  return numericValue.toString(16).padStart(2, "0");
-}
-
-function rgbToHex(value: string): string | null {
-  const match = value
-    .trim()
-    .match(/^rgba?\(\s*(\d{1,3})[\s,]+(\d{1,3})[\s,]+(\d{1,3})(?:[\s,/]+[\d.]+)?\s*\)$/i);
-
-  if (!match) {
-    return null;
-  }
-
-  return `#${toHexChannel(match[1] || "0")}${toHexChannel(match[2] || "0")}${toHexChannel(
-    match[3] || "0"
-  )}`;
+function isRgbColor(value: string): boolean {
+  return /^rgba?\(\s*(\d{1,3})[\s,]+(\d{1,3})[\s,]+(\d{1,3})(?:[\s,/]+[\d.]+)?\s*\)$/i.test(
+    value.trim()
+  );
 }

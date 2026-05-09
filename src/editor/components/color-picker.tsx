@@ -7,7 +7,6 @@ import {
   useState,
 } from "react";
 import { cn } from "../lib/utils";
-import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "./ui/tabs";
 
@@ -55,12 +54,14 @@ function ColorPicker({
   const spectrumRef = useRef<HTMLDivElement>(null);
   const hueRef = useRef<HTMLDivElement>(null);
   const parsedColor = useMemo(() => parseColorValue(value), [value]);
+  const parsedGradient = useMemo(() => parseGradientValue(value), [value]);
   const hsv = useMemo(() => hexToHsv(parsedColor.hex), [parsedColor.hex]);
-  const normalizedHex = hsvToHex(hsv);
+  const normalizedHex = expandHex(parsedColor.hex);
   const [hexInput, setHexInput] = useState(normalizedHex.replace("#", ""));
-  const [gradientStart, setGradientStart] = useState("#06B6D4");
-  const [gradientEnd, setGradientEnd] = useState("#8B5CF6");
-  const [gradientAngle, setGradientAngle] = useState(135);
+  const [gradientStart, setGradientStart] = useState(parsedGradient?.start ?? "#06B6D4");
+  const [gradientEnd, setGradientEnd] = useState(parsedGradient?.end ?? "#8B5CF6");
+  const [gradientAngle, setGradientAngle] = useState(parsedGradient?.angle ?? 135);
+  const [activeTab, setActiveTab] = useState(parsedGradient ? "gradient" : "color");
   const hueColor = `hsl(${hsv.h}, 100%, 50%)`;
   const colorPanel = (
     <div className="grid gap-3">
@@ -155,7 +156,7 @@ function ColorPicker({
             value={Math.round(parsedColor.alpha * 100)}
             aria-label="Opacity"
             onChange={updateOpacity}
-            className="h-2 w-full cursor-pointer appearance-none rounded-full bg-foreground/10 accent-foreground"
+            className="h-2 w-full cursor-pointer accent-foreground"
           />
         </section>
       ) : null}
@@ -170,7 +171,7 @@ function ColorPicker({
               key={color}
               className={cn(
                 "aspect-square min-w-0 cursor-pointer rounded-md border border-foreground/10 shadow-[0_1px_4px_rgba(0,0,0,0.08)] transition-[box-shadow,outline-color,border-color] duration-150 hover:border-foreground/25 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring",
-                color.toLowerCase() === value.toLowerCase() &&
+                color.toLowerCase() === normalizedHex.toLowerCase() &&
                   "shadow-[0_0_0_2px_white,0_0_0_4px_rgba(0,0,0,0.18)]"
               )}
               type="button"
@@ -205,7 +206,13 @@ function ColorPicker({
                 : `Use gradient ${index + 1}`
             }
             onClick={() => {
-              onChange(gradient);
+              const nextGradient = parseGradientValue(gradient);
+              if (nextGradient) {
+                setGradientAngle(nextGradient.angle);
+                setGradientStart(nextGradient.start);
+                setGradientEnd(nextGradient.end);
+              }
+              commitGradient(nextGradient ?? undefined);
               onCommit?.();
             }}
           />
@@ -222,18 +229,14 @@ function ColorPicker({
             className="h-8 rounded-md bg-white px-2 font-mono text-xs uppercase"
             aria-label="Gradient start"
             value={gradientStart.replace("#", "")}
-            onChange={(event) =>
-              setGradientStart(`#${event.target.value.replace(/[^0-9a-f]/gi, "").slice(0, 6)}`)
-            }
+            onChange={(event) => updateGradientColor("start", event.target.value)}
             onBlur={() => setGradientStart(expandHex(gradientStart))}
           />
           <Input
             className="h-8 rounded-md bg-white px-2 font-mono text-xs uppercase"
             aria-label="Gradient end"
             value={gradientEnd.replace("#", "")}
-            onChange={(event) =>
-              setGradientEnd(`#${event.target.value.replace(/[^0-9a-f]/gi, "").slice(0, 6)}`)
-            }
+            onChange={(event) => updateGradientColor("end", event.target.value)}
             onBlur={() => setGradientEnd(expandHex(gradientEnd))}
           />
         </div>
@@ -248,21 +251,14 @@ function ColorPicker({
             max={360}
             value={gradientAngle}
             aria-label="Gradient angle"
-            onChange={(event) => setGradientAngle(Number.parseInt(event.target.value, 10))}
-            className="h-2 w-full cursor-pointer appearance-none rounded-full bg-foreground/10 accent-foreground"
+            onChange={(event) => {
+              const nextAngle = Number.parseInt(event.target.value, 10);
+              setGradientAngle(nextAngle);
+              commitGradient({ angle: nextAngle });
+            }}
+            className="h-2 w-full cursor-pointer accent-foreground"
           />
         </div>
-        <Button
-          type="button"
-          variant="outline"
-          size="sm"
-          onClick={() => {
-            onChange(createGradientValue(gradientAngle, gradientStart, gradientEnd));
-            onCommit?.();
-          }}
-        >
-          Apply gradient
-        </Button>
       </div>
     </section>
   ) : null;
@@ -271,6 +267,17 @@ function ColorPicker({
     setHexInput(normalizedHex.replace("#", ""));
   }, [normalizedHex]);
 
+  useEffect(() => {
+    if (!parsedGradient) {
+      return;
+    }
+
+    setGradientAngle(parsedGradient.angle);
+    setGradientStart(parsedGradient.start);
+    setGradientEnd(parsedGradient.end);
+    setActiveTab("gradient");
+  }, [parsedGradient]);
+
   function commitColor(nextHex: string, nextAlpha = parsedColor.alpha) {
     onChange(formatColorValue(nextHex, nextAlpha));
   }
@@ -278,6 +285,29 @@ function ColorPicker({
   function updateOpacity(event: ChangeEvent<HTMLInputElement>) {
     const alpha = Number.parseInt(event.target.value, 10) / 100;
     commitColor(normalizedHex, alpha);
+  }
+
+  function commitGradient(overrides: Partial<{ angle: number; start: string; end: string }> = {}) {
+    onChange(
+      createGradientValue(
+        overrides.angle ?? gradientAngle,
+        overrides.start ?? gradientStart,
+        overrides.end ?? gradientEnd
+      )
+    );
+  }
+
+  function updateGradientColor(target: "start" | "end", rawValue: string) {
+    const nextValue = `#${rawValue.replace(/[^0-9a-f]/gi, "").slice(0, 6)}`;
+    if (target === "start") {
+      setGradientStart(nextValue);
+    } else {
+      setGradientEnd(nextValue);
+    }
+
+    if (nextValue.length === 7) {
+      commitGradient({ [target]: expandHex(nextValue) });
+    }
   }
 
   function updateFromSpectrum(event: ReactPointerEvent<HTMLDivElement>) {
@@ -312,7 +342,7 @@ function ColorPicker({
   }
 
   return (
-    <Tabs defaultValue="color" className="gap-3">
+    <Tabs value={activeTab} onValueChange={setActiveTab} className="gap-3">
       <TabsList className="grid w-full grid-cols-2" aria-label="Color picker mode">
         <TabsTrigger value="color">Color</TabsTrigger>
         <TabsTrigger value="gradient">Gradient</TabsTrigger>
@@ -364,6 +394,49 @@ function formatColorValue(hex: string, alpha: number) {
 
 function createGradientValue(angle: number, start: string, end: string) {
   return `linear-gradient(${angle}deg, ${expandHex(start)}, ${expandHex(end)})`;
+}
+
+function parseGradientValue(value: string): { angle: number; start: string; end: string } | null {
+  const trimmedValue = value.trim();
+  if (!trimmedValue.toLowerCase().startsWith("linear-gradient(") || !trimmedValue.endsWith(")")) {
+    return null;
+  }
+
+  const content = trimmedValue.slice(trimmedValue.indexOf("(") + 1, -1);
+  const parts = splitCssFunctionArguments(content);
+  if (parts.length < 3) {
+    return null;
+  }
+
+  const angle = Number.parseFloat(parts[0] ?? "");
+  const start = parseColorValue(parts[1] ?? "").hex;
+  const end = parseColorValue(parts[2] ?? "").hex;
+  return {
+    angle: Number.isFinite(angle) ? clamp(Math.round(angle), 0, 360) : 135,
+    start: expandHex(start),
+    end: expandHex(end),
+  };
+}
+
+function splitCssFunctionArguments(value: string): string[] {
+  const parts: string[] = [];
+  let depth = 0;
+  let partStart = 0;
+
+  for (let index = 0; index < value.length; index += 1) {
+    const character = value[index];
+    if (character === "(") {
+      depth += 1;
+    } else if (character === ")") {
+      depth = Math.max(0, depth - 1);
+    } else if (character === "," && depth === 0) {
+      parts.push(value.slice(partStart, index).trim());
+      partStart = index + 1;
+    }
+  }
+
+  parts.push(value.slice(partStart).trim());
+  return parts;
 }
 
 function isHexColor(value: string): boolean {
