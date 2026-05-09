@@ -41,6 +41,6 @@ changes, include rendered browser validation when practical.
 ## Agent-Facing Work
 
 The agent-facing generation workflow lives in
-`skills/starry-slides-skill/`. Agents should use the local `starry-slides` CLI
+`skills/starry-slides/`. Agents should use the local `starry-slides` CLI
 for validation, previewing, and opening decks instead of owning a separate
 editor runtime.

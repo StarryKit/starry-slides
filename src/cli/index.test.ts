@@ -1,5 +1,6 @@
 import { spawnSync } from "node:child_process";
 import fs from "node:fs";
+import os from "node:os";
 import path from "node:path";
 import { afterEach, describe, expect, test } from "vitest";
 import {
@@ -37,6 +38,28 @@ function runPackageScript(args: string[]) {
     cwd: repo,
     encoding: "utf8",
   });
+}
+
+function createFakeSkillsBin(exitCode = 0) {
+  const binDir = fs.mkdtempSync(path.join(fs.realpathSync(os.tmpdir()), "starry-slides-skills-"));
+  const binPath = path.join(binDir, "skills.mjs");
+  const argvPath = path.join(binDir, "argv.json");
+  fs.writeFileSync(
+    binPath,
+    [
+      "import fs from 'node:fs';",
+      "fs.writeFileSync(process.env.STARRY_SLIDES_FAKE_SKILLS_ARGV_PATH, JSON.stringify(process.argv.slice(2)));",
+      "process.stdout.write('fake skills stdout\\n');",
+      "process.stderr.write('fake skills stderr\\n');",
+      `process.exit(${exitCode});`,
+      "",
+    ].join("\n")
+  );
+  return {
+    argvPath,
+    binPath,
+    cleanup: () => fs.rmSync(binDir, { recursive: true, force: true }),
+  };
 }
 
 function parseJson(stdout: string) {
@@ -363,11 +386,57 @@ describe("source starry-slides cli", () => {
     }
   });
 
-  test("add-skill preserves the reserved stub behavior", () => {
-    const result = runCli(["add-skill"]);
+  test("add-skill delegates to skills add and forwards passthrough args", () => {
+    const fakeSkills = createFakeSkillsBin();
 
-    expect(result.status).toBe(0);
-    expect(result.stdout).toBe("");
-    expect(result.stderr).toContain("add-skill is not implemented yet.");
+    try {
+      const result = runCli(["add-skill", "--agent", "codex", "-y"], {
+        env: {
+          STARRY_SLIDES_SKILLS_BIN: fakeSkills.binPath,
+          STARRY_SLIDES_FAKE_SKILLS_ARGV_PATH: fakeSkills.argvPath,
+        },
+      });
+
+      expect(result.status).toBe(0);
+      expect(result.stdout).toBe("fake skills stdout\n");
+      expect(result.stderr).toBe("fake skills stderr\n");
+      expect(JSON.parse(fs.readFileSync(fakeSkills.argvPath, "utf8"))).toEqual([
+        "add",
+        "StarryKit/starry-slides",
+        "--skill",
+        "starry-slides",
+        "--agent",
+        "codex",
+        "-y",
+      ]);
+    } finally {
+      fakeSkills.cleanup();
+    }
+  });
+
+  test("add-skill exits non-zero when delegated skills command fails", () => {
+    const fakeSkills = createFakeSkillsBin(17);
+
+    try {
+      const result = runCli(["add-skill", "--all"], {
+        env: {
+          STARRY_SLIDES_SKILLS_BIN: fakeSkills.binPath,
+          STARRY_SLIDES_FAKE_SKILLS_ARGV_PATH: fakeSkills.argvPath,
+        },
+      });
+
+      expect(result.status).toBe(17);
+      expect(result.stdout).toBe("fake skills stdout\n");
+      expect(result.stderr).toBe("fake skills stderr\n");
+      expect(JSON.parse(fs.readFileSync(fakeSkills.argvPath, "utf8"))).toEqual([
+        "add",
+        "StarryKit/starry-slides",
+        "--skill",
+        "starry-slides",
+        "--all",
+      ]);
+    } finally {
+      fakeSkills.cleanup();
+    }
   });
 });

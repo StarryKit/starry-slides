@@ -13,21 +13,11 @@
     "type": "git",
     "url": "git+https://github.com/StarryKit/starry-slides.git"
   },
-  "keywords": [
-    "slides",
-    "presentation",
-    "html",
-    "cli",
-    "editor"
-  ],
+  "keywords": ["slides", "presentation", "html", "cli", "editor"],
   "engines": {
     "node": ">=20.11"
   },
-  "files": [
-    "dist",
-    "README.md",
-    "LICENSE"
-  ],
+  "files": ["dist", "README.md", "LICENSE", "skills/starry-slides"],
   "bin": {
     "starry-slides": "dist/cli/index.js"
   },
@@ -46,10 +36,10 @@
     "build:app": "vite build",
     "editor:e2e:generate-deck": "node e2e/tools/prepare-regression-deck.mjs --app-out-dir sample-slides",
     "prepare:regression-deck": "node e2e/tools/prepare-regression-deck.mjs",
-    "starry:contract:create-style-pack": "node skills/starry-slides-skill/tools/contract-protocol/create-style-pack.mjs",
+    "starry:contract:create-style-pack": "node skills/starry-slides/tools/contract-protocol/create-style-pack.mjs",
     "starry:contract:validate": "pnpm starry-slides verify",
-    "starry:contract:annotate": "node skills/starry-slides-skill/tools/contract-protocol/annotate-slides.mjs",
-    "starry:contract:manifest": "node skills/starry-slides-skill/tools/contract-protocol/build-manifest.mjs",
+    "starry:contract:annotate": "node skills/starry-slides/tools/contract-protocol/annotate-slides.mjs",
+    "starry:contract:manifest": "node skills/starry-slides/tools/contract-protocol/build-manifest.mjs",
     "starry:open": "pnpm starry-slides open",
     "test:e2e:prepare": "pnpm prepare:regression-deck",
     "lint": "biome check .",
@@ -71,6 +61,7 @@
     "radix-ui": "^1.4.3",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
+    "skills": "^1.5.6",
     "sonner": "^2.0.7",
     "tailwind-merge": "^3.5.0",
     "tw-animate-css": "^1.4.0"

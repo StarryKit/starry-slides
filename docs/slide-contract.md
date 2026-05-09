@@ -59,4 +59,4 @@ Recommended:
   help generation and editing tools preserve intent.
 
 The full v1 Contract lives in
-`skills/starry-slides-skill/references/contract-protocol/contract-v1.md`.
+`skills/starry-slides/references/contract-protocol/contract-v1.md`.

@@ -73,10 +73,29 @@ starry-slides verify [deck] --static
 starry-slides view [deck] --slide <manifest-file>
 starry-slides view [deck] --all
 starry-slides view [deck] --all --out-dir <directory>
-starry-slides add-skill
+starry-slides add-skill [skills-options...]
 ```
 
 `starry-slides [deck]` defaults to `starry-slides open [deck]`.
+
+Install the Agent Skill with the branded wrapper:
+
+```bash
+npx starry-slides add-skill
+```
+
+The wrapper delegates to the standard Agent Skills installer and passes through
+additional options, for example:
+
+```bash
+npx starry-slides add-skill --agent codex -y
+```
+
+The equivalent standard installer command is:
+
+```bash
+npx skills add StarryKit/starry-slides --skill starry-slides
+```
 
 ## Publishing
 
@@ -123,7 +142,7 @@ Detailed planning lives in [ROADMAP.md](./ROADMAP.md).
   required HTML attributes.
 - [Context map](./CONTEXT-MAP.md): where to read before changing a subsystem.
 - [Architecture decisions](./docs/adr/): accepted ADRs and ADR template.
-- [Agent-facing skill](./skills/starry-slides-skill/SKILL.md): generation
+- [Agent-facing skill](./skills/starry-slides/SKILL.md): generation
   workflow and protocol tools for agents.
 
 ## License

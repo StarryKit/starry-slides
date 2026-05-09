@@ -1,5 +1,9 @@
 #!/usr/bin/env node
 
+import { spawnSync } from "node:child_process";
+import fs from "node:fs";
+import { createRequire } from "node:module";
+import path from "node:path";
 import { type VerifyResult, createVerifyResult, verifyDeck } from "../core/verify-deck";
 import { resolveDeckPath } from "../node/deck-source";
 import { startEditorServer } from "../node/editor-server";
@@ -23,6 +27,7 @@ interface ParsedArgs {
   slideFiles?: string[];
   outDir?: string;
   outFile?: string;
+  passThroughArgs: string[];
 }
 
 const COMMANDS = new Set(["open", "verify", "view", "export", "add-skill", "help", "--help", "-h"]);
@@ -41,12 +46,20 @@ function usage(): string {
   starry-slides export pdf [deck] --slide <manifest-file> --out <file>
   starry-slides export pdf [deck] --slides <manifest-file>[,<manifest-file>...] --out <file>
   starry-slides export html [deck] --out <file>
-  starry-slides add-skill`;
+  starry-slides add-skill [skills-options...]`;
 }
 
 function parseArgs(argv: string[]): ParsedArgs {
   const [first, ...rest] = argv;
   const command = normalizeCommand(first);
+  if (command === "add-skill") {
+    return {
+      command,
+      staticVerify: false,
+      passThroughArgs: rest,
+    };
+  }
+
   const remaining = command === "open" && first && !COMMANDS.has(first) ? [first, ...rest] : rest;
   let deckPath: string | undefined;
   let staticVerify = false;
@@ -150,6 +163,7 @@ function parseArgs(argv: string[]): ParsedArgs {
     slideFiles,
     outDir,
     outFile,
+    passThroughArgs: [],
   };
 }
 
@@ -307,6 +321,41 @@ async function runOpen(deckPath: string) {
   process.on("SIGTERM", closeServer);
 }
 
+function resolveSkillsBin(): string {
+  const injectedBin = process.env.STARRY_SLIDES_SKILLS_BIN;
+  if (injectedBin) {
+    return injectedBin;
+  }
+
+  const require = createRequire(import.meta.url);
+  const packageJsonPath = require.resolve("skills/package.json");
+  const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, "utf8")) as {
+    bin?: string | Record<string, string>;
+  };
+  const binEntry = typeof packageJson.bin === "string" ? packageJson.bin : packageJson.bin?.skills;
+  if (!binEntry) {
+    throw new Error("Unable to locate the skills CLI binary from the skills package.");
+  }
+  return path.resolve(path.dirname(packageJsonPath), binEntry);
+}
+
+function runAddSkill(args: string[]): never {
+  // ADR-0023: Starry Slides owns only this branded wrapper; installation belongs to skills.
+  const result = spawnSync(
+    process.execPath,
+    [resolveSkillsBin(), "add", "StarryKit/starry-slides", "--skill", "starry-slides", ...args],
+    {
+      stdio: "inherit",
+    }
+  );
+
+  if (result.error) {
+    throw result.error;
+  }
+
+  process.exit(result.status ?? 1);
+}
+
 async function main() {
   const parsed = parseArgs(process.argv.slice(2));
 
@@ -316,8 +365,7 @@ async function main() {
   }
 
   if (parsed.command === "add-skill") {
-    console.error("add-skill is not implemented yet.");
-    return;
+    runAddSkill(parsed.passThroughArgs);
   }
 
   const deckPath = resolveDeckPath(parsed.deckPath);

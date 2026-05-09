@@ -53,7 +53,7 @@ e2e/                           Playwright tests, fixtures, and deck generator
 sample-slides/                 ignored local sample deck for dev and CLI default
 
 skills/
-  starry-slides-skill/         agent-facing deck workflow and protocol tools
+  starry-slides/         agent-facing deck workflow and protocol tools
 ```
 
 ## Implementation Boundaries
@@ -69,7 +69,7 @@ Start here before making changes:
      CLI runtime integration.
 3. Read `CONTEXT.md` before changing architecture, persistence, collaboration,
    package boundaries, history, or editor pipeline semantics.
-4. For deck generation work, use `skills/starry-slides-skill/SKILL.md` and its
+4. For deck generation work, use `skills/starry-slides/SKILL.md` and its
    bundled scripts.
 
 Rules that matter in this repo:

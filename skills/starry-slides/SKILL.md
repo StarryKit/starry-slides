@@ -1,5 +1,5 @@
 ---
-name: starry-slides-skill
+name: starry-slides
 description: Generate, validate, normalize, deliver, and open Starry Slides deck packages for editing in Starry Slides Editor.
 ---
 
