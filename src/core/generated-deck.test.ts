@@ -5,7 +5,6 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { describe, expect, test } from "vitest";
-import { REGRESSION_DECK_SLIDE_COUNT } from "../../e2e/tests/regression-deck";
 import {
   DEFAULT_SLIDE_HEIGHT,
   DEFAULT_SLIDE_WIDTH,
@@ -167,7 +166,7 @@ describe("generated deck import", () => {
     const secondSlide = parseSlide(secondSlideHtml, "generated-slide-2");
 
     expect(manifest.topic).toBe(regressionDeckConfig.topic);
-    expect(manifest.slides).toHaveLength(REGRESSION_DECK_SLIDE_COUNT);
+    expect(manifest.slides).toHaveLength(16);
     expect(firstSlide.id).toBe("generated-slide-1");
     expect(firstSlide.width).toBe(DEFAULT_SLIDE_WIDTH);
     expect(firstSlide.height).toBe(DEFAULT_SLIDE_HEIGHT);
