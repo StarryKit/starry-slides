@@ -185,8 +185,14 @@ export function FieldLabel({ children, htmlFor }: { children: ReactNode; htmlFor
   );
 }
 
-export function ToolbarIcon({ icon: Icon }: { icon: LucideIcon }) {
-  return <Icon className="size-3" />;
+export function ToolbarIcon({
+  icon: Icon,
+  strokeWidth = 2.5,
+}: {
+  icon: LucideIcon;
+  strokeWidth?: number;
+}) {
+  return <Icon className="size-3.5" strokeWidth={strokeWidth} />;
 }
 
 export function ToolbarValueButton({
