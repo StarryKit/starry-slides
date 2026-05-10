@@ -1,14 +1,19 @@
 ![](assets/readme-banner.png)
+
+> **The project is currently under development and has not made a release version yet. Please stay tuned for future progress.**
+
 # Starry Slides
 
 Starry Slides is an agentic editor for slides and presentations using HTML as the source file.
 
 The project mainly contains 3 parts:
-- `starry-slides` CLI - serve as the tools for agent to preview, verify and open the generated slides HTML file 
-- Starry Slide Editor - a WYSIWYG editor for editing your slides HTML file 
-- `/starry-slides` Skill - a skill for teaching your agent to generate HTML file that meet the requirements of the `STARRY-SLIDES-CONTRACT.md`.
 
-The project is currently under development and has not made a release version yet. Please stay tuned for future progress.
+| Part | Description |
+| --- | --- |
+| `starry-slides` CLI | Tools for agents to preview, verify, and open generated slide HTML files. |
+| Starry Slide Editor | A WYSIWYG editor for creating and editing slide HTML files. |
+| `/starry-slides` Skill | A skill that teaches your agent to generate HTML files that meet the requirements of [`STARRY-SLIDES-CONTRACT.md`](./skills/starry-slides/reference/STARRY-SLIDES-CONTRACT.md). |
+
 
 ## CLI Quick Start
 
@@ -29,6 +34,29 @@ starry-slides open <deck>
 - `verify` checks whether a deck HTML file follows the contract and prints JSON results.
 - `view` renders preview images for one slide or the whole deck.
 - `open` runs verification first, then opens the deck in the editor when it passes.
+
+## Skill Quick Start
+
+Install the Starry Slides skill with the `skills` CLI:
+
+```bash
+npx skills add StarryKit/starry-slides --skill starry-slides
+```
+
+Then prompt your agent with something like:
+
+```text
+Use /starry-slides to create a single-file HTML slide deck for a product launch review.
+
+Requirements:
+- Audience: founders and product team
+- Tone: sharp, modern, confident
+- Slides: 6
+- Include: title slide, problem, solution, roadmap, metrics, closing
+- Visual direction: dark navy background, bright cyan accents, clean typography
+
+After generating the deck, verify it and preview all slides.
+```
 
 ## Documentation
 
