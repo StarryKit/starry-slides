@@ -9,7 +9,7 @@ import { parseDeckDocument } from "./slide-document";
 import { SELECTOR_ATTR, SLIDE_ROOT_ATTR } from "./slide-contract";
 
 export type VerifyMode = "static" | "complete";
-export type VerifyCheck = "structure" | "static-overflow" | "rendered-overflow";
+export type VerifyCheck = "structure" | "css" | "static-overflow" | "rendered-overflow";
 
 export interface VerifyIssue {
   severity: "error" | "warning";
@@ -108,50 +108,144 @@ function parseDeckDocumentWithNodeFallback(
   }
 }
 
+// ---------------------------------------------------------------------------
+// CSS validation helpers
+// ---------------------------------------------------------------------------
+
+type CssRule = { selectors: string; body: string };
+
+function extractCssRules(html: string): CssRule[] {
+  const dom = new JSDOM(html, { virtualConsole: new VirtualConsole() });
+  const { document } = dom.window;
+  const rules: CssRule[] = [];
+
+  for (const style of Array.from(document.querySelectorAll("style"))) {
+    const text = style.textContent || "";
+    const rulePattern = /([^{}]+)\{([^}]*)\}/g;
+    let match: RegExpExecArray | null;
+
+    while ((match = rulePattern.exec(text)) !== null) {
+      rules.push({
+        selectors: (match[1] ?? "").trim(),
+        body: (match[2] ?? "").trim(),
+      });
+    }
+  }
+
+  return rules;
+}
+
+function hasPropertyInRuleBody(ruleBody: string, property: string): boolean {
+  const pattern = new RegExp(`(?:^|;)\\s*${property}\\s*:`, "i");
+  return pattern.test(ruleBody);
+}
+
+function isSelectorForTarget(selectorList: string, target: string): boolean {
+  const normalizedTarget = target.toLowerCase();
+  return selectorList
+    .split(",")
+    .some((s) => s.trim().toLowerCase() === normalizedTarget);
+}
+
+function hasPropertyForTarget(
+  rules: CssRule[],
+  target: string,
+  property: string
+): boolean {
+  return rules.some(
+    (r) =>
+      isSelectorForTarget(r.selectors, target) &&
+      hasPropertyInRuleBody(r.body, property)
+  );
+}
+
+interface RequiredCssCheck {
+  target: string;
+  property: string;
+  code: string;
+  message: string;
+}
+
+const REQUIRED_CSS_CHECKS: RequiredCssCheck[] = [
+  {
+    target: "slides",
+    property: "display",
+    code: "css.slides-missing-display",
+    message: "`slides` must have `display: block`",
+  },
+  {
+    target: "slide",
+    property: "display",
+    code: "css.slide-missing-display",
+    message: "`slide` must have `display: block`",
+  },
+  {
+    target: "slide",
+    property: "width",
+    code: "css.slide-missing-width",
+    message: "`slide` must have a CSS `width` (e.g. `1920px`)",
+  },
+  {
+    target: "slide",
+    property: "height",
+    code: "css.slide-missing-height",
+    message: "`slide` must have a CSS `height` (e.g. `1080px`)",
+  },
+  {
+    target: "slide",
+    property: "overflow",
+    code: "css.slide-missing-overflow",
+    message: "`slide` must have `overflow: hidden`",
+  },
+  {
+    target: "slide",
+    property: "position",
+    code: "css.slide-missing-position",
+    message: "`slide` must have `position: relative`",
+  },
+  {
+    target: "body",
+    property: "margin",
+    code: "css.body-missing-margin",
+    message: "`body` must have `margin: 0`",
+  },
+];
+
+function validateCss(
+  _filePath: string,
+  slideId: string,
+  html: string
+): VerifyIssue[] {
+  const rules = extractCssRules(html);
+  const issues: VerifyIssue[] = [];
+
+  const hasStyleTag = /<style[\s>]/i.test(html) || /<style\s*\/>/i.test(html);
+  if (!hasStyleTag) {
+    issues.push(
+      issue("error", "css.missing-style-block", "deck must include a <style> block", {
+        slideId,
+      })
+    );
+    return issues;
+  }
+
+  for (const check of REQUIRED_CSS_CHECKS) {
+    if (!hasPropertyForTarget(rules, check.target, check.property)) {
+      issues.push(issue("error", check.code, check.message, { slideId }));
+    }
+  }
+
+  return issues;
+}
+
+// ---------------------------------------------------------------------------
+// Structure validation
+// ---------------------------------------------------------------------------
+
 function validateSlideHtml(_filePath: string, slideId: string, html: string): VerifyIssue[] {
   const dom = new JSDOM(html, { virtualConsole: new VirtualConsole() });
   const { document } = dom.window;
   const issues: VerifyIssue[] = [];
-
-  const roots = Array.from(document.querySelectorAll<HTMLElement>(`[${SLIDE_ROOT_ATTR}]`));
-  if (roots.length === 0) {
-    issues.push(
-      issue("error", "structure.missing-root", "missing required slide root", {
-        slideId,
-      })
-    );
-  }
-  if (roots.length > 1) {
-    issues.push(
-      issue("error", "structure.multiple-roots", "found multiple slide roots", {
-        slideId,
-      })
-    );
-  }
-
-  const root = roots[0] ?? null;
-  if (root) {
-    if (!root.getAttribute("data-slide-width")) {
-      issues.push(
-        issue(
-          "warning",
-          "structure.missing-width",
-          "missing data-slide-width, default 1920 will be assumed",
-          { slideId }
-        )
-      );
-    }
-    if (!root.getAttribute("data-slide-height")) {
-      issues.push(
-        issue(
-          "warning",
-          "structure.missing-height",
-          "missing data-slide-height, default 1080 will be assumed",
-          { slideId }
-        )
-      );
-    }
-  }
 
   const editableNodes = Array.from(
     document.querySelectorAll<HTMLElement>(`[${SLIDE_ROOT_ATTR}] *`)
@@ -243,6 +337,10 @@ function validateStaticOverflow(_filePath: string, slideId: string, html: string
   return issues;
 }
 
+// ---------------------------------------------------------------------------
+// Deck loading and verification
+// ---------------------------------------------------------------------------
+
 export function loadVerifyDeckSource(deckPath: string): VerifyDeckSourceResult {
   const resolvedPath = path.resolve(process.cwd(), deckPath);
   const deckStat = fs.existsSync(resolvedPath) ? fs.statSync(resolvedPath) : null;
@@ -309,6 +407,7 @@ export function loadVerifyDeckSource(deckPath: string): VerifyDeckSourceResult {
 
   for (const slide of slides) {
     issues.push(...validateSlideHtml(deckFilePath, slide.id, slide.htmlSource));
+    issues.push(...validateCss(deckFilePath, slide.id, slide.htmlSource));
     issues.push(...validateStaticOverflow(deckFilePath, slide.id, slide.htmlSource));
   }
 
@@ -360,8 +459,8 @@ export function verifyDeck(
     mode,
     checks:
       mode === "complete"
-        ? ["structure", "static-overflow", "rendered-overflow"]
-        : ["structure", "static-overflow"],
+        ? ["structure", "css", "static-overflow", "rendered-overflow"]
+        : ["structure", "css", "static-overflow"],
     issues,
   });
 }

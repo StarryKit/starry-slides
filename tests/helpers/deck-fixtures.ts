@@ -23,15 +23,26 @@ export function writeDeck(
   fs.writeFileSync(path.join(deck, "deck.html"), createDeckHtml(slides), "utf8");
 }
 
+export const VALID_SLIDE_CSS = `*{box-sizing:border-box}
+body{margin:0;overflow:hidden;font-family:sans-serif}
+slides{display:block}
+slide{display:block;width:800px;height:600px;overflow:hidden;position:relative}
+[data-editor-id]:not([data-slide-root]){position:absolute;box-sizing:border-box;left:20px;top:20px;width:240px;height:80px;margin:0}`;
+
 export function slideHtml(content = textElement("text-1", "Hello"), rootStyle = "") {
   return `<!DOCTYPE html><html><head><style>
-html,body{margin:0;width:800px;height:600px;overflow:hidden}
-[data-slide-root]{position:relative;width:800px;height:600px;overflow:hidden;background:#fff}
-[data-editor-id]:not([data-slide-root]){position:absolute;box-sizing:border-box;left:20px;top:20px;width:240px;height:80px;margin:0}
+${VALID_SLIDE_CSS}
 </style></head><body><main data-slide-root="true" data-slide-width="800" data-slide-height="600" data-editor-id="slide-root" style="${rootStyle}">${content}</main></body></html>`;
 }
 
-export function slideHtmlWithoutDimensions(content = textElement("text-1", "Hello")) {
+export function slideHtmlWithCss(
+  css: string,
+  content = textElement("text-1", "Hello")
+) {
+  return `<!DOCTYPE html><html><head><style>${css}</style></head><body><main data-slide-root="true" data-editor-id="slide-root">${content}</main></body></html>`;
+}
+
+export function slideHtmlWithoutCss(content = textElement("text-1", "Hello")) {
   return `<!DOCTYPE html><html><body><main data-slide-root="true" data-editor-id="slide-root">${content}</main></body></html>`;
 }
 
