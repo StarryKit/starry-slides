@@ -7,7 +7,7 @@ description: Generate contract-compatible HTML slide decks for Starry Slides. Us
 
 ## Goal
 
-Create or edit a single HTML deck file that follows `reference/STARRY-SLIDES-CONTRACT.md`, then verify it with the `starry-slides` CLI and open it only after verification succeeds.
+Create or edit a single HTML deck file that follows `references/STARRY-SLIDES-CONTRACT.md`, then verify it with the `starry-slides` CLI and open it only after verification succeeds.
 
 ## What to Produce
 
@@ -31,7 +31,7 @@ starry-slides open <deck>
 
 ## Workflow
 
-1. Understand the user's slide context before generating anything. Extract the deck goal, audience, topic, tone, structure, theme, visual direction, and any explicit content or design constraints from the prompt and provided materials.
+1. Understand the user's slide context before generating anything. Use [SLIDES-DISCOVERY-INTERVIEW.md](references/SLIDES-DISCOVERY-INTERVIEW.md) to gather missing context, ask only the highest-signal questions, and consolidate the result into a brief before you generate.
 2. Generate or edit the deck HTML to satisfy the contract reference and reflect that context.
 3. Verify the deck with:
 
@@ -68,4 +68,5 @@ starry-slides view <deck> --slide <slide-id>
 
 ## Reference
 
-- Contract details: [STARRY-SLIDES-CONTRACT.md](reference/STARRY-SLIDES-CONTRACT.md)
+- Discovery interview: [SLIDES-DISCOVERY-INTERVIEW.md](references/SLIDES-DISCOVERY-INTERVIEW.md)
+- Contract details: [STARRY-SLIDES-CONTRACT.md](references/STARRY-SLIDES-CONTRACT.md)
