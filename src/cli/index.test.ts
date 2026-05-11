@@ -64,26 +64,13 @@ describe("source starry-slides cli", () => {
   });
 
   test("verify with no deck uses the default deck resolution path", () => {
-    const result = runCli(["verify", "--static"]);
+    const result = runCli(["verify"]);
 
     expect(result.stderr).toBe("");
     const parsed = parseJson(result.stdout);
     expect(result.status).toBe(parsed.ok ? 0 : 1);
-    expect(parsed.mode).toBe("static");
+    expect(parsed.mode).toBe("complete");
     expect(parsed.deck).toContain("sample-slides");
-  });
-
-  test("verify static skips rendered checks", () => {
-    const deck = writeValidDeck();
-
-    const result = runCli(["verify", "--static", deck]);
-
-    expect(result.status).toBe(0);
-    expect(result.stderr).toBe("");
-    const parsed = parseJson(result.stdout);
-    expect(parsed.mode).toBe("static");
-    expect(parsed.checks).toEqual(["structure", "static-overflow"]);
-    expect(parsed.ok).toBe(true);
   });
 
   test("failed verify exits one and writes parseable JSON to stdout", () => {
@@ -104,11 +91,11 @@ describe("source starry-slides cli", () => {
   test("pnpm --silent starry-slides keeps verify stdout JSON-parseable", () => {
     const deck = writeValidDeck();
 
-    const result = runPackageScript(["verify", deck, "--static"]);
+    const result = runPackageScript(["verify", deck]);
 
     expect(result.status).toBe(0);
     expect(result.stderr).toBe("");
-    expect(parseJson(result.stdout)).toMatchObject({ ok: true, mode: "static" });
+    expect(parseJson(result.stdout)).toMatchObject({ ok: true, mode: "complete" });
   });
 
   test("view slide renders exactly one slide and writes diagnostics only to stderr", () => {
@@ -191,12 +178,16 @@ describe("source starry-slides cli", () => {
     expect(fs.existsSync(path.join(deck, ".starry-slides", "view"))).toBe(false);
   });
 
-  test("view runs static verify before rendering and writes no previews when static verify fails", () => {
+  test("view runs full verify before rendering and writes no previews when rendered verify fails", () => {
     const deck = createDeck();
     writeDeck(deck, [
       {
         file: "slides/01.html",
-        html: slideHtml(textElement("text-1", "Hello"), "overflow: scroll"),
+        html: `<!DOCTYPE html><html><body><main data-slide-root="true" data-slide-width="800" data-slide-height="600" data-editor-id="slide-root">${blockElement(
+          "block-1",
+          "Outside",
+          "position:absolute;left:760px;top:20px;width:100px;height:100px"
+        )}</main></body></html>`,
       },
     ]);
 
@@ -205,9 +196,9 @@ describe("source starry-slides cli", () => {
     expect(result.status).toBe(1);
     expect(result.stderr).toBe("");
     const parsed = parseJson(result.stdout);
-    expect(parsed.mode).toBe("static");
+    expect(parsed.mode).toBe("complete");
     expect((parsed.issues as Array<{ code: string }>).map((issue) => issue.code)).toContain(
-      "overflow.static"
+      "overflow.element-bounds"
     );
     expect(fs.existsSync(path.join(deck, ".starry-slides", "view"))).toBe(false);
   });
@@ -218,9 +209,7 @@ describe("source starry-slides cli", () => {
     expect(runCli(["view", deck]).stderr).toContain(
       "view requires either --slide <manifest-file> or --all"
     );
-    expect(runCli(["view", deck, "--static", "--all"]).stderr).toContain(
-      "view always runs Static Verify; do not pass --static"
-    );
+    expect(runCli(["view", deck, "--static", "--all"]).stderr).toContain("unknown option '--static'");
     expect(runCli(["view", deck, "--slide"]).stderr).toContain(
       "option '--slide <manifest-file>' argument missing"
     );
@@ -243,7 +232,7 @@ describe("source starry-slides cli", () => {
     expect(parseJson(slideResult.stdout).mode).toBe("single");
   });
 
-  test("complete verify reports rendered overflow while static verify skips it", () => {
+  test("verify reports rendered overflow by default", () => {
     const deck = createDeck();
     writeDeck(deck, [
       {
@@ -256,14 +245,12 @@ describe("source starry-slides cli", () => {
       },
     ]);
 
-    const staticResult = runCli(["verify", deck, "--static"]);
-    const completeResult = runCli(["verify", deck]);
+    const result = runCli(["verify", deck]);
 
-    expect(parseJson(staticResult.stdout).ok).toBe(true);
-    expect(completeResult.status).toBe(1);
-    const completeJson = parseJson(completeResult.stdout);
-    expect(completeJson.mode).toBe("complete");
-    expect((completeJson.issues as Array<{ code: string }>).map((issue) => issue.code)).toContain(
+    expect(result.status).toBe(1);
+    const parsed = parseJson(result.stdout);
+    expect(parsed.mode).toBe("complete");
+    expect((parsed.issues as Array<{ code: string }>).map((issue) => issue.code)).toContain(
       "overflow.element-bounds"
     );
   });
@@ -328,7 +315,7 @@ describe("source starry-slides cli", () => {
       expect(result.stderr).toBe("");
       expect(result.stdout).toContain("Usage: starry-slides [options] [command] [deck]");
       expect(result.stdout).toContain("open [deck]");
-      expect(result.stdout).toContain("verify [options] [deck]");
+      expect(result.stdout).toContain("verify [deck]");
       expect(result.stdout).toContain("view [options] [deck]");
     }
   });

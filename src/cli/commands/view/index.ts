@@ -10,12 +10,11 @@ export function registerViewCommand(program: Command) {
     .option("--slide <manifest-file>", "render exactly one manifest slide file")
     .option("--all", "render every manifest slide")
     .option("--out-dir <directory>", "write previews to a specific directory")
-    .option("--static", "invalid for view; kept to produce a helpful error")
     .description("Render preview images for a deck.")
     .action(
       async (
         deckPath: string | undefined,
-        options: { slide?: string; all?: boolean; outDir?: string; static?: boolean }
+        options: { slide?: string; all?: boolean; outDir?: string }
       ) => {
         const normalizedOptions = resolveViewSelection(getRawArgs(), options);
         await runView(deckPath, normalizedOptions);

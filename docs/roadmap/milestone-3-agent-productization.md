@@ -65,7 +65,7 @@ Implementation topics:
 
 - Product UI for generation inputs and progress.
 - Reuse or evolve the unified slide contract in
-  [docs/slides-contract.md](/Users/haichao/.codex/worktrees/4582/starry-slides/docs/slides-contract.md)
+  [STARRY-SLIDES-CONTRACT.md](../../skills/starry-slides/references/STARRY-SLIDES-CONTRACT.md)
   as the generation foundation.
 - Validation and repair loop for Agent-generated HTML.
 - Style pack selection or style direction handling.

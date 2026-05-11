@@ -25,18 +25,12 @@ detection in the normal verification workflow. Rendered overflow checking is
 part of default verify, not an opt-in flag. `starry-slides open` must run this
 same complete verify workflow before starting the editor.
 
-`starry-slides verify --static` is an explicit fast mode. It skips rendered
-checks and runs only structure checks plus static overflow checks. Because it
-does not execute browser layout, it cannot guarantee that rendered slide output
-is overflow-free.
-
 The target command shape is:
 
 ```bash
 starry-slides [deck]
 starry-slides open [deck]
 starry-slides verify [deck]
-starry-slides verify [deck] --static
 starry-slides view [deck] --slide <manifest-file>
 starry-slides view [deck] --all
 starry-slides add-skill
@@ -53,9 +47,9 @@ starry-slides add-skill
 Preview rendering belongs to the Starry Slides CLI runtime. It should not be
 implemented as a separate standalone CLI.
 
-`starry-slides view` runs Static Verify before rendering previews. It does not
-run Complete Verify, because agents may need preview images while diagnosing
-rendered overflow or other visual issues.
+`starry-slides view` runs the same complete verify workflow as
+`starry-slides verify` before rendering previews. If verification fails, view
+must return the Verify Result JSON and skip preview generation.
 
 `--slide` accepts only an exact `manifest.json` slide `file` value. It does not
 accept numeric indexes, slide titles, or inferred slug ids. Agents are expected
@@ -145,8 +139,7 @@ code `1`. Structural contract issues and overflow issues should be reported in
 the same `issues` array. `starry-slides open` should reuse the same complete
 verify result before deciding whether to start the editor.
 
-`mode` is `"complete"` for default verify and `"static"` for
-`starry-slides verify --static`.
+`mode` is `"complete"` for `starry-slides verify`.
 
 ### Overflow verification rules
 

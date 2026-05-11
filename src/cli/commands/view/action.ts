@@ -1,6 +1,6 @@
-import { verifyDeck } from "../../../core/verify-deck";
 import { resolveDeckPath } from "../../../node/deck-source";
 import { renderPreviewManifest } from "../../../node/view-renderer";
+import { runFullVerify } from "../verify/action";
 
 function writeJson(value: unknown) {
   process.stdout.write(`${JSON.stringify(value, null, 2)}\n`);
@@ -39,26 +39,18 @@ export function resolveViewSelection(argv: string[], options: { slide?: string; 
   return options;
 }
 
-async function runStaticVerify(deckPath: string) {
-  return verifyDeck(deckPath, { mode: "static" });
-}
-
 export async function runView(
   deckPathArg: string | undefined,
-  options: { slide?: string; all?: boolean; outDir?: string; static?: boolean }
+  options: { slide?: string; all?: boolean; outDir?: string }
 ) {
-  if (options.static) {
-    throw new Error("view always runs Static Verify; do not pass --static");
-  }
-
   if (!options.slide && !options.all) {
     throw new Error("view requires either --slide <manifest-file> or --all");
   }
 
   const deckPath = resolveDeckPath(deckPathArg);
-  const staticResult = await runStaticVerify(deckPath);
-  if (!staticResult.ok) {
-    writeJson(staticResult);
+  const verifyResult = await runFullVerify(deckPath);
+  if (!verifyResult.ok) {
+    writeJson(verifyResult);
     process.exitCode = 1;
     return;
   }

@@ -1,35 +1,16 @@
-import { type VerifyResult, createVerifyResult, verifyDeck } from "../../../core/verify-deck";
 import { resolveDeckPath } from "../../../node/deck-source";
 import { startEditorServer } from "../../../node/editor-server";
 import { openBrowser } from "../../../node/open-browser";
 import { findAvailablePort } from "../../../node/ports";
-import { verifyRenderedOverflow } from "../../../node/view-renderer";
+import { runFullVerify } from "../verify/action";
 
 function writeJson(value: unknown) {
   process.stdout.write(`${JSON.stringify(value, null, 2)}\n`);
 }
 
-async function runCompleteVerify(deckPath: string): Promise<VerifyResult> {
-  const staticResult = verifyDeck(deckPath, { mode: "static" });
-  if (!staticResult.ok) {
-    return createVerifyResult({
-      deck: staticResult.deck,
-      mode: "complete",
-      checks: ["structure", "static-overflow", "rendered-overflow"],
-      issues: staticResult.issues,
-    });
-  }
-
-  const renderedIssues = await verifyRenderedOverflow(deckPath);
-  return verifyDeck(deckPath, {
-    mode: "complete",
-    renderedIssues,
-  });
-}
-
 export async function runOpen(deckPathArg: string | undefined) {
   const deckPath = resolveDeckPath(deckPathArg);
-  const result = await runCompleteVerify(deckPath);
+  const result = await runFullVerify(deckPath);
   if (!result.ok) {
     writeJson(result);
     process.exitCode = 1;

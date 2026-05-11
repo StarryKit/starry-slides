@@ -163,6 +163,9 @@ async function loadSlide(
 ): Promise<{ width: number; height: number }> {
   await page.goto(pathToFileURL(filePath).href, { waitUntil: "load" });
   const root = page.locator('[data-slide-root="true"]');
+  if ((await root.count()) === 0) {
+    return { width: 1920, height: 1080 };
+  }
   const size = {
     width: Number((await root.getAttribute("data-slide-width")) || 1920),
     height: Number((await root.getAttribute("data-slide-height")) || 1080),

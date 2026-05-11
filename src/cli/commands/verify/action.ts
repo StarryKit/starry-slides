@@ -6,21 +6,7 @@ function writeJson(value: unknown) {
   process.stdout.write(`${JSON.stringify(value, null, 2)}\n`);
 }
 
-async function runStaticVerify(deckPath: string): Promise<VerifyResult> {
-  return verifyDeck(deckPath, { mode: "static" });
-}
-
-async function runCompleteVerify(deckPath: string): Promise<VerifyResult> {
-  const staticResult = verifyDeck(deckPath, { mode: "static" });
-  if (!staticResult.ok) {
-    return createVerifyResult({
-      deck: staticResult.deck,
-      mode: "complete",
-      checks: ["structure", "static-overflow", "rendered-overflow"],
-      issues: staticResult.issues,
-    });
-  }
-
+export async function runFullVerify(deckPath: string): Promise<VerifyResult> {
   const renderedIssues = await verifyRenderedOverflow(deckPath);
   return verifyDeck(deckPath, {
     mode: "complete",
@@ -28,10 +14,9 @@ async function runCompleteVerify(deckPath: string): Promise<VerifyResult> {
   });
 }
 
-export async function runVerify(deckPathArg: string | undefined, mode: "static" | "complete") {
+export async function runVerify(deckPathArg: string | undefined) {
   const deckPath = resolveDeckPath(deckPathArg);
-  const result =
-    mode === "static" ? await runStaticVerify(deckPath) : await runCompleteVerify(deckPath);
+  const result = await runFullVerify(deckPath);
   writeJson(result);
   if (!result.ok) {
     process.exitCode = 1;

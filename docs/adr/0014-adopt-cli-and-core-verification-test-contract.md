@@ -53,9 +53,8 @@ failure path, stdout/stderr behavior, and filesystem or process side effects.
 | `starry-slides [deck]` | Treats the first non-command argument as the deck path and behaves like `starry-slides open [deck]`. Extra positional arguments fail non-zero. |
 | `starry-slides open [deck]` | Runs Complete Verify before starting Vite. On verify failure, writes a Verify Result JSON to stdout, exits non-zero, and does not spawn Vite. On verify success, starts the editor server with `STARRY_SLIDES_DECK_DIR` set to the resolved deck path, writes human-readable startup information to stderr, and does not write agent JSON to stdout. |
 | `starry-slides verify [deck]` | Runs Complete Verify, writes a Verify Result JSON to stdout, exits `0` when `ok: true`, exits `1` when `ok: false`, includes rendered overflow checks, and reports structural/static/rendered issues in one `issues` array. |
-| `starry-slides verify [deck] --static` | Runs Static Verify only, writes a Verify Result JSON to stdout, exits according to `ok`, and excludes rendered overflow checks. Option order before or after `[deck]` should be covered if the parser supports it. |
-| `starry-slides view [deck] --slide <manifest-file>` | Runs Static Verify first, requires an exact manifest `file` value, renders exactly one PNG, writes a Preview Manifest JSON to stdout, and writes diagnostics only to stderr. |
-| `starry-slides view [deck] --all` | Runs Static Verify first, renders every manifest slide, writes one Preview Manifest JSON to stdout, and produces one PNG per manifest slide. |
+| `starry-slides view [deck] --slide <manifest-file>` | Runs the same Complete Verify workflow as `starry-slides verify` first, requires an exact manifest `file` value, renders exactly one PNG, writes a Preview Manifest JSON to stdout, and writes diagnostics only to stderr. |
+| `starry-slides view [deck] --all` | Runs the same Complete Verify workflow as `starry-slides verify` first, renders every manifest slide, writes one Preview Manifest JSON to stdout, and produces one PNG per manifest slide. |
 | `starry-slides view [deck] --all --out-dir <directory>` | Overrides the default output directory, clears stale files in that directory, writes all previews there, and does not write to `<deck>/.starry-slides/view/`. |
 | `starry-slides view [deck] --slide <manifest-file> --out-dir <directory>` | Combines exact single-slide selection with explicit output directory behavior. |
 | `starry-slides add-skill` | Preserves the current reserved/stub behavior until a later ADR defines installation semantics. The current expected exit code and stderr text must be asserted so accidental behavior changes are visible. |
@@ -66,8 +65,7 @@ Invalid command and option behavior must also be covered:
 - unknown options fail non-zero and write a human-readable error to stderr
 - missing option values for `--slide` and `--out-dir` fail non-zero
 - `view` without `--slide` or `--all` fails non-zero
-- `view --static` fails non-zero because `view` always runs Static Verify
-  internally
+- `view --static` fails non-zero as an unknown option
 - conflicting `view --slide ... --all` behavior is explicitly tested and
   documented according to the parser's chosen semantics
 - missing deck, invalid manifest, missing slide, and rendered overflow failures
@@ -140,7 +138,6 @@ They must cover:
 
 - `verify [deck]` defaults to Complete Verify
 - `verify` with no deck uses the default deck resolution path
-- `verify [deck] --static` skips rendered checks
 - successful verify exits `0` and writes parseable JSON to stdout
 - failed verify exits `1` and writes parseable JSON to stdout
 - human-readable diagnostics and errors go to stderr
@@ -149,9 +146,9 @@ They must cover:
 - `view --out-dir <directory>` writes only to the explicit output directory
 - `view` clears stale preview files before writing new previews
 - `view` refuses non-exact `--slide` values such as indexes, titles, or slugs
-- `view` runs Static Verify before rendering and writes no previews when Static
-  Verify fails
-- `view --static` fails because view always runs Static Verify internally
+- `view` runs Complete Verify before rendering and writes no previews when
+  verification fails
+- `view --static` fails as an unknown option
 - `view` missing `--slide` or `--all` fails
 - missing values for `--slide` and `--out-dir` fail
 - `view --slide ... --all` follows the documented parser behavior
@@ -322,8 +319,8 @@ precise failure localization.
       `pnpm --silent starry-slides`.
 - [ ] `view` tests prove single-slide, all-slide, exact `--slide`, default
       output directory, explicit `--out-dir`, and stale preview cleanup.
-- [ ] `verify` tests prove Complete Verify catches rendered overflow while
-      Static Verify skips rendered checks.
+- [ ] `verify` tests prove Complete Verify catches rendered overflow by
+      default.
 - [ ] `open` tests prove failure does not start the editor and success startup
       behavior is covered without leaving child processes running.
 - [ ] Temporary deck and preview directories are cleaned after tests.
