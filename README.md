@@ -8,11 +8,11 @@ Starry Slides is an agentic editor for slides and presentations using HTML as th
 
 The project mainly contains 3 parts:
 
-| Part | Description |
-| --- | --- |
-| `starry-slides` CLI | Tools for agents to preview, verify, and open generated slide HTML files. |
-| Starry Slide Editor | A WYSIWYG editor for creating and editing slide HTML files. |
-| `/starry-slides` Skill | A skill that teaches your agent to generate HTML files that meet the requirements of [`STARRY-SLIDES-CONTRACT.md`](./skills/starry-slides/reference/STARRY-SLIDES-CONTRACT.md). |
+| Part                   | Description                                                                                                                                                                      |
+| ---------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `starry-slides` CLI    | Tools for agents to preview, verify, and open generated slide HTML files.                                                                                                        |
+| Starry Slide Editor    | A WYSIWYG editor for creating and editing slide HTML files.                                                                                                                      |
+| `/starry-slides` Skill | A skill that teaches your agent to generate HTML files that meet the requirements of [`STARRY-SLIDES-CONTRACT.md`](./skills/starry-slides/references/STARRY-SLIDES-CONTRACT.md). |
 
 
 ## CLI Quick Start
@@ -43,19 +43,10 @@ Install the Starry Slides skill with the `skills` CLI:
 npx skills add StarryKit/starry-slides --skill starry-slides
 ```
 
-Then prompt your agent with something like:
+Then start with a simple prompt like:
 
 ```text
-Use /starry-slides to create a single-file HTML slide deck for a product launch review.
-
-Requirements:
-- Audience: founders and product team
-- Tone: sharp, modern, confident
-- Slides: 6
-- Include: title slide, problem, solution, roadmap, metrics, closing
-- Visual direction: dark navy background, bright cyan accents, clean typography
-
-After generating the deck, verify it and preview all slides.
+Use /starry-slides to create a slide deck for my presentation.
 ```
 
 ## Documentation
@@ -65,7 +56,7 @@ After generating the deck, verify it and preview all slides.
   and implementation boundaries.
 - [Contributing guide](./docs/contributing.md): expectations for changes,
   verification, and review.
-- [Slide Contract guide](./skills/starry-slides/reference/STARRY-SLIDES-CONTRACT.md): deck package shape and
+- [Slide Contract guide](./skills/starry-slides/references/STARRY-SLIDES-CONTRACT.md): deck package shape and
   required HTML attributes.
 - [Repository context](./CONTEXT.md): repo rules, boundaries, testing
   expectations, and shared terminology.
