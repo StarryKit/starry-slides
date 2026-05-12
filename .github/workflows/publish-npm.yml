@@ -63,22 +63,22 @@ jobs:
       - name: Prepare release version
         id: release
         run: |
-          if [ "${{ steps.npm.outputs.published }}" = "true" ]; then
-            echo "should_publish=false" >> "$GITHUB_OUTPUT"
-            echo "version=${{ steps.pkg.outputs.version }}" >> "$GITHUB_OUTPUT"
-            exit 0
-          fi
-
           head_subject="$(git log -1 --pretty=%s)"
-          if [[ "$head_subject" == chore\(release\):* ]]; then
+
+          if [ "${{ steps.npm.outputs.published }}" = "true" ] && [[ "$head_subject" == chore\(release\):* ]]; then
             echo "should_publish=false" >> "$GITHUB_OUTPUT"
             echo "version=${{ steps.pkg.outputs.version }}" >> "$GITHUB_OUTPUT"
             exit 0
           fi
 
-          npm version patch --no-git-tag-version
-          pnpm install --lockfile-only
-          echo "needs_commit=true" >> "$GITHUB_OUTPUT"
+          if [ "${{ steps.npm.outputs.published }}" = "true" ]; then
+            npm version patch --no-git-tag-version
+            pnpm install --lockfile-only
+            echo "needs_commit=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "needs_commit=false" >> "$GITHUB_OUTPUT"
+          fi
+
           echo "should_publish=true" >> "$GITHUB_OUTPUT"
           echo "version=$(node -p "require('./package.json').version")" >> "$GITHUB_OUTPUT"
 
