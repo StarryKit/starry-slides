@@ -8,7 +8,7 @@ function writeJson(value: unknown) {
   process.stdout.write(`${JSON.stringify(value, null, 2)}\n`);
 }
 
-export async function runOpen(deckPathArg: string | undefined) {
+export async function runOpen(deckPathArg: string | undefined, preferredPort?: number) {
   const deckPath = resolveDeckPath(deckPathArg);
   const result = await runFullVerify(deckPath);
   if (!result.ok) {
@@ -17,7 +17,7 @@ export async function runOpen(deckPathArg: string | undefined) {
     return;
   }
 
-  const port = await findAvailablePort(Number(process.env.PORT ?? 5173));
+  const port = await findAvailablePort(preferredPort ?? Number(process.env.PORT ?? 5173));
   const url = `http://127.0.0.1:${port}/`;
   if (process.env.STARRY_SLIDES_TEST_STUB_OPEN === "1") {
     console.error(`Opening Starry Slides at ${url}`);
