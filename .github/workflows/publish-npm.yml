@@ -17,6 +17,8 @@ concurrency:
 jobs:
   publish:
     runs-on: ubuntu-latest
+    env:
+      STARRY_SLIDES_DISABLE_UPDATE_CHECK: "1"
 
     steps:
       - name: Checkout

@@ -4,6 +4,7 @@ import { Command, CommanderError, InvalidArgumentError } from "commander/esm.mjs
 import { registerDefaultOpen, registerOpenCommand } from "./commands/open";
 import { registerVerifyCommand } from "./commands/verify";
 import { registerViewCommand } from "./commands/view";
+import { notifyIfRuntimeUpdateAvailable } from "./runtime-updates";
 
 function createProgram() {
   const program = new Command();
@@ -18,6 +19,10 @@ function createProgram() {
       writeOut: (str) => process.stdout.write(str),
       writeErr: (str) => process.stderr.write(str),
     });
+
+  program.hook("preAction", async () => {
+    await notifyIfRuntimeUpdateAvailable();
+  });
 
   registerDefaultOpen(program);
   registerOpenCommand(program);

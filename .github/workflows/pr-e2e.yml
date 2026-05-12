@@ -19,6 +19,8 @@ jobs:
   changes:
     name: Detect changed files
     runs-on: ubuntu-latest
+    env:
+      STARRY_SLIDES_DISABLE_UPDATE_CHECK: "1"
     outputs:
       should_run_e2e: ${{ steps.filter.outputs.should_run_e2e }}
 
@@ -60,6 +62,8 @@ jobs:
     if: needs.changes.outputs.should_run_e2e == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 30
+    env:
+      STARRY_SLIDES_DISABLE_UPDATE_CHECK: "1"
 
     steps:
       - name: Checkout
@@ -100,6 +104,8 @@ jobs:
       - e2e
     if: always()
     runs-on: ubuntu-latest
+    env:
+      STARRY_SLIDES_DISABLE_UPDATE_CHECK: "1"
 
     steps:
       - name: Enforce PR merge gate

@@ -2,6 +2,7 @@ import { spawnSync } from "node:child_process";
 import fs from "node:fs";
 import path from "node:path";
 import { afterEach, beforeAll, describe, expect, test } from "vitest";
+import packageJson from "../../package.json";
 import { createTempDeck, writeDeck } from "../helpers/deck-fixtures";
 
 const repo = process.cwd();
@@ -26,7 +27,11 @@ function runBuiltCli(args: string[], env: NodeJS.ProcessEnv = {}) {
   return spawnSync("node", [distCli, ...args], {
     cwd: repo,
     encoding: "utf8",
-    env: { ...process.env, ...env },
+    env: {
+      ...process.env,
+      STARRY_SLIDES_DISABLE_UPDATE_CHECK: "1",
+      ...env,
+    },
   });
 }
 
@@ -112,5 +117,22 @@ describe("packaged starry-slides CLI", () => {
     const invalid = runBuiltCli(["view", deck, "--all"]);
     expect(() => parseJson(invalid.stdout)).not.toThrow();
     expect(invalid.stderr).toBe("");
+  });
+
+  test("built CLI writes runtime update notices to stderr without polluting JSON stdout", () => {
+    const deck = createDeck();
+    const latestVersion = "9.9.9";
+
+    const result = runBuiltCli(["verify", deck], {
+      STARRY_SLIDES_DISABLE_UPDATE_CHECK: "0",
+      STARRY_SLIDES_TEST_LATEST_VERSION: latestVersion,
+    });
+
+    expect(result.status).toBe(0);
+    expect(parseJson(result.stdout)).toMatchObject({ ok: true, mode: "complete" });
+    expect(result.stderr).toContain(
+      `Starry Slides runtime update available: current=${packageJson.version} latest=${latestVersion}.`
+    );
+    expect(result.stderr).toContain("Run: npm install -g starry-slides@latest");
   });
 });

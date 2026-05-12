@@ -33,6 +33,9 @@ This section is just an index of where things live.
   Architecture Decision Records.
 - `docs/roadmap/`
   Roadmap index and milestone plans.
+- `docs/skills-references/`
+  Authoritative contract, CLI usage, and discovery documents referenced by the
+  installed skill shell.
 - `e2e/`
   Browser E2E tests, fixtures, and deck-generation tools.
 - `skills/`

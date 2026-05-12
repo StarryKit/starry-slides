@@ -2,6 +2,7 @@ import { spawnSync } from "node:child_process";
 import fs from "node:fs";
 import path from "node:path";
 import { afterEach, describe, expect, test } from "vitest";
+import packageJson from "../../package.json";
 import {
   blockElement,
   createTempDeck,
@@ -28,7 +29,11 @@ function runCli(args: string[], options: { env?: NodeJS.ProcessEnv } = {}) {
   return spawnSync("pnpm", ["exec", "tsx", "src/cli/index.ts", ...args], {
     cwd: repo,
     encoding: "utf8",
-    env: { ...process.env, ...options.env },
+    env: {
+      ...process.env,
+      STARRY_SLIDES_DISABLE_UPDATE_CHECK: "1",
+      ...options.env,
+    },
   });
 }
 
@@ -36,6 +41,10 @@ function runPackageScript(args: string[]) {
   return spawnSync("pnpm", ["--silent", "starry-slides", ...args], {
     cwd: repo,
     encoding: "utf8",
+    env: {
+      ...process.env,
+      STARRY_SLIDES_DISABLE_UPDATE_CHECK: "1",
+    },
   });
 }
 
@@ -211,7 +220,9 @@ describe("source starry-slides cli", () => {
     expect(runCli(["view", deck]).stderr).toContain(
       "view requires either --slide <manifest-file> or --all"
     );
-    expect(runCli(["view", deck, "--static", "--all"]).stderr).toContain("unknown option '--static'");
+    expect(runCli(["view", deck, "--static", "--all"]).stderr).toContain(
+      "unknown option '--static'"
+    );
     expect(runCli(["view", deck, "--slide"]).stderr).toContain(
       "option '--slide <manifest-file>' argument missing"
     );
@@ -324,5 +335,28 @@ describe("source starry-slides cli", () => {
       expect(result.stdout).toContain("verify [deck]");
       expect(result.stdout).toContain("view [options] [deck]");
     }
+  });
+
+  test("verify keeps stdout JSON-only while writing runtime update notices to stderr", () => {
+    const deck = writeValidDeck();
+    const latestVersion = "9.9.9";
+
+    const result = runCli(["verify", deck], {
+      env: {
+        STARRY_SLIDES_DISABLE_UPDATE_CHECK: "0",
+        STARRY_SLIDES_TEST_LATEST_VERSION: latestVersion,
+      },
+    });
+
+    expect(result.status).toBe(0);
+    expect(parseJson(result.stdout)).toMatchObject({ ok: true, mode: "complete" });
+    expect(result.stderr).toContain(
+      `Starry Slides runtime update available: current=${packageJson.version} latest=${latestVersion}.`
+    );
+    expect(result.stderr).toContain(
+      "Agent action: upgrade the runtime package after this command completes."
+    );
+    expect(result.stderr).toContain("Run: npm install -g starry-slides@latest");
+    expect(result.stderr).toContain("Current command may continue under the installed runtime.");
   });
 });

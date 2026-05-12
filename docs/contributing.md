@@ -35,6 +35,6 @@ changes, include rendered browser validation when practical.
 ## Agent-Facing Work
 
 Contract expectations live in
-[STARRY-SLIDES-CONTRACT.md](../skills/starry-slides/references/STARRY-SLIDES-CONTRACT.md).
+[STARRY-SLIDES-CONTRACT.md](./skills-references/STARRY-SLIDES-CONTRACT.md).
 Agents should use the local `starry-slides` CLI for validation, previewing,
 and opening decks instead of owning a separate editor runtime.

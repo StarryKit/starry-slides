@@ -16,7 +16,8 @@ The project mainly contains 3 parts:
 
 3. `/starry-slides` Skill
 
-   A skill that teaches your agent to generate HTML files that meet the requirements of [`STARRY-SLIDES-CONTRACT.md`](./skills/starry-slides/references/STARRY-SLIDES-CONTRACT.md).
+   A thin local skill shell that points agents to the authoritative Starry
+   Slides references under [`docs/skills-references/`](./docs/skills-references/).
 
 ## Skill Quick Start
 
@@ -52,6 +53,10 @@ starry-slides open <deck>
 - `view` renders preview images for one slide or the whole deck.
 - `open` runs verification first, then opens the deck in the editor when it passes.
 
+Runtime upgrades are notify-only. CLI commands never auto-install a newer
+version; update notices, when present, are written to `stderr` so structured
+`stdout` stays parseable.
+
 
 ## Documentation
 
@@ -60,7 +65,9 @@ starry-slides open <deck>
   and implementation boundaries.
 - [Contributing guide](./docs/contributing.md): expectations for changes,
   verification, and review.
-- [Slide Contract guide](./skills/starry-slides/references/STARRY-SLIDES-CONTRACT.md): deck package shape and
+- [Skill references](./docs/skills-references/): authoritative contract, CLI usage, and
+  discovery documents used by the installed skill.
+- [Slide Contract guide](./docs/skills-references/STARRY-SLIDES-CONTRACT.md): deck package shape and
   required HTML attributes.
 - [Repository context](./CONTEXT.md): repo rules, boundaries, testing
   expectations, and shared terminology.
@@ -69,4 +76,3 @@ starry-slides open <deck>
 ## License
 
 Starry Slides is licensed under [MIT License](./LICENSE).
-
