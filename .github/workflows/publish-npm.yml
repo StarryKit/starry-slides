@@ -48,8 +48,8 @@ jobs:
       - name: Read package metadata
         id: pkg
         run: |
-          echo "name=$(node -p "require('./package.json').name")" >> "$GITHUB_OUTPUT"
-          echo "version=$(node -p "require('./package.json').version")" >> "$GITHUB_OUTPUT"
+          echo "name=$(node -p \"require('./package.json').name\")" >> "$GITHUB_OUTPUT"
+          echo "version=$(node -p \"require('./package.json').version\")" >> "$GITHUB_OUTPUT"
 
       - name: Check whether current version is already on npm
         id: npm
@@ -63,24 +63,24 @@ jobs:
       - name: Prepare release version
         id: release
         run: |
-          if [ "${{ steps.npm.outputs.published }}" = "true" ]; then
-            echo "should_publish=false" >> "$GITHUB_OUTPUT"
-            echo "version=${{ steps.pkg.outputs.version }}" >> "$GITHUB_OUTPUT"
-            exit 0
-          fi
-
           head_subject="$(git log -1 --pretty=%s)"
-          if [[ "$head_subject" == chore\(release\):* ]]; then
+
+          if [ "${{ steps.npm.outputs.published }}" = "true" ] && [[ "$head_subject" == chore\(release\):* ]]; then
             echo "should_publish=false" >> "$GITHUB_OUTPUT"
             echo "version=${{ steps.pkg.outputs.version }}" >> "$GITHUB_OUTPUT"
             exit 0
           fi
 
-          npm version patch --no-git-tag-version
-          pnpm install --lockfile-only
-          echo "needs_commit=true" >> "$GITHUB_OUTPUT"
+          if [ "${{ steps.npm.outputs.published }}" = "true" ]; then
+            npm version patch --no-git-tag-version
+            pnpm install --lockfile-only
+            echo "needs_commit=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "needs_commit=false" >> "$GITHUB_OUTPUT"
+          fi
+
           echo "should_publish=true" >> "$GITHUB_OUTPUT"
-          echo "version=$(node -p "require('./package.json').version")" >> "$GITHUB_OUTPUT"
+          echo "version=$(node -p \"require('./package.json').version\")" >> "$GITHUB_OUTPUT"
 
       - name: Build package
         if: steps.release.outputs.should_publish == 'true'
@@ -88,6 +88,8 @@ jobs:
 
       - name: Commit release version
         if: steps.release.outputs.needs_commit == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
@@ -95,13 +97,17 @@ jobs:
           git checkout -b "$branch"
           git add package.json pnpm-lock.yaml
           git commit -m "chore(release): v${{ steps.release.outputs.version }}"
-          git push origin "HEAD:$branch"
+          git push origin "HEAD:$branch" --force
+          # Close any existing PR for this branch
+          existing_pr=$(gh pr list --head "$branch" --state open --json number --jq '.[0].number')
+          if [ -n "$existing_pr" ]; then
+            gh pr close "$existing_pr"
+          fi
           gh pr create \
             --base main \
             --head "$branch" \
             --title "chore(release): v${{ steps.release.outputs.version }}" \
-            --body "Automated version bump to v${{ steps.release.outputs.version }}." \
-            --merge-commit-message "chore(release): v${{ steps.release.outputs.version }}"
+            --body "Automated version bump to v${{ steps.release.outputs.version }}."
 
       - name: Publish package
         if: steps.release.outputs.should_publish == 'true'
