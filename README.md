@@ -1,7 +1,5 @@
 ![starry kit banner](assets/readme-banner.png)
 
-> **The project is currently under development and has not made a release version yet. Please stay tuned for future progress.**
-
 # Starry Slides
 
 Starry Slides is an agentic editor for slides and presentations using HTML as the source file.
@@ -21,6 +19,19 @@ The project mainly contains 3 parts:
    A skill that teaches your agent to generate HTML files that meet the requirements of [`STARRY-SLIDES-CONTRACT.md`](./skills/starry-slides/references/STARRY-SLIDES-CONTRACT.md).
 
 
+## Skill Quick Start
+
+Install the Starry Slides skill with the `skills` CLI:
+
+```bash
+npx skills add StarryKit/starry-slides --skill starry-slides
+```
+
+Then start with a simple prompt like:
+
+```text
+Use /starry-slides to create a slide deck for my presentation.
+```
 
 ## CLI Quick Start
 
@@ -42,19 +53,6 @@ starry-slides open <deck>
 - `view` renders preview images for one slide or the whole deck.
 - `open` runs verification first, then opens the deck in the editor when it passes.
 
-## Skill Quick Start
-
-Install the Starry Slides skill with the `skills` CLI:
-
-```bash
-npx skills add StarryKit/starry-slides --skill starry-slides
-```
-
-Then start with a simple prompt like:
-
-```text
-Use /starry-slides to create a slide deck for my presentation.
-```
 
 ## Documentation
 
