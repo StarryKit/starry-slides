@@ -14,6 +14,7 @@ import {
 import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import type { PdfExportSelection } from "../../core";
+import logoUrl from "../assets/logo.png";
 import { cn } from "../lib/utils";
 
 export interface PdfExportSlideOption {
@@ -119,9 +120,11 @@ export function EditorHeader({
     <header className="px-6 h-14 flex items-center justify-between bg-white border-b border-foreground/[0.06]">
       {/* Left: Logo + title + count */}
       <div className="flex min-w-0 flex-1 items-center gap-3">
-        <div className="w-8 h-8 rounded-lg bg-foreground flex items-center justify-center shrink-0">
-          <span className="text-background font-bold text-sm font-display">P</span>
-        </div>
+        <img
+          src={logoUrl}
+          alt="Starry Slides logo"
+          className="h-8 w-8 shrink-0 rounded-lg object-contain"
+        />
         <div className="w-px h-5 bg-foreground/10" />
         <div className="relative min-w-0 flex-1">
           <input
