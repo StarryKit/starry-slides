@@ -14,7 +14,7 @@ import {
 import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import type { PdfExportSelection } from "../../core";
-import logoUrl from "../assets/logo.png";
+import logoUrl from "../assets/logo-starry-slides.png";
 import { cn } from "../lib/utils";
 
 export interface PdfExportSlideOption {
@@ -145,7 +145,7 @@ export function EditorHeader({
           <img
             src={logoUrl}
             alt="Starry Slides logo"
-            className="h-8 w-8 rounded-lg object-contain"
+            className="h-8 rounded-lg object-contain"
           />
         </a>
         <div className="w-px h-5 bg-foreground/10" />

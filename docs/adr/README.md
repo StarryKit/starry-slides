@@ -56,3 +56,4 @@ Update this directory whenever a change affects:
 | [0025](./0025-adopt-docs-e2e-md-as-the-e2e-source-of-truth.md)                  | Adopt `docs/e2e.md` as the E2E source of truth                                  | accepted              |
 | [0026](./0026-adopt-single-generated-regression-deck-path.md)                   | Adopt single generated regression deck path                                     | accepted              |
 | [0027](./0027-adopt-v1-deck-contract-and-track-cli-editor-refactors.md)         | Adopt V1 deck contract and track CLI and editor refactors                       | accepted              |
+| [0028](./0028-adopt-notify-only-runtime-updates-and-remote-skill-references.md) | Adopt notify-only runtime updates and remote Skill references                   | proposed              |
