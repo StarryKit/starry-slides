@@ -67,6 +67,8 @@ const EXPORTS: ExportItem[] = [
   { id: "gslides", label: "Google Slides", desc: "Sync to Google Slides", icon: Cloud, soon: true },
 ];
 
+const GITHUB_REPO_URL = "https://github.com/StarryKit/starry-slides";
+
 export function EditorHeader({
   title,
   onTitleChange,
@@ -133,11 +135,19 @@ export function EditorHeader({
     <header className="px-6 h-14 flex items-center justify-between bg-white border-b border-foreground/[0.06]">
       {/* Left: Logo + title + count */}
       <div className="flex min-w-0 flex-1 items-center gap-3">
-        <img
-          src={logoUrl}
-          alt="Starry Slides logo"
-          className="h-8 w-8 shrink-0 rounded-lg object-contain"
-        />
+        <a
+          href={GITHUB_REPO_URL}
+          target="_blank"
+          rel="noreferrer"
+          aria-label="Open the Starry Slides GitHub repository"
+          className="shrink-0 rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-foreground/20"
+        >
+          <img
+            src={logoUrl}
+            alt="Starry Slides logo"
+            className="h-8 w-8 rounded-lg object-contain"
+          />
+        </a>
         <div className="w-px h-5 bg-foreground/10" />
         <div className="relative min-w-0 flex-1">
           <input
