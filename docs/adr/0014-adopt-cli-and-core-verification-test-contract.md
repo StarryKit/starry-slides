@@ -204,8 +204,8 @@ CLI tests but should stay much smaller than browser editor E2E.
 ### Fixture strategy
 
 CLI and core tests should create deterministic temporary deck fixtures. Do not
-rely on `sample-slides/` as the only fixture because ADR-0012 keeps sample
-slides out of project Git.
+rely on `.e2e-test-slides/` as the only fixture because ADR-0026 reserves it as
+the shared generated regression deck for local development and E2E.
 
 Use shared fixture helpers for:
 

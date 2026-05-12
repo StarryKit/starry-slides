@@ -85,9 +85,9 @@ ADR. The current agent-facing command target is `starry-slides`, `view` is a
 subcommand of that CLI, and overflow detection is part of the normal verify
 workflow.
 
-ADR-0012 supersedes the sample deck tracking assumption in this ADR. The default
-sample deck path remains `sample-slides/`, but that directory is ignored local
-working data and must not be tracked by this project repository's Git index.
+ADR-0012 supersedes the sample deck tracking assumption in this ADR.
+ADR-0026 supersedes the sample deck path assumption in this ADR. The repository
+now uses `.e2e-test-slides/` as the only generated local regression deck path.
 
 Use these internal module boundaries:
 

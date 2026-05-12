@@ -12,7 +12,7 @@ export default defineConfig({
     trace: "on-first-retry",
   },
   webServer: {
-    command: `pnpm test:e2e:prepare && pnpm build && STARRY_SLIDES_DECK_SOURCE=e2e pnpm exec vite preview --host 127.0.0.1 --port ${e2ePort} --strictPort`,
+    command: `pnpm test:e2e:prepare && pnpm build && pnpm exec vite preview --host 127.0.0.1 --port ${e2ePort} --strictPort`,
     port: e2ePort,
     reuseExistingServer: false,
     timeout: 120_000,

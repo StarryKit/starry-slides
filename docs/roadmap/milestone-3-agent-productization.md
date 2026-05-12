@@ -105,8 +105,8 @@ Expected direction:
 
 Implementation topics:
 
-- Deck/project model for multiple generated decks instead of only
-  `sample-slides`.
+- Deck/project model for multiple generated decks instead of only the shared
+  local regression deck.
 - Checkpoints or versions before and after Agent actions.
 - Recovery behavior for failed saves and invalid Agent edits.
 - Export/import boundaries for saved projects.

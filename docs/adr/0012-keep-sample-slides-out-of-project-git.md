@@ -1,8 +1,9 @@
 # ADR-0012: Keep sample slides out of project Git
 
-- Status: accepted
+- Status: superseded
 - Date: 2026-05-06
 - Supersedes: sample deck Git tracking guidance in [ADR-0007](./0007-limit-generated-deck-copies.md)
+- Superseded by: [ADR-0026](./0026-adopt-single-generated-regression-deck-path.md)
 
 ## Context
 
@@ -114,7 +115,7 @@ Steps:
 - [ ] `git check-ignore -v sample-slides/` shows the `.gitignore` rule.
 - [ ] Editing a slide through `pnpm dev` changes local files under
       `sample-slides/` without adding tracked project diffs.
-- [ ] `pnpm editor:e2e:generate-deck` can create or refresh the ignored local
-      sample deck.
+- [ ] `pnpm prepare:regression-deck` can create or refresh the ignored local
+      regression deck.
 - [ ] README and runtime context describe `sample-slides/` as ignored local
       working data.

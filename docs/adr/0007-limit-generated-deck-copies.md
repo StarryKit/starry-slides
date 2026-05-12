@@ -1,9 +1,10 @@
 # ADR-0007: Limit generated deck copies
 
-- Status: accepted
+- Status: superseded
 - Date: 2026-05-05
 - Amendment: [ADR-0012](./0012-keep-sample-slides-out-of-project-git.md)
   supersedes the `sample-slides/` Git tracking guidance in this ADR.
+- Superseded by: [ADR-0026](./0026-adopt-single-generated-regression-deck-path.md)
 
 ## Context
 

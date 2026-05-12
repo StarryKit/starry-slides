@@ -10,7 +10,7 @@ import {
   buildTimelineSlide,
 } from "./regression-deck/narrative-slides.mjs";
 import { buildArchitectureSlide, buildProblemSlide } from "./regression-deck/pipeline-slides.mjs";
-import { copyDirectory, resetDirectory, slugify, splitPoints } from "./regression-deck/shared.mjs";
+import { resetDirectory, slugify, splitPoints } from "./regression-deck/shared.mjs";
 import {
   buildBlockFlattenSlide,
   buildGroupGeometrySlide,
@@ -47,7 +47,6 @@ const outputRoot = path.resolve(
   process.cwd(),
   getArg("--out-dir", `generated/${slugify(deckTitle)}`)
 );
-const appOutputRoot = path.resolve(process.cwd(), getArg("--app-out-dir", "sample-slides"));
 
 const slides = [
   {
@@ -159,10 +158,4 @@ fs.writeFileSync(
 console.log(`Generated ${slides.length} slides in ${outputRoot}`);
 for (const slide of slides) {
   console.log(`- ${slide.file}`);
-}
-
-if (appOutputRoot !== outputRoot) {
-  resetDirectory(appOutputRoot);
-  copyDirectory(outputRoot, appOutputRoot);
-  console.log(`Synced slides to ${appOutputRoot}`);
 }

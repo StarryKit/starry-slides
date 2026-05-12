@@ -55,10 +55,9 @@ This section is just an index of where things live.
 
 ### Local deck/runtime paths
 
-- `sample-slides/`
-  Ignored local sample deck for normal local development.
 - `.e2e-test-slides/`
-  Ignored temporary deck for browser E2E runs.
+  Ignored generated regression deck for browser E2E runs and local manual
+  development.
 
 ## Workflow Rules
 
@@ -108,9 +107,9 @@ This section is just an index of where things live.
 
 ### Deck/runtime rules
 
-- Normal local development uses `sample-slides/`.
-- If `sample-slides/` is missing, recreate it with
-  `pnpm editor:e2e:generate-deck`.
+- Normal local development uses `.e2e-test-slides/`.
+- If `.e2e-test-slides/` is missing, recreate it with
+  `pnpm prepare:regression-deck`.
 - E2E runs use `.e2e-test-slides/`.
-- Do not add extra persistent deck copies beyond `sample-slides/` and the
-  ignored E2E deck.
+- Do not add extra persistent generated deck copies beyond
+  `.e2e-test-slides/`.

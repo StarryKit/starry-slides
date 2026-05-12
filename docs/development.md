@@ -24,24 +24,24 @@ pnpm lint && pnpm test && pnpm build && pnpm test:packaged-cli && pnpm test:e2e
 Deck-specific commands:
 
 ```bash
-pnpm editor:e2e:generate-deck
-pnpm --silent starry-slides verify sample-slides
-pnpm --silent starry-slides view sample-slides --slide slides/01-hero.html
-pnpm starry-slides open sample-slides
+pnpm prepare:regression-deck
+pnpm --silent starry-slides verify .e2e-test-slides
+pnpm --silent starry-slides view .e2e-test-slides --slide slides/01-hero.html
+pnpm starry-slides open .e2e-test-slides
 ```
 
-The browser regression suite uses a temporary ignored deck in
-`.e2e-test-slides/`. Normal development uses the ignored local sample deck in
-`sample-slides/`.
+The browser regression suite and normal local development both use the ignored
+generated deck in `.e2e-test-slides/`.
 
-## Local Sample Deck
+## Local Regression Deck
 
-Create or refresh the sample deck:
+Create or refresh the local regression deck:
 
 ```bash
-pnpm editor:e2e:generate-deck
+pnpm prepare:regression-deck
 ```
 
-`pnpm dev` starts the root Vite app and serves the deck from `sample-slides/`.
-Local edits are saved back into that ignored deck while the dev server is
+`pnpm dev` starts the root Vite app and serves the deck from
+`.e2e-test-slides/`. Local edits are saved back into that ignored deck while
+the dev server is
 running.

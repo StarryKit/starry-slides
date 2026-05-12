@@ -70,7 +70,7 @@ describe("source starry-slides cli", () => {
     const parsed = parseJson(result.stdout);
     expect(result.status).toBe(parsed.ok ? 0 : 1);
     expect(parsed.mode).toBe("complete");
-    expect(parsed.deck).toContain("sample-slides");
+    expect(parsed.deck).toContain(".e2e-test-slides");
   });
 
   test("failed verify exits one and writes parseable JSON to stdout", () => {

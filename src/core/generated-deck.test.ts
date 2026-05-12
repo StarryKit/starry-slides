@@ -68,7 +68,7 @@ describe("generated deck import", () => {
     };
 
     const deck = await loadSlidesFromManifest({
-      manifestUrl: "https://example.com/sample-slides/manifest.json",
+      manifestUrl: "https://example.com/.e2e-test-slides/manifest.json",
       fetchImpl,
       requestInit: {
         credentials: "same-origin",
@@ -128,28 +128,21 @@ describe("generated deck import", () => {
     };
 
     await loadSlidesFromManifest({
-      manifestUrl: "https://example.com/sample-slides/manifest.json?v=123",
+      manifestUrl: "https://example.com/.e2e-test-slides/manifest.json?v=123",
       fetchImpl,
     });
 
-    expect(requestedUrls[1]).toBe("https://example.com/sample-slides/slide-1.html?v=123");
+    expect(requestedUrls[1]).toBe("https://example.com/.e2e-test-slides/slide-1.html?v=123");
   });
 
   test("parseSlide returns editor-compatible metadata for generated slides", () => {
     const workspaceRoot = path.resolve(import.meta.dirname, "../..");
     const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), "hse-generated-"));
     const outputRoot = path.join(tempRoot, "generated");
-    const appOutputRoot = path.join(tempRoot, "synced");
 
     execFileSync(
       "node",
-      [
-        path.join(workspaceRoot, "e2e/tools/prepare-regression-deck.mjs"),
-        "--out-dir",
-        outputRoot,
-        "--app-out-dir",
-        appOutputRoot,
-      ],
+      [path.join(workspaceRoot, "e2e/tools/prepare-regression-deck.mjs"), "--out-dir", outputRoot],
       {
         cwd: workspaceRoot,
         stdio: "pipe",

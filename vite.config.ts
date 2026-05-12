@@ -7,16 +7,13 @@ import { createDeckRuntimeMiddlewarePlugin } from "./src/node/deck-runtime-middl
 
 const configDir = path.dirname(fileURLToPath(import.meta.url));
 const workspaceRoot = configDir;
-const sampleSlidesDir = path.resolve(workspaceRoot, "sample-slides");
 const e2eTestSlidesDir = path.resolve(workspaceRoot, ".e2e-test-slides");
 const cliDeckDir = process.env.STARRY_SLIDES_DECK_DIR
   ? path.resolve(process.env.STARRY_SLIDES_DECK_DIR)
   : "";
-const selectedLocalDeckDir =
-  process.env.STARRY_SLIDES_DECK_SOURCE === "e2e" ? e2eTestSlidesDir : sampleSlidesDir;
-const runtimeDeckDir = cliDeckDir || selectedLocalDeckDir;
-const previewDeckDir = cliDeckDir || selectedLocalDeckDir;
-const saveTargetDirs = cliDeckDir ? [cliDeckDir] : [selectedLocalDeckDir];
+const runtimeDeckDir = cliDeckDir || e2eTestSlidesDir;
+const previewDeckDir = cliDeckDir || e2eTestSlidesDir;
+const saveTargetDirs = cliDeckDir ? [cliDeckDir] : [e2eTestSlidesDir];
 
 export default defineConfig({
   build: {

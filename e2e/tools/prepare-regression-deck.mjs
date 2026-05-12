@@ -18,7 +18,6 @@ function getArg(name, fallback = "") {
 function main() {
   const workspaceRoot = path.resolve(new URL("../..", import.meta.url).pathname);
   const outputRoot = path.resolve(process.cwd(), getArg("--out-dir", ".e2e-test-slides"));
-  const appOutputRoot = path.resolve(process.cwd(), getArg("--app-out-dir", outputRoot));
 
   execFileSync(
     "node",
@@ -34,8 +33,6 @@ function main() {
       regressionConfig.points.join("|"),
       "--out-dir",
       outputRoot,
-      "--app-out-dir",
-      appOutputRoot,
     ],
     {
       cwd: workspaceRoot,

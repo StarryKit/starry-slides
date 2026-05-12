@@ -304,7 +304,7 @@ This decision does not:
     - `starry:contract:validate`
     - `starry:contract:annotate`
     - `starry:contract:manifest`
-    - `editor:e2e:generate-deck`
+    - `prepare:regression-deck`
     - `starry:open`
 13. Remove `@starry-slides/core` from workspace dependencies once no package
     imports it directly.

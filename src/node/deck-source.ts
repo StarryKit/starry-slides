@@ -5,5 +5,5 @@ export function resolveDeckPath(deckPath: string | undefined): string {
     return path.resolve(process.cwd(), deckPath);
   }
 
-  return path.resolve(import.meta.dirname, "../../sample-slides");
+  return path.resolve(import.meta.dirname, "../../.e2e-test-slides");
 }
