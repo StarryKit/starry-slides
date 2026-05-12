@@ -1,0 +1,113 @@
+name: Publish to npm
+
+on:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: write
+  id-token: write
+
+concurrency:
+  group: publish-npm-main
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Generate GitHub App token
+        id: app-token
+        uses: actions/create-github-app-token@v3
+        with:
+          client-id: ${{ vars.RELEASE_APP_CLIENT_ID }}
+          private-key: ${{ secrets.RELEASE_APP_PRIVATE_KEY }}
+
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ steps.app-token.outputs.token }}
+
+      - name: Sync to latest main
+        run: |
+          git fetch origin main --tags
+          git checkout main
+          git reset --hard origin/main
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+          registry-url: https://registry.npmjs.org
+
+      - name: Upgrade npm for trusted publishing
+        run: npm install --global npm@11.5.1
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Read package metadata
+        id: pkg
+        run: |
+          echo "name=$(node -p "require('./package.json').name")" >> "$GITHUB_OUTPUT"
+          echo "version=$(node -p "require('./package.json').version")" >> "$GITHUB_OUTPUT"
+
+      - name: Check whether current version is already on npm
+        id: npm
+        run: |
+          if npm view "${{ steps.pkg.outputs.name }}@${{ steps.pkg.outputs.version }}" version >/dev/null 2>&1; then
+            echo "published=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "published=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Prepare release version
+        id: release
+        run: |
+          head_subject="$(git log -1 --pretty=%s)"
+
+          if [ "${{ steps.npm.outputs.published }}" = "true" ] && [[ "$head_subject" == chore\(release\):* ]]; then
+            echo "should_publish=false" >> "$GITHUB_OUTPUT"
+            echo "version=${{ steps.pkg.outputs.version }}" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          if [ "${{ steps.npm.outputs.published }}" = "true" ]; then
+            npm version patch --no-git-tag-version
+            pnpm install --lockfile-only
+            echo "needs_commit=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "needs_commit=false" >> "$GITHUB_OUTPUT"
+          fi
+
+          echo "should_publish=true" >> "$GITHUB_OUTPUT"
+          echo "version=$(node -p "require('./package.json').version")" >> "$GITHUB_OUTPUT"
+
+      - name: Build package
+        if: steps.release.outputs.should_publish == 'true'
+        run: pnpm build
+
+      - name: Commit release version
+        if: steps.release.outputs.needs_commit == 'true'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add package.json pnpm-lock.yaml
+          git commit -m "chore(release): v${{ steps.release.outputs.version }}"
+          git remote set-url origin "https://x-access-token:${{ steps.app-token.outputs.token }}@github.com/${{ github.repository }}.git"
+          git push origin HEAD:main
+
+      - name: Publish package
+        if: steps.release.outputs.should_publish == 'true'
+        run: npm publish --access public
+
+      - name: Skip publish
+        if: steps.release.outputs.should_publish != 'true'
+        run: echo "Skipping publish because main already points at the latest published release commit."
