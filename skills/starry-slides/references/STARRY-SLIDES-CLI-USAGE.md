@@ -30,8 +30,8 @@ The CLI currently supports these command forms:
 - `starry-slides verify [deck]`
 - `starry-slides view [deck] --all`
 - `starry-slides view [deck] --slide <manifest-file>`
-- `starry-slides open [deck]`
-- `starry-slides [deck]`
+- `starry-slides open [deck] [--port <number>]`
+- `starry-slides [deck] [--port <number>]`
 
 The last form is shorthand for `starry-slides open [deck]`.
 
@@ -189,10 +189,31 @@ What it does:
 - opens the editor in a browser
 - writes startup messages to stderr
 
+### `--port` option
+
+By default the editor starts on port 5173. Use `--port` to specify a different
+port:
+
+```bash
+starry-slides open <deck> --port 5180
+```
+
+If the requested port is already in use, the CLI automatically tries the next
+available port (up to 100 attempts). This lets you run multiple editors
+side-by-side without port conflicts:
+
+```bash
+# Terminal 1
+starry-slides open my-deck --port 5180
+
+# Terminal 2 — auto-falls-back to 5181 if 5180 is taken
+starry-slides open another-deck --port 5180
+```
+
 Example successful startup messages:
 
 ```text
-Opening Starry Slides at http://127.0.0.1:5173/
+Opening Starry Slides at http://127.0.0.1:5180/
 Press Ctrl+C to stop the editor server.
 ```
 
@@ -225,4 +246,10 @@ This behaves the same as:
 
 ```bash
 starry-slides open <deck>
+```
+
+The `--port` option works in this shorthand form as well:
+
+```bash
+starry-slides <deck> --port 5180
 ```
