@@ -95,7 +95,12 @@ jobs:
           git checkout -b "$branch"
           git add package.json pnpm-lock.yaml
           git commit -m "chore(release): v${{ steps.release.outputs.version }}"
-          git push origin "HEAD:$branch"
+          git push origin "HEAD:$branch" --force
+          # Close any existing PR for this branch
+          existing_pr=$(gh pr list --head "$branch" --state open --json number --jq '.[0].number')
+          if [ -n "$existing_pr" ]; then
+            gh pr close "$existing_pr"
+          fi
           gh pr create \
             --base main \
             --head "$branch" \
