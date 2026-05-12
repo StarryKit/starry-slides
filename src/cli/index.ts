@@ -15,6 +15,7 @@ function createProgram() {
     .helpCommand("help [command]")
     .showHelpAfterError()
     .allowExcessArguments(false)
+    .enablePositionalOptions()
     .configureOutput({
       writeOut: (str) => process.stdout.write(str),
       writeErr: (str) => process.stderr.write(str),
