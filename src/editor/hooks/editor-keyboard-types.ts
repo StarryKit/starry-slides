@@ -34,6 +34,7 @@ export interface UseEditorKeyboardShortcutsOptions {
   slideWidth: number;
   slideHeight: number;
   isEditingText: boolean;
+  isSidebarFocused: boolean;
   canUndo: boolean;
   canRedo: boolean;
   onEscapeSelection: () => boolean;
@@ -46,6 +47,7 @@ export interface UseEditorKeyboardShortcutsOptions {
       | SlideOperation
   ) => void;
   onSelectElementIds: (elementIds: string[]) => void;
+  onDeleteSlide: (slideId: string) => boolean;
   onUndo: () => void;
   onRedo: () => void;
 }

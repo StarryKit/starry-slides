@@ -79,6 +79,7 @@ function SlidesEditor({
   } | null>(null);
   const [isPresenting, setIsPresenting] = useState(false);
   const [isToolbarSuppressed, setIsToolbarSuppressed] = useState(false);
+  const [isSidebarFocused, setIsSidebarFocused] = useState(false);
   const [lockedElementIdsBySlideId, setLockedElementIdsBySlideId] = useState<
     Record<string, string[]>
   >({});
@@ -323,10 +324,12 @@ function SlidesEditor({
     slideWidth,
     slideHeight,
     isEditingText,
+    isSidebarFocused,
     canUndo: undoDepth > 0,
     canRedo: redoDepth > 0,
     onCommitOperation: commitOperation,
     onSelectElementIds: setSelectedElementIds,
+    onDeleteSlide: slideActions.deleteSlide,
     onEscapeSelection: clearSelection,
     onNavigateSlide: slideActions.selectSlideByDirection,
     onUndo: runUndo,
@@ -384,6 +387,7 @@ function SlidesEditor({
         setActiveSlideId(slideId);
         setSelectedElementId(null);
       }}
+      onSidebarSlideFocusChange={setIsSidebarFocused}
       onAddSlide={slideActions.addSlideAfterActive}
       onAddSlideAbove={slideActions.addSlideAbove}
       onAddSlideBelow={slideActions.addSlideBelow}
