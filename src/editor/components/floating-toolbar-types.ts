@@ -8,6 +8,7 @@ export interface FloatingToolbarProps {
   selectionCommandAvailability: SelectionCommandAvailability;
   isSelectedElementLocked: boolean;
   attributeValues: AttributeValues;
+  isSidebarCollapsed?: boolean;
   onStyleChange: (propertyName: string, nextValue: string) => void;
   onStylePreview: (propertyName: string, nextValue: string | null) => void;
   onAttributeChange: (attributeName: string, nextValue: string) => void;
@@ -17,6 +18,7 @@ export interface FloatingToolbarProps {
   onGroup: () => void;
   onLayerOrder: (action: string) => void;
   onUngroup: () => void;
+  onToggleSidebar?: () => void;
 }
 
 export interface AttributeValues {

@@ -1,18 +1,14 @@
-import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
+import { PanelLeftClose, PanelLeftOpen } from "lucide-react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { commitElementToolFeature } from "../lib/element-tool-commit";
 import { ELEMENT_TOOL_GROUPS, type ElementToolFeature } from "../lib/element-tool-model";
 import { getElementToolValue } from "../lib/element-tool-values";
-import {
-  EDITOR_MOTION_MS,
-  editorMotionClassName,
-  editorPanelEnterClassName,
-  editorPanelExitClassName,
-} from "../lib/motion";
+import { editorMotionClassName, editorPanelEnterClassName } from "../lib/motion";
 import { cn } from "../lib/utils";
 import { AttributeDialog } from "./floating-toolbar-attribute-dialog";
-import { shouldUpdateOffset } from "./floating-toolbar-parts";
 import { FloatingToolbarSections } from "./floating-toolbar-sections";
 import type { EditableAttributeId, FloatingToolbarProps } from "./floating-toolbar-types";
+import { toolbarIconButtonClassName } from "./floating-toolbar-types";
 export type { SelectionCommandAvailability } from "./floating-toolbar-types";
 
 type OptimisticStyles = Record<string, string | null>;
@@ -29,6 +25,7 @@ function FloatingToolbar({
   selectionCommandAvailability,
   isSelectedElementLocked,
   attributeValues,
+  isSidebarCollapsed,
   onStyleChange,
   onStylePreview,
   onAttributeChange,
@@ -38,10 +35,9 @@ function FloatingToolbar({
   onGroup,
   onLayerOrder,
   onUngroup,
+  onToggleSidebar,
 }: FloatingToolbarProps) {
   const toolbarRef = useRef<HTMLDivElement>(null);
-  const [toolbarOffsetX, setToolbarOffsetX] = useState(0);
-  const toolbarOffsetXRef = useRef(0);
   const [activeAttributeDialog, setActiveAttributeDialog] = useState<EditableAttributeId | null>(
     null
   );
@@ -70,65 +66,6 @@ function FloatingToolbar({
     },
     [onStylePreview]
   );
-
-  useEffect(() => {
-    const node = toolbarRef.current;
-    if (!node) {
-      return;
-    }
-
-    return () => {
-      const currentNode = toolbarRef.current;
-      const stagePanel = currentNode?.closest('[data-testid="stage-panel"]');
-      if (!(currentNode instanceof HTMLElement) || !(stagePanel instanceof HTMLElement)) {
-        return;
-      }
-
-      const toolbarRect = currentNode.getBoundingClientRect();
-      const stageRect = stagePanel.getBoundingClientRect();
-      const ghost = currentNode.cloneNode(true);
-      if (!(ghost instanceof HTMLElement)) {
-        return;
-      }
-
-      ghost.className = cn(ghost.className, "absolute z-40 m-0 pointer-events-none");
-      ghost.classList.remove("motion-safe:animate-in", "motion-safe:fade-in-0");
-      ghost.className = cn(ghost.className, editorPanelExitClassName);
-      ghost.setAttribute("aria-hidden", "true");
-      ghost.style.left = `${toolbarRect.left - stageRect.left}px`;
-      ghost.style.top = `${toolbarRect.top - stageRect.top}px`;
-      ghost.style.width = `${toolbarRect.width}px`;
-      ghost.style.height = `${toolbarRect.height}px`;
-      stagePanel.appendChild(ghost);
-      ghost.addEventListener("animationend", () => ghost.remove());
-      window.setTimeout(() => ghost.remove(), EDITOR_MOTION_MS + 50);
-    };
-  }, []);
-
-  useLayoutEffect(() => {
-    const node = toolbarRef.current;
-    if (!node) {
-      return;
-    }
-
-    const rect = node.getBoundingClientRect();
-    const baseLeft = rect.left - toolbarOffsetXRef.current;
-    const baseRight = rect.right - toolbarOffsetXRef.current;
-    const viewportPadding = 16;
-    let nextOffsetX = 0;
-
-    if (baseLeft < viewportPadding) {
-      nextOffsetX = viewportPadding - baseLeft;
-    }
-    if (baseRight + nextOffsetX > window.innerWidth - viewportPadding) {
-      nextOffsetX += window.innerWidth - viewportPadding - (baseRight + nextOffsetX);
-    }
-
-    if (shouldUpdateOffset(toolbarOffsetXRef.current, nextOffsetX)) {
-      toolbarOffsetXRef.current = nextOffsetX;
-      setToolbarOffsetX(nextOffsetX);
-    }
-  }, []);
 
   useEffect(() => {
     function closeOnOutsidePointer(event: MouseEvent) {
@@ -245,12 +182,26 @@ function FloatingToolbar({
       onMouseDown={(event) => event.stopPropagation()}
       onPointerDown={(event) => event.stopPropagation()}
       ref={toolbarRef}
-      style={{ marginLeft: toolbarOffsetX }}
     >
       <div
         className="flex w-max items-center gap-0.5 overflow-x-auto overflow-y-hidden rounded-2xl border border-foreground/[0.08] bg-white/92 px-1.5 py-1.5 shadow-[0_2px_12px_rgba(0,0,0,0.04),0_8px_32px_rgba(0,0,0,0.06)] backdrop-blur-xl max-[1200px]:min-w-[940px]"
         aria-label="Full editing toolbar"
       >
+        {onToggleSidebar ? (
+          <button
+            type="button"
+            className={toolbarIconButtonClassName}
+            onClick={onToggleSidebar}
+            aria-label={isSidebarCollapsed ? "Show sidebar" : "Hide sidebar"}
+            title={isSidebarCollapsed ? "Show sidebar" : "Hide sidebar"}
+          >
+            {isSidebarCollapsed ? (
+              <PanelLeftOpen className="size-3.5" />
+            ) : (
+              <PanelLeftClose className="size-3.5" />
+            )}
+          </button>
+        ) : null}
         <FloatingToolbarSections
           activePopoverId={activePopoverId}
           isSelectedElementLocked={isSelectedElementLocked}

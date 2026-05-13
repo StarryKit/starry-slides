@@ -22,7 +22,7 @@ test("plain click selects text only, and double click enters editing", async ({ 
 
   await editableHeading.dblclick();
 
-  await expect(floatingToolbarAnchor).toBeHidden();
+  await expect(floatingToolbarAnchor.getByText("Select element to edit")).toBeVisible();
   await expect(selectionOverlay).toBeHidden();
   await expect(editableHeading).toHaveAttribute("contenteditable", "plaintext-only");
 });

@@ -1,14 +1,16 @@
-import type { MouseEvent as ReactMouseEvent, RefObject } from "react";
+import { PanelLeft } from "lucide-react";
+import { type MouseEvent as ReactMouseEvent, type RefObject, useState } from "react";
 import type { EditableType, PdfExportSelection, SlideModel, StageRect } from "../../core";
 import type { BlockManipulationOverlay as BlockManipulationOverlayModel } from "../hooks/block-manipulation-types";
 import type { ImageCropOverlay as ImageCropOverlayModel } from "../hooks/use-image-crop";
 import type { CssPropertyRow } from "../lib/collect-css-properties";
 import { EditorHeader } from "./editor-header";
-import type { SelectionCommandAvailability } from "./floating-toolbar";
+import { FloatingToolbar, type SelectionCommandAvailability } from "./floating-toolbar";
 import { PresenterView } from "./presenter-view";
 import { SlideSidebar } from "./slide-sidebar";
 import { StageCanvas } from "./stage-canvas";
-import { TooltipProvider } from "./ui/tooltip";
+import { Button } from "./ui/button";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "./ui/tooltip";
 
 type ResizeHandleCorner = "top-left" | "top-right" | "bottom-right" | "bottom-left";
 
@@ -161,6 +163,15 @@ function EditorWorkspace({
   onDuplicateElement,
   onDeleteElement,
 }: EditorWorkspaceProps) {
+  const [sidebarVisible, setSidebarVisible] = useState(true);
+  const shouldShowToolbarControls =
+    toolbarKey !== null &&
+    selectionOverlay !== null &&
+    !isManipulating &&
+    !isToolbarSuppressed &&
+    !isEditingText &&
+    !isCropMode;
+
   return (
     <TooltipProvider>
       <div className="flex h-screen flex-col overflow-hidden bg-background text-foreground">
@@ -186,72 +197,116 @@ function EditorWorkspace({
           />
 
           <div className="flex min-h-0 flex-auto gap-3 overflow-hidden max-[1200px]:block">
-            <SlideSidebar
-              slides={slides}
-              activeSlideId={activeSlide.id}
-              slideCount={slides.length}
-              thumbnails={thumbnails}
-              onSelectSlide={onSelectSlide}
-              onAdd={onAddSlide}
-              onAddSlideAbove={onAddSlideAbove}
-              onAddSlideBelow={onAddSlideBelow}
-              onDuplicate={onDuplicateSlide}
-              onDelete={onDeleteSlide}
-              onToggleHidden={onToggleSlideHidden}
-              onRename={onRenameSlide}
-              onReorder={onReorderSlide}
-            />
-
-            <main className="flex min-h-0 min-w-0 flex-auto overflow-visible max-[1200px]:block">
-              <StageCanvas
-                slideWidth={slideWidth}
-                slideHeight={slideHeight}
-                offsetX={offsetX}
-                offsetY={offsetY}
-                scale={scale}
-                preselectionOverlay={preselectionOverlay}
-                marqueeOverlay={marqueeOverlay}
-                selectionOverlay={selectionOverlay}
-                toolbarKey={toolbarKey}
-                inspectedStyles={inspectedStyles}
-                selectedElementType={selectedElementType}
-                selectionCommandAvailability={selectionCommandAvailability}
-                isSelectedElementLocked={isSelectedElementLocked}
-                groupScopeOverlayPassive={groupScopeOverlayPassive}
-                isEditingText={isEditingText}
-                isCropMode={isCropMode}
-                cropOverlay={cropOverlay}
-                manipulationOverlay={manipulationOverlay}
-                iframeRef={iframeRef}
-                stageViewportRef={stageViewportRef}
-                selectionOverlayRef={selectionOverlayRef}
-                selectionContextMenuTriggerRef={selectionContextMenuTriggerRef}
-                isManipulating={isManipulating}
-                isToolbarSuppressed={isToolbarSuppressed}
-                onSelectionOverlayMouseDown={onSelectionOverlayMouseDown}
-                onSelectionOverlayMouseMove={onSelectionOverlayMouseMove}
-                onSelectionOverlayContextMenu={onSelectionOverlayContextMenu}
-                onSelectionOverlayMouseUp={onSelectionOverlayMouseUp}
-                onStageMouseLeave={onStageMouseLeave}
-                onResizeHandleMouseDown={onResizeHandleMouseDown}
-                onRotateHandleMouseDown={onRotateHandleMouseDown}
-                onCropHandleMouseDown={onCropHandleMouseDown}
-                onSelectionOverlayDoubleClick={onSelectionOverlayDoubleClick}
-                onBackgroundClick={onBackgroundClick}
-                onStyleChange={onStyleChange}
-                onStylePreview={onStylePreview}
-                onAttributeChange={onAttributeChange}
-                onAlignToSlide={onAlignToSlide}
-                onCropImage={onCropImage}
-                onDistribute={onDistribute}
-                onGroup={onGroup}
-                onLayerOrder={onLayerOrder}
-                onUngroup={onUngroup}
-                onDuplicate={onDuplicateElement}
-                onDelete={onDeleteElement}
-                attributeValues={attributeValues}
+            {sidebarVisible ? (
+              <SlideSidebar
+                slides={slides}
+                activeSlideId={activeSlide.id}
+                slideCount={slides.length}
+                thumbnails={thumbnails}
+                onSelectSlide={onSelectSlide}
+                onAdd={onAddSlide}
+                onAddSlideAbove={onAddSlideAbove}
+                onAddSlideBelow={onAddSlideBelow}
+                onDuplicate={onDuplicateSlide}
+                onDelete={onDeleteSlide}
+                onToggleHidden={onToggleSlideHidden}
+                onRename={onRenameSlide}
+                onReorder={onReorderSlide}
               />
-            </main>
+            ) : null}
+
+            <div className="flex min-h-0 min-w-0 flex-auto flex-col overflow-hidden max-[1200px]:block">
+              <div
+                className="flex min-h-14 min-w-0 shrink-0 items-center gap-2 border-b border-foreground/[0.06] bg-background/95 px-3 py-2"
+                data-testid="floating-toolbar-anchor"
+              >
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      type="button"
+                      variant={sidebarVisible ? "secondary" : "outline"}
+                      size="icon-sm"
+                      className="shrink-0"
+                      aria-label="Toggle sidebar"
+                      aria-pressed={sidebarVisible}
+                      onClick={() => setSidebarVisible((current) => !current)}
+                    >
+                      <PanelLeft className="size-4" aria-hidden="true" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent side="bottom">Toggle sidebar</TooltipContent>
+                </Tooltip>
+
+                <div className="min-w-0 flex-auto overflow-x-auto overflow-y-hidden">
+                  {shouldShowToolbarControls ? (
+                    <FloatingToolbar
+                      key={toolbarKey}
+                      inspectedStyles={inspectedStyles}
+                      selectedElementType={selectedElementType}
+                      selectionCommandAvailability={selectionCommandAvailability}
+                      isSelectedElementLocked={isSelectedElementLocked}
+                      attributeValues={attributeValues}
+                      onStyleChange={onStyleChange}
+                      onStylePreview={onStylePreview}
+                      onAttributeChange={onAttributeChange}
+                      onAlignToSlide={onAlignToSlide}
+                      onCropImage={onCropImage}
+                      onDistribute={onDistribute}
+                      onGroup={onGroup}
+                      onLayerOrder={onLayerOrder}
+                      onUngroup={onUngroup}
+                    />
+                  ) : toolbarKey === null ? (
+                    <div className="flex h-8 items-center text-sm text-foreground/45">
+                      Select element to edit
+                    </div>
+                  ) : (
+                    <div className="h-8" aria-hidden="true" />
+                  )}
+                </div>
+              </div>
+
+              <main className="flex min-h-0 min-w-0 flex-auto overflow-visible max-[1200px]:block">
+                <StageCanvas
+                  slideWidth={slideWidth}
+                  slideHeight={slideHeight}
+                  offsetX={offsetX}
+                  offsetY={offsetY}
+                  scale={scale}
+                  preselectionOverlay={preselectionOverlay}
+                  marqueeOverlay={marqueeOverlay}
+                  selectionOverlay={selectionOverlay}
+                  selectionCommandAvailability={selectionCommandAvailability}
+                  groupScopeOverlayPassive={groupScopeOverlayPassive}
+                  isEditingText={isEditingText}
+                  isCropMode={isCropMode}
+                  cropOverlay={cropOverlay}
+                  manipulationOverlay={manipulationOverlay}
+                  iframeRef={iframeRef}
+                  stageViewportRef={stageViewportRef}
+                  selectionOverlayRef={selectionOverlayRef}
+                  selectionContextMenuTriggerRef={selectionContextMenuTriggerRef}
+                  isManipulating={isManipulating}
+                  onSelectionOverlayMouseDown={onSelectionOverlayMouseDown}
+                  onSelectionOverlayMouseMove={onSelectionOverlayMouseMove}
+                  onSelectionOverlayContextMenu={onSelectionOverlayContextMenu}
+                  onSelectionOverlayMouseUp={onSelectionOverlayMouseUp}
+                  onStageMouseLeave={onStageMouseLeave}
+                  onResizeHandleMouseDown={onResizeHandleMouseDown}
+                  onRotateHandleMouseDown={onRotateHandleMouseDown}
+                  onCropHandleMouseDown={onCropHandleMouseDown}
+                  onSelectionOverlayDoubleClick={onSelectionOverlayDoubleClick}
+                  onBackgroundClick={onBackgroundClick}
+                  onAlignToSlide={onAlignToSlide}
+                  onDistribute={onDistribute}
+                  onGroup={onGroup}
+                  onLayerOrder={onLayerOrder}
+                  onUngroup={onUngroup}
+                  onDuplicate={onDuplicateElement}
+                  onDelete={onDeleteElement}
+                />
+              </main>
+            </div>
           </div>
         </div>
         {isPresenting ? (

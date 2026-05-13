@@ -479,7 +479,8 @@ test("text editing hides editor chrome and suppresses inline editing outline", a
   await editableHeading.dblclick();
 
   await expect(selectionOverlay).toBeHidden();
-  await expect(floatingToolbarAnchor).toBeHidden();
+  await expect(floatingToolbarAnchor).toBeVisible();
+  await expect(floatingToolbarAnchor.getByText("Select element to edit")).toBeVisible();
   await expect(editableHeading).toHaveAttribute("data-hse-editing", "true");
   await expect(editableHeading).toHaveJSProperty("contentEditable", "plaintext-only");
   await expect(editableHeading).toHaveCSS("outline-style", "none");

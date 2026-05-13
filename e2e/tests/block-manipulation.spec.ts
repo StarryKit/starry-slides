@@ -411,7 +411,7 @@ test("floating toolbar hides while dragging a selected element", async ({ page }
 
   await page.mouse.move(start.x, start.y);
   await page.mouse.down();
-  await expect(floatingToolbarAnchor).toBeHidden();
+  await expect(floatingToolbarAnchor.getByText("Select element to edit")).toBeVisible();
   await page.mouse.move(start.x + 8, start.y + 6, { steps: 2 });
   await expect(resizeHandle).toHaveCount(0);
   await expect(rotateHandle).toHaveCount(0);

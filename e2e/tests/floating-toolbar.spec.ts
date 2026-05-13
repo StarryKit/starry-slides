@@ -573,7 +573,8 @@ test("full floating editor is the only primary element tooling surface", async (
   const stagePanel = page.getByTestId("stage-panel");
   const { floatingToolbarAnchor } = getHeaderControls(page);
 
-  await expect(floatingToolbarAnchor).toBeHidden();
+  await expect(floatingToolbarAnchor).toBeVisible();
+  await expect(floatingToolbarAnchor.getByText("Select element to edit")).toBeVisible();
   await expect(page.getByTestId("sidebar-tool-panel")).toHaveCount(0);
   await expect(page.getByRole("button", { name: "Use tool panel mode", exact: true })).toHaveCount(
     0
@@ -591,7 +592,8 @@ test("full floating editor is the only primary element tooling surface", async (
   await expect(page.getByTestId("sidebar-tool-panel")).toHaveCount(0);
 
   await stagePanel.click({ position: { x: 12, y: 12 } });
-  await expect(floatingToolbarAnchor).toBeHidden();
+  await expect(floatingToolbarAnchor).toBeVisible();
+  await expect(floatingToolbarAnchor.getByText("Select element to edit")).toBeVisible();
 });
 
 test("multi selection exposes align, layer, distribute, and group controls", async ({ page }) => {

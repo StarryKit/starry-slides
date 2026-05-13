@@ -1,11 +1,10 @@
-import type { CSSProperties, MouseEvent as ReactMouseEvent, RefObject } from "react";
-import type { EditableType, StageRect } from "../../core";
+import type { MouseEvent as ReactMouseEvent, RefObject } from "react";
+import type { StageRect } from "../../core";
 import type { ImageCropOverlay as ImageCropOverlayModel } from "../hooks/use-image-crop";
-import type { CssPropertyRow } from "../lib/collect-css-properties";
+import type { SelectionCommandAvailability } from "./floating-toolbar";
 import { cn } from "../lib/utils";
 import { BlockManipulationOverlay } from "./block-manipulation-overlay";
 import { SelectionContextMenuContent } from "./context-menu";
-import { FloatingToolbar, type SelectionCommandAvailability } from "./floating-toolbar";
 import { ImageCropOverlay } from "./image-crop-overlay";
 import { ContextMenu, ContextMenuTrigger } from "./ui/context-menu";
 
@@ -25,11 +24,7 @@ interface StageCanvasProps {
   preselectionOverlay: StageRect | null;
   marqueeOverlay: StageRect | null;
   selectionOverlay: StageRect | null;
-  toolbarKey: string | null;
-  inspectedStyles: CssPropertyRow[];
-  selectedElementType: EditableType | "multi";
   selectionCommandAvailability: SelectionCommandAvailability;
-  isSelectedElementLocked: boolean;
   groupScopeOverlayPassive: boolean;
   isEditingText: boolean;
   isCropMode: boolean;
@@ -49,17 +44,11 @@ interface StageCanvasProps {
     }>;
     rotationHandle: { x: number; y: number };
   } | null;
-  attributeValues: {
-    locked: string;
-    ariaLabel: string;
-    linkUrl: string;
-  };
   iframeRef: RefObject<HTMLIFrameElement | null>;
   stageViewportRef: RefObject<HTMLDivElement | null>;
   selectionOverlayRef: RefObject<HTMLDivElement | null>;
   selectionContextMenuTriggerRef: RefObject<HTMLSpanElement | null>;
   isManipulating: boolean;
-  isToolbarSuppressed: boolean;
   onSelectionOverlayMouseDown: (event: ReactMouseEvent<HTMLDivElement>) => void;
   onSelectionOverlayMouseUp: (event: ReactMouseEvent<HTMLDivElement>) => void;
   onSelectionOverlayMouseMove: (event: ReactMouseEvent<HTMLDivElement>) => void;
@@ -76,11 +65,7 @@ interface StageCanvasProps {
   ) => void;
   onSelectionOverlayDoubleClick: (event: ReactMouseEvent<HTMLDivElement>) => void;
   onBackgroundClick: () => void;
-  onStyleChange: (propertyName: string, nextValue: string) => void;
-  onStylePreview: (propertyName: string, nextValue: string | null) => void;
-  onAttributeChange: (attributeName: string, nextValue: string) => void;
   onAlignToSlide: (action: string) => void;
-  onCropImage: () => void;
   onDistribute: (action: string) => void;
   onGroup: () => void;
   onLayerOrder: (action: string) => void;
@@ -98,23 +83,17 @@ function StageCanvas({
   preselectionOverlay,
   marqueeOverlay,
   selectionOverlay,
-  toolbarKey,
-  inspectedStyles,
-  selectedElementType,
   selectionCommandAvailability,
-  isSelectedElementLocked,
   groupScopeOverlayPassive,
   isEditingText,
   isCropMode,
   cropOverlay,
   manipulationOverlay,
-  attributeValues,
   iframeRef,
   stageViewportRef,
   selectionOverlayRef,
   selectionContextMenuTriggerRef,
   isManipulating,
-  isToolbarSuppressed,
   onSelectionOverlayMouseDown,
   onSelectionOverlayMouseUp,
   onSelectionOverlayMouseMove,
@@ -125,11 +104,7 @@ function StageCanvas({
   onCropHandleMouseDown,
   onSelectionOverlayDoubleClick,
   onBackgroundClick,
-  onStyleChange,
-  onStylePreview,
-  onAttributeChange,
   onAlignToSlide,
-  onCropImage,
   onDistribute,
   onGroup,
   onLayerOrder,
@@ -146,9 +121,6 @@ function StageCanvas({
     }
   };
 
-  const toolbarStyle: CSSProperties | undefined = selectionOverlay
-    ? createToolbarStyle({ selectionOverlay, offsetX, scale, slideWidth })
-    : undefined;
   return (
     <section
       className="relative z-[5] min-h-0 min-w-0 flex-auto overflow-visible p-10 pb-6 max-[1200px]:px-5 max-[1200px]:py-4"
@@ -164,36 +136,6 @@ function StageCanvas({
       }}
       onMouseLeave={onStageMouseLeave}
     >
-      {selectionOverlay &&
-      !isManipulating &&
-      !isToolbarSuppressed &&
-      !isEditingText &&
-      !isCropMode ? (
-        <div
-          className="pointer-events-none absolute z-40 w-max max-[1200px]:static max-[1200px]:mb-4 max-[1200px]:pointer-events-auto"
-          style={toolbarStyle}
-          data-testid="floating-toolbar-anchor"
-        >
-          <FloatingToolbar
-            key={toolbarKey}
-            inspectedStyles={inspectedStyles}
-            selectedElementType={selectedElementType}
-            selectionCommandAvailability={selectionCommandAvailability}
-            isSelectedElementLocked={isSelectedElementLocked}
-            attributeValues={attributeValues}
-            onStyleChange={onStyleChange}
-            onStylePreview={onStylePreview}
-            onAttributeChange={onAttributeChange}
-            onAlignToSlide={onAlignToSlide}
-            onCropImage={onCropImage}
-            onDistribute={onDistribute}
-            onGroup={onGroup}
-            onLayerOrder={onLayerOrder}
-            onUngroup={onUngroup}
-          />
-        </div>
-      ) : null}
-
       <div
         className="absolute origin-top-left overflow-hidden rounded-xl shadow-[0_0_0_1px_rgba(0,0,0,0.08),0_2px_12px_rgba(0,0,0,0.04),0_8px_32px_rgba(0,0,0,0.06)] max-[1200px]:max-w-full"
         data-testid="stage-frame"
@@ -298,37 +240,6 @@ function StageCanvas({
       ) : null}
     </section>
   );
-}
-
-function createToolbarStyle({
-  selectionOverlay,
-  offsetX,
-  scale,
-  slideWidth,
-}: {
-  selectionOverlay: StageRect;
-  offsetX: number;
-  scale: number;
-  slideWidth: number;
-}): CSSProperties {
-  const toolbarHalfWidth = 288;
-  const slideLeft = offsetX;
-  const slideRight = offsetX + slideWidth * scale;
-  const slideHalfWidth = Math.max((slideRight - slideLeft) / 2, 0);
-  const inset = Math.min(toolbarHalfWidth, slideHalfWidth);
-  const minCenterX = slideLeft + inset;
-  const maxCenterX = slideRight - inset;
-  const targetCenterX = selectionOverlay.x + selectionOverlay.width / 2;
-  const centerX = Math.min(Math.max(targetCenterX, minCenterX), Math.max(minCenterX, maxCenterX));
-
-  return {
-    left: `${centerX}px`,
-    top:
-      selectionOverlay.y < 84
-        ? `${selectionOverlay.y + selectionOverlay.height + 18}px`
-        : `${selectionOverlay.y - 18}px`,
-    transform: selectionOverlay.y < 84 ? "translate(-50%, 0)" : "translate(-50%, -100%)",
-  };
 }
 
 export { StageCanvas };
