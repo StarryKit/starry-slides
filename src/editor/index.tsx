@@ -306,6 +306,10 @@ function SlidesEditor({
     onBeginGroupEditingScope: beginGroupEditingScope,
     onClearSelection: clearSelection,
   });
+  const [isSidebarFocused, setIsSidebarFocused] = useState(false);
+  const handleSidebarFocusChange = useCallback((focused: boolean) => {
+    setIsSidebarFocused(focused);
+  }, []);
   const handleBackgroundClick = useCallback(() => {
     if (imageCrop.isCropMode) {
       imageCrop.exitCropMode();
@@ -331,6 +335,8 @@ function SlidesEditor({
     onNavigateSlide: slideActions.selectSlideByDirection,
     onUndo: runUndo,
     onRedo: runRedo,
+    isSidebarFocused,
+    onDeleteSlide: slideActions.deleteSlide,
   });
 
   if (!activeSlide) {
@@ -392,6 +398,7 @@ function SlidesEditor({
       onToggleSlideHidden={slideActions.toggleSlideHidden}
       onRenameSlide={slideActions.renameSlide}
       onReorderSlide={slideActions.reorderSlide}
+      onSidebarFocusChange={handleSidebarFocusChange}
       onSelectionOverlayMouseDown={selectionOverlayActions.onSelectionOverlayMouseDown}
       onSelectionOverlayMouseMove={selectionOverlayActions.onSelectionOverlayMouseMove}
       onSelectionOverlayContextMenu={selectionOverlayActions.onSelectionOverlayContextMenu}

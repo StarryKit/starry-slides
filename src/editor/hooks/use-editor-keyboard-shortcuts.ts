@@ -39,6 +39,8 @@ function useEditorKeyboardShortcuts({
   onSelectElementIds,
   onUndo,
   onRedo,
+  isSidebarFocused,
+  onDeleteSlide,
 }: UseEditorKeyboardShortcutsOptions) {
   const clipboardRef = useRef<ClipboardPayload | null>(null);
   const activeSlideRef = useRef(activeSlide);
@@ -50,6 +52,9 @@ function useEditorKeyboardShortcuts({
   const onEscapeSelectionRef = useRef(onEscapeSelection);
   const activeSlideHtmlSource = activeSlide?.htmlSource ?? "";
   const onNavigateSlideRef = useRef(onNavigateSlide);
+  const isSidebarFocusedRef = useRef(isSidebarFocused);
+  const onDeleteSlideRef = useRef(onDeleteSlide);
+  const activeSlideIdRef = useRef(activeSlide?.id);
 
   activeSlideRef.current = activeSlide;
   selectedElementIdsRef.current = selectedElementIds;
@@ -59,6 +64,9 @@ function useEditorKeyboardShortcuts({
   isEditingTextRef.current = isEditingText;
   onEscapeSelectionRef.current = onEscapeSelection;
   onNavigateSlideRef.current = onNavigateSlide;
+  isSidebarFocusedRef.current = isSidebarFocused;
+  onDeleteSlideRef.current = onDeleteSlide;
+  activeSlideIdRef.current = activeSlide?.id;
 
   useEffect(() => {
     const copySelection = () => {
@@ -274,11 +282,20 @@ function useEditorKeyboardShortcuts({
           copySelection() &&
           pasteSelection();
       } else if (event.key === "Backspace" || event.key === "Delete") {
-        handled = !selectedElementIdsRef.current.some((id) =>
-          lockedElementIdsRef.current.includes(id)
-        )
-          ? removeSelection()
-          : false;
+        if (
+          isSidebarFocusedRef.current &&
+          !isEditingTextRef.current &&
+          activeSlideIdRef.current
+        ) {
+          onDeleteSlideRef.current(activeSlideIdRef.current);
+          handled = true;
+        } else {
+          handled = !selectedElementIdsRef.current.some((id) =>
+            lockedElementIdsRef.current.includes(id)
+          )
+            ? removeSelection()
+            : false;
+        }
       } else if (event.key === "Escape") {
         handled = onEscapeSelectionRef.current();
       } else if (event.key in ARROW_DELTAS) {
@@ -322,6 +339,8 @@ function useEditorKeyboardShortcuts({
     onUndo,
     slideHeight,
     slideWidth,
+    isSidebarFocused,
+    onDeleteSlide,
   ]);
 }
 
