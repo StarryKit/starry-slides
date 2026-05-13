@@ -1,0 +1,79 @@
+You are implementing GitHub Issue #48 for StarryKit/starry-slides.
+
+## Issue Title
+Editor: support Backspace/Delete to delete the selected slide from the sidebar
+
+## Issue Description
+The slide preview sidebar should support keyboard deletion for the currently selected slide.
+
+Today, deleting a slide from the left sidebar requires opening the slide card context menu and choosing `Delete`. We should also support pressing `Backspace` or `Delete` when a sidebar slide is selected, so users can remove that slide directly from the keyboard.
+
+## Current behavior
+- clicking a slide thumbnail in the left sidebar selects that slide
+- `Backspace` and `Delete` currently target element deletion flows handled by `use-editor-keyboard-shortcuts.ts`
+- deleting a slide from the sidebar is only available through the slide context menu in `src/editor/components/slide-sidebar.tsx`
+
+## Desired behavior
+When a slide is selected from the left preview sidebar:
+
+- pressing `Backspace` deletes that selected slide
+- pressing `Delete` also deletes that selected slide
+- this should behave like the existing context-menu delete action for slides
+- the normal guard that prevents deleting the final remaining slide should still apply
+- focus/editing safeguards should remain intact, so text editing and rename input behavior do not regress
+
+## Expected interaction details
+- if the user has selected a slide in the sidebar and is not currently editing text or a rename field, `Backspace` / `Delete` should remove that slide
+- after deletion, selection should move to the same next-active slide that the existing slide delete action already chooses
+- if only one slide remains, keyboard deletion should be blocked exactly like the context-menu delete path
+- element deletion inside the canvas should continue to work as it does today; slide deletion should only happen when sidebar slide selection is the active context
+
+## Key code locations (read these files first to understand the architecture):
+
+1. `src/editor/components/slide-sidebar.tsx` — The sidebar component. Has `onDelete` prop, `renameDialogSlideId` state for rename dialog, and `activeSlideId` prop. The context menu delete at line ~274 calls `onDelete?.(slide.id)`.
+
+2. `src/editor/hooks/use-editor-keyboard-shortcuts.ts` — Global keyboard handler. Line 276: `Backspace`/`Delete` currently only removes selected canvas elements via `removeSelection()`. This hook receives `isEditingText` prop.
+
+3. `src/editor/hooks/use-editor-slide-actions.ts` — Has `deleteSlide(slideId)` at line 104 which handles: guard against single slide, find fallback slide, commit operation, update active slide, clear selection.
+
+4. `src/editor/index.tsx` — Wires everything together. `onDeleteSlide={slideActions.deleteSlide}` at line 391.
+
+5. `e2e/tests/editor-chrome.spec.ts` — E2E test file. Uses Playwright with `gotoEditor`, `page.getByTestId`, etc.
+
+## Implementation approach
+
+The cleanest approach is to add keyboard handling directly in the `slide-sidebar.tsx` component:
+
+1. In `slide-sidebar.tsx`:
+   - Add a `useEffect` that listens for `keydown` events on the sidebar's container element
+   - When `Backspace` or `Delete` is pressed AND no rename dialog is open (`renameDialogSlideId === null`):
+     - Call `onDelete?.(activeSlideId)` to delete the currently active slide
+     - The existing `deleteSlide` in `use-editor-slide-actions.ts` already handles the guard (slides.length <= 1), fallback selection, and operation commit
+   - The sidebar container should have a `tabIndex={0}` or be focusable so it can receive keyboard events when clicked
+   - Add a state or ref to track whether the sidebar has focus, so keyboard events only fire when the sidebar context is active
+   - The event handler should check `event.target` to ensure the event originates from within the sidebar, not from the canvas/iframe
+
+2. IMPORTANT: Do NOT modify `use-editor-keyboard-shortcuts.ts` — the existing canvas element deletion should remain untouched. The sidebar keyboard handling should be self-contained within the sidebar component.
+
+3. In `e2e/tests/editor-chrome.spec.ts`:
+   - Add tests for:
+     a. Selecting a slide in the sidebar, pressing Backspace → slide is deleted
+     b. Selecting a slide in the sidebar, pressing Delete → slide is deleted
+     c. When only one slide remains, pressing Backspace/Delete does nothing
+     d. When rename dialog is open, pressing Backspace/Delete does not delete the slide
+
+## Key guardrails
+- The sidebar `onDelete` already goes through `slideActions.deleteSlide` which has the `slides.length <= 1` guard
+- The rename dialog (`renameDialogSlideId`) should block deletion — check this before calling onDelete
+- Make sure the keyboard handler doesn't interfere with text editing in the iframe canvas
+- The sidebar should only capture keyboard events when it has focus (use focus/blur events or check if the active element is within the sidebar)
+
+## Commit message format
+feat: support Backspace/Delete to delete selected slide from sidebar
+
+Closes #48
+
+## After implementation
+- Make sure `npm run build` passes
+- Make sure TypeScript compiles without errors
+- Commit all changes with the message above

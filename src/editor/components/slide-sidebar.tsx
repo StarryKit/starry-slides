@@ -26,6 +26,7 @@ interface SlideSidebarProps {
   onToggleHidden?: (slideId: string) => void;
   onRename?: (slideId: string, nextTitle: string) => void;
   onReorder?: (slideId: string, targetIndex: number) => void;
+  onSlideFocusChange?: (isFocused: boolean) => void;
 }
 
 function SlideSidebar({
@@ -42,11 +43,13 @@ function SlideSidebar({
   onToggleHidden,
   onRename,
   onReorder,
+  onSlideFocusChange,
 }: SlideSidebarProps) {
   const [draggingId, setDraggingId] = useState<string | null>(null);
   const [dropIndex, setDropIndex] = useState<number | null>(null);
   const [renameDialogSlideId, setRenameDialogSlideId] = useState<string | null>(null);
   const [renameDraft, setRenameDraft] = useState("");
+  const shouldRefocusActiveSlideRef = useRef(false);
   const draggingIndex = draggingId ? slides.findIndex((slide) => slide.id === draggingId) : -1;
   const renameDialogSlide = renameDialogSlideId
     ? slides.find((slide) => slide.id === renameDialogSlideId)
@@ -57,6 +60,12 @@ function SlideSidebar({
       block: "nearest",
       inline: "nearest",
     });
+    if (node && document.activeElement?.closest('[data-testid="slide-card"]')) {
+      node.focus();
+    }
+    if (node && shouldRefocusActiveSlideRef.current) {
+      node.focus();
+    }
   }, []);
   const finishReorder = useCallback(
     (draggedSlideId: string | null, targetIndex: number | null) => {
@@ -96,7 +105,6 @@ function SlideSidebar({
     onRename?.(renameDialogSlideId, renameDraft);
     cancelRename();
   }, [cancelRename, onRename, renameDialogSlideId, renameDraft]);
-
   return (
     <>
       <aside
@@ -128,6 +136,22 @@ function SlideSidebar({
           <div
             className="min-h-0 flex-1 space-y-2.5 overflow-y-auto px-2 py-2.5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
             data-testid="slide-list"
+            onBlur={(event) => {
+              const slideList = event.currentTarget;
+              const nextTarget = event.relatedTarget;
+              if (!(nextTarget instanceof Node) || !event.currentTarget.contains(nextTarget)) {
+                onSlideFocusChange?.(false);
+                window.requestAnimationFrame(() => {
+                  const activeElement = document.activeElement;
+                  if (activeElement instanceof Node && slideList.contains(activeElement)) {
+                    return;
+                  }
+                  if (activeElement && activeElement !== document.body) {
+                    shouldRefocusActiveSlideRef.current = false;
+                  }
+                });
+              }
+            }}
           >
             {slides.map((slide, index) => {
               const active = slide.id === activeSlideId;
@@ -202,6 +226,10 @@ function SlideSidebar({
                           ref={active ? activeSlideRef : null}
                           className="block w-full text-left focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
                           onClick={() => onSelectSlide(slide.id)}
+                          onFocus={() => {
+                            shouldRefocusActiveSlideRef.current = true;
+                            onSlideFocusChange?.(true);
+                          }}
                           type="button"
                           aria-label={`Slide ${index + 1}`}
                           aria-current={active ? "true" : undefined}
@@ -238,6 +266,10 @@ function SlideSidebar({
                             className="h-full w-full truncate rounded-b-lg px-2 text-left text-[11px] text-foreground/60 focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-ring"
                             type="button"
                             onClick={() => onSelectSlide(slide.id)}
+                            onFocus={() => {
+                              shouldRefocusActiveSlideRef.current = true;
+                              onSlideFocusChange?.(true);
+                            }}
                             onDoubleClick={() => beginRename(slide)}
                             aria-label={`Slide title: ${slide.title || "Untitled Slide"}`}
                           >
