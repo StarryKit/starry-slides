@@ -1,6 +1,6 @@
 {
   "name": "starry-slides",
-  "version": "0.1.12",
+  "version": "0.1.13",
   "description": "Local-first CLI and browser editor for HTML slide decks.",
   "license": "MIT",
   "type": "module",
