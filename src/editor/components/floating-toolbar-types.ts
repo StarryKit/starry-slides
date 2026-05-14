@@ -9,6 +9,7 @@ export interface FloatingToolbarProps {
   isSelectedElementLocked: boolean;
   attributeValues: AttributeValues;
   onStyleChange: (propertyName: string, nextValue: string) => void;
+  onStyleChanges: (changes: Array<{ propertyName: string; nextValue: string }>) => void;
   onStylePreview: (propertyName: string, nextValue: string | null) => void;
   onAttributeChange: (attributeName: string, nextValue: string) => void;
   onAlignToSlide: (action: string) => void;

@@ -5,6 +5,13 @@
   "license": "MIT",
   "type": "module",
   "packageManager": "pnpm@10.33.2",
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "esbuild",
+      "@parcel/watcher",
+      "@biomejs/biome"
+    ]
+  },
   "homepage": "https://github.com/StarryKit/starry-slides#readme",
   "bugs": {
     "url": "https://github.com/StarryKit/starry-slides/issues"

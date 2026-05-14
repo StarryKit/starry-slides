@@ -411,6 +411,7 @@ function SlidesEditor({
       onSelectionOverlayDoubleClick={selectionOverlayActions.onSelectionOverlayDoubleClick}
       onBackgroundClick={handleBackgroundClick}
       onStyleChange={elementActions.commitStyleChange}
+      onStyleChanges={elementActions.commitStyleChanges}
       onStylePreview={elementActions.previewStyleChange}
       onAttributeChange={elementActions.commitAttributeChange}
       onAlignToSlide={elementActions.commitArrangeAction}
