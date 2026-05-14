@@ -85,9 +85,29 @@ function useEditorElementActions({
     }
   };
 
+  const commitStyleChanges = (changes: Array<{ propertyName: string; nextValue: string }>) => {
+    if (!activeSlide || changes.length === 0) {
+      return;
+    }
+
+    const operations = changes
+      .map(({ propertyName, nextValue }) =>
+        createStyleUpdateOperation({
+          elementId: selectedTargetElementId,
+          nextValue,
+          propertyName,
+          slide: activeSlide,
+        })
+      )
+      .filter((op): op is NonNullable<typeof op> => op !== null);
+
+    commitSelectionOperation(operations);
+  };
+
   return {
     attributeValues,
     commitStyleChange,
+    commitStyleChanges,
     previewStyleChange: (propertyName: string, nextValue: string | null) => {
       const doc = iframeRef.current?.contentDocument;
       if (!doc) {

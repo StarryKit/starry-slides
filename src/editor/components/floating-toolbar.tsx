@@ -286,7 +286,7 @@ function FloatingToolbar({
   function getCurrentValue(feature: ElementToolFeature) {
     if (feature.id === "background-color") {
       const optimisticBackgroundImage = optimisticStyles["background-image"];
-      if ((optimisticBackgroundImage ?? "").trim().startsWith("linear-gradient")) {
+      if (optimisticBackgroundImage && optimisticBackgroundImage.trim().startsWith("linear-gradient")) {
         return optimisticBackgroundImage;
       }
 
