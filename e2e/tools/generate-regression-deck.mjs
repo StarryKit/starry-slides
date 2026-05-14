@@ -2,7 +2,11 @@ import fs from "node:fs";
 import path from "node:path";
 import { buildChartSlide } from "./regression-deck/chart-slide.mjs";
 import { buildClosingSlide } from "./regression-deck/closing-slide.mjs";
-import { buildCropImageSlide, buildImageSlide } from "./regression-deck/image-slide.mjs";
+import {
+  buildCropImageSlide,
+  buildDeckLocalImageSlide,
+  buildImageSlide,
+} from "./regression-deck/image-slide.mjs";
 import { buildAgendaSlide, buildHeroSlide } from "./regression-deck/intro-slides.mjs";
 import {
   buildComparisonSlide,
@@ -10,7 +14,7 @@ import {
   buildTimelineSlide,
 } from "./regression-deck/narrative-slides.mjs";
 import { buildArchitectureSlide, buildProblemSlide } from "./regression-deck/pipeline-slides.mjs";
-import { resetDirectory, slugify, splitPoints } from "./regression-deck/shared.mjs";
+import { copyDirectory, resetDirectory, slugify, splitPoints } from "./regression-deck/shared.mjs";
 import {
   buildBlockFlattenSlide,
   buildGroupGeometrySlide,
@@ -33,10 +37,7 @@ const description = getArg(
   "--description",
   `A project overview deck for ${deckTitle} that also serves as a broad HTML fixture for editor testing.`
 );
-const summary = getArg(
-  "--summary",
-  description
-);
+const summary = getArg("--summary", description);
 const points = splitPoints(
   getArg(
     "--points",
@@ -47,6 +48,7 @@ const outputRoot = path.resolve(
   process.cwd(),
   getArg("--out-dir", `generated/${slugify(deckTitle)}`)
 );
+const fixtureRoot = path.resolve(new URL("../fixtures/regression-deck", import.meta.url).pathname);
 
 const slides = [
   {
@@ -129,11 +131,18 @@ const slides = [
     title: "Single image crop fixture",
     html: buildCropImageSlide(),
   },
+  {
+    file: "17-deck-local-image.html",
+    title: "Deck-local image fixture",
+    html: buildDeckLocalImageSlide(),
+  },
 ];
 
 resetDirectory(outputRoot);
+copyDirectory(path.join(fixtureRoot, "assets"), path.join(outputRoot, "assets"));
 
 for (const slide of slides) {
+  fs.mkdirSync(path.dirname(path.join(outputRoot, slide.file)), { recursive: true });
   fs.writeFileSync(path.join(outputRoot, slide.file), slide.html, "utf8");
 }
 

@@ -17,4 +17,4 @@ export const REGRESSION_DECK_SUMMARY = regressionDeckConfig.summary;
 export const REGRESSION_DECK_SOURCE_LABEL = `Generated deck: ${regressionDeckConfig.deckTitle}`;
 export const REGRESSION_DECK_HERO_KICKER = regressionDeckConfig.heroKicker;
 export const REGRESSION_DECK_AGENDA_PARAGRAPH = regressionDeckConfig.agendaParagraph;
-export const REGRESSION_DECK_SLIDE_COUNT = 16;
+export const REGRESSION_DECK_SLIDE_COUNT = 17;

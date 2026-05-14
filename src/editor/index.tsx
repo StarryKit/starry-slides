@@ -79,6 +79,10 @@ function SlidesEditor({
   } | null>(null);
   const [isPresenting, setIsPresenting] = useState(false);
   const [isToolbarSuppressed, setIsToolbarSuppressed] = useState(false);
+  const [isSidebarFocused, setIsSidebarFocused] = useState(false);
+  const handleSidebarFocusChange = useCallback((focused: boolean) => {
+    setIsSidebarFocused(focused);
+  }, []);
   const [lockedElementIdsBySlideId, setLockedElementIdsBySlideId] = useState<
     Record<string, string[]>
   >({});
@@ -323,10 +327,12 @@ function SlidesEditor({
     slideWidth,
     slideHeight,
     isEditingText,
+    isSidebarFocused,
     canUndo: undoDepth > 0,
     canRedo: redoDepth > 0,
     onCommitOperation: commitOperation,
     onSelectElementIds: setSelectedElementIds,
+    onDeleteSlide: slideActions.deleteSlide,
     onEscapeSelection: clearSelection,
     onNavigateSlide: slideActions.selectSlideByDirection,
     onUndo: runUndo,
@@ -384,6 +390,7 @@ function SlidesEditor({
         setActiveSlideId(slideId);
         setSelectedElementId(null);
       }}
+      onSidebarSlideFocusChange={setIsSidebarFocused}
       onAddSlide={slideActions.addSlideAfterActive}
       onAddSlideAbove={slideActions.addSlideAbove}
       onAddSlideBelow={slideActions.addSlideBelow}
@@ -392,6 +399,7 @@ function SlidesEditor({
       onToggleSlideHidden={slideActions.toggleSlideHidden}
       onRenameSlide={slideActions.renameSlide}
       onReorderSlide={slideActions.reorderSlide}
+      onSidebarFocusChange={handleSidebarFocusChange}
       onSelectionOverlayMouseDown={selectionOverlayActions.onSelectionOverlayMouseDown}
       onSelectionOverlayMouseMove={selectionOverlayActions.onSelectionOverlayMouseMove}
       onSelectionOverlayContextMenu={selectionOverlayActions.onSelectionOverlayContextMenu}
@@ -403,6 +411,7 @@ function SlidesEditor({
       onSelectionOverlayDoubleClick={selectionOverlayActions.onSelectionOverlayDoubleClick}
       onBackgroundClick={handleBackgroundClick}
       onStyleChange={elementActions.commitStyleChange}
+      onStyleChanges={elementActions.commitStyleChanges}
       onStylePreview={elementActions.previewStyleChange}
       onAttributeChange={elementActions.commitAttributeChange}
       onAlignToSlide={elementActions.commitArrangeAction}

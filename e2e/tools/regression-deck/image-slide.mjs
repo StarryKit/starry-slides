@@ -204,3 +204,70 @@ export function buildCropImageSlide() {
     `
   );
 }
+
+export function buildDeckLocalImageSlide() {
+  return wrapHtml(
+    `${baseStyles("linear-gradient(135deg, #f8fafc 0%, #ecfeff 52%, #fff7ed 100%)")}
+    .asset-layout {
+      display: grid;
+      grid-template-columns: 0.95fr 1.05fr;
+      gap: 52px;
+      align-items: center;
+      height: 100%;
+    }
+    .asset-copy {
+      display: grid;
+      gap: 24px;
+    }
+    .asset-copy .kicker {
+      width: max-content;
+      background: rgba(14, 116, 144, 0.12);
+      color: #0e7490;
+    }
+    .asset-copy h1 {
+      max-width: 760px;
+      font-size: 72px;
+      line-height: 0.98;
+    }
+    .asset-copy p {
+      max-width: 720px;
+      color: rgba(17, 24, 39, 0.68);
+      font-size: 28px;
+      line-height: 1.34;
+    }
+    .asset-card {
+      position: relative;
+      min-height: 650px;
+      overflow: hidden;
+      border-radius: 36px;
+      background: #ffffff;
+      border: 1px solid rgba(15, 23, 42, 0.08);
+      box-shadow: 0 28px 80px rgba(15, 23, 42, 0.14);
+    }
+    .asset-card img {
+      display: block;
+      width: 100%;
+      height: 100%;
+      min-height: 650px;
+      object-fit: cover;
+    }`,
+    `
+      <div class="asset-layout">
+        <section class="asset-copy" data-editable="block">
+          <div class="kicker" data-editable="text">Deck asset</div>
+          <h1 data-editable="text">Relative image paths resolve from the slide file directory</h1>
+          <p data-editable="text">This slide intentionally loads an SVG from assets/test-image.svg so iframe base URL handling is covered by the regression deck.</p>
+        </section>
+        <figure class="asset-card" data-editable="block">
+          <img
+            data-testid="deck-local-image"
+            data-editable="image"
+            data-editable-id="deck-local-image"
+            alt="Deck-local regression asset"
+            src="assets/test-image.svg"
+          />
+        </figure>
+      </div>
+    `
+  );
+}

@@ -1,5 +1,11 @@
 import { type RefObject, useEffect } from "react";
-import { SELECTOR_ATTR, isPersistedGroupNode, type SlideModel, querySlideElement } from "../../core";
+import {
+  SELECTOR_ATTR,
+  type SlideModel,
+  injectBaseTag,
+  isPersistedGroupNode,
+  querySlideElement,
+} from "../../core";
 import { ensureSelectionContainsTarget } from "./iframe-editing-session";
 import {
   applyGroupScopeFocus,
@@ -61,7 +67,7 @@ function useIframeTextDocumentEvents({
     }
 
     doc.open();
-    doc.write(activeSlide.htmlSource);
+    doc.write(injectBaseTag(activeSlide.htmlSource, activeSlide.sourceFile));
     doc.close();
 
     ensureEditingTextStyle(doc);

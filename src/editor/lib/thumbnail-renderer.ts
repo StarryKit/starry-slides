@@ -1,5 +1,5 @@
 import { toPng } from "html-to-image";
-import type { SlideModel } from "../../core";
+import { type SlideModel, injectBaseTag } from "../../core";
 
 const THUMBNAIL_DISPLAY_WIDTH = 224;
 const THUMBNAIL_PIXEL_RATIO = 2;
@@ -44,10 +44,11 @@ export async function renderSlideThumbnail(slide: SlideModel): Promise<string> {
     }
 
     doc.open();
-    doc.write(slide.htmlSource);
+    doc.write(injectBaseTag(slide.htmlSource, slide.sourceFile));
     doc.close();
 
     await waitForFonts(doc);
+    await waitForImages(doc);
     await wait(50);
 
     const root = doc.querySelector<HTMLElement>(slide.rootSelector);
@@ -57,14 +58,55 @@ export async function renderSlideThumbnail(slide: SlideModel): Promise<string> {
 
     const renderTarget = doc.body ?? root;
 
-    return await toPng(renderTarget, {
-      cacheBust: true,
-      pixelRatio: THUMBNAIL_PIXEL_RATIO,
-      canvasWidth: THUMBNAIL_DISPLAY_WIDTH,
-      canvasHeight: Math.round((slide.height / slide.width) * THUMBNAIL_DISPLAY_WIDTH),
-      skipFonts: false,
-    });
+    return await renderThumbnailPng(doc, renderTarget, slide);
   } finally {
     iframe.remove();
+  }
+}
+
+async function waitForImages(doc: Document) {
+  const pendingImages = Array.from(doc.images).filter((image) => !image.complete);
+  if (!pendingImages.length) {
+    return;
+  }
+
+  await Promise.race([
+    Promise.all(
+      pendingImages.map(
+        (image) =>
+          new Promise<void>((resolve) => {
+            image.addEventListener("load", () => resolve(), { once: true });
+            image.addEventListener("error", () => resolve(), { once: true });
+          })
+      )
+    ),
+    wait(750),
+  ]);
+}
+
+async function renderThumbnailPng(doc: Document, renderTarget: HTMLElement, slide: SlideModel) {
+  const options = {
+    cacheBust: true,
+    pixelRatio: THUMBNAIL_PIXEL_RATIO,
+    canvasWidth: THUMBNAIL_DISPLAY_WIDTH,
+    canvasHeight: Math.round((slide.height / slide.width) * THUMBNAIL_DISPLAY_WIDTH),
+    skipFonts: false,
+  };
+
+  try {
+    return await toPng(renderTarget, options);
+  } catch {
+    removeBrokenImages(doc);
+    return await toPng(renderTarget, options);
+  }
+}
+
+function removeBrokenImages(doc: Document) {
+  for (const image of Array.from(doc.images)) {
+    if (image.complete && image.naturalWidth > 0) {
+      continue;
+    }
+
+    image.remove();
   }
 }

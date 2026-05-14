@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="640" viewBox="0 0 960 640" role="img" aria-labelledby="title desc">
+  <title id="title">Deck-local regression asset</title>
+  <desc id="desc">A colorful SVG used to verify deck-relative image loading.</desc>
+  <defs>
+    <linearGradient id="sky" x1="0" x2="1" y1="0" y2="1">
+      <stop offset="0%" stop-color="#0f766e"/>
+      <stop offset="54%" stop-color="#0284c7"/>
+      <stop offset="100%" stop-color="#f59e0b"/>
+    </linearGradient>
+  </defs>
+  <rect width="960" height="640" rx="48" fill="url(#sky)"/>
+  <circle cx="760" cy="140" r="74" fill="#fde68a" opacity="0.92"/>
+  <path d="M0 468L148 344L298 438L456 276L618 424L760 330L960 486V640H0Z" fill="#f8fafc" opacity="0.92"/>
+  <path d="M0 528L178 424L330 496L502 362L666 506L810 418L960 520V640H0Z" fill="#164e63" opacity="0.72"/>
+  <rect x="92" y="90" width="364" height="56" rx="28" fill="#ffffff" opacity="0.92"/>
+  <rect x="92" y="168" width="252" height="24" rx="12" fill="#ffffff" opacity="0.72"/>
+</svg>

@@ -2,7 +2,7 @@ import fs from "node:fs/promises";
 import type { IncomingMessage, ServerResponse } from "node:http";
 import path from "node:path";
 import type { Plugin, PreviewServer, ViteDevServer } from "vite";
-import { createSafeExportFilenameBase, type PdfExportSelection } from "../core";
+import { type PdfExportSelection, createSafeExportFilenameBase } from "../core";
 import { exportHtml } from "./html-export";
 import { exportPdf } from "./pdf-export";
 import { exportSourceFiles } from "./source-files-export";
@@ -14,6 +14,26 @@ const EXPORT_HTML_ROUTE = "/__editor/export-html";
 const EXPORT_SOURCE_FILES_ROUTE = "/__editor/export-source-files";
 const DECK_ROUTE_PREFIX = "/deck/";
 const NOT_FOUND_ERROR_CODE = "ENOENT";
+const CONTENT_TYPES: Record<string, string> = {
+  ".avif": "image/avif",
+  ".css": "text/css; charset=utf-8",
+  ".gif": "image/gif",
+  ".htm": "text/html; charset=utf-8",
+  ".html": "text/html; charset=utf-8",
+  ".ico": "image/x-icon",
+  ".jpeg": "image/jpeg",
+  ".jpg": "image/jpeg",
+  ".js": "text/javascript; charset=utf-8",
+  ".json": "application/json; charset=utf-8",
+  ".mjs": "text/javascript; charset=utf-8",
+  ".pdf": "application/pdf",
+  ".png": "image/png",
+  ".svg": "image/svg+xml",
+  ".txt": "text/plain; charset=utf-8",
+  ".webp": "image/webp",
+  ".woff": "font/woff",
+  ".woff2": "font/woff2",
+};
 
 interface SaveGeneratedDeckPayload {
   clientLoadedAt?: number;
@@ -224,10 +244,7 @@ export function createDeckRuntimeMiddleware({
 
     response.statusCode = 200;
     response.setHeader("Content-Type", "application/pdf");
-    response.setHeader(
-      "Content-Disposition",
-      `attachment; filename="${exportFilenameBase}.pdf"`
-    );
+    response.setHeader("Content-Disposition", `attachment; filename="${exportFilenameBase}.pdf"`);
     response.end(contents);
   }
 
@@ -242,10 +259,7 @@ export function createDeckRuntimeMiddleware({
 
     response.statusCode = 200;
     response.setHeader("Content-Type", "text/html; charset=utf-8");
-    response.setHeader(
-      "Content-Disposition",
-      `attachment; filename="${exportFilenameBase}.html"`
-    );
+    response.setHeader("Content-Disposition", `attachment; filename="${exportFilenameBase}.html"`);
     response.end(contents);
   }
 
@@ -294,12 +308,7 @@ export function createDeckRuntimeMiddleware({
       const contents = await fs.readFile(targetPath);
       response.statusCode = 200;
       response.setHeader("Cache-Control", "no-store");
-      response.setHeader(
-        "Content-Type",
-        targetPath.endsWith(".json")
-          ? "application/json; charset=utf-8"
-          : "text/html; charset=utf-8"
-      );
+      response.setHeader("Content-Type", getContentType(targetPath));
       response.end(request.method === "HEAD" ? undefined : contents);
       return true;
     } catch (error) {
@@ -408,6 +417,10 @@ export function createDeckRuntimeMiddleware({
       void handleRequest(request, response, next, previewDeckDir);
     },
   };
+}
+
+function getContentType(filePath: string): string {
+  return CONTENT_TYPES[path.extname(filePath).toLowerCase()] ?? "application/octet-stream";
 }
 
 async function readRequestBody(request: IncomingMessage): Promise<string> {

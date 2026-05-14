@@ -5,12 +5,20 @@ import {
   PRESENTATION_PEN_COLORS,
   type PresentationTool,
   clampPresentationIndex,
+  injectBaseTag,
   planPresentationSlides,
 } from "../../core";
 import { Button } from "./ui/button";
 
 export interface PresenterViewProps {
-  slides: { hidden?: boolean; id: string; width: number; height: number; htmlSource: string }[];
+  slides: {
+    hidden?: boolean;
+    id: string;
+    width: number;
+    height: number;
+    htmlSource: string;
+    sourceFile?: string;
+  }[];
   startSlideId?: string;
   onExit: () => void;
 }
@@ -244,7 +252,7 @@ function PresenterView({ slides, startSlideId, onExit }: PresenterViewProps) {
       "[data-testid='presenter-slide-iframe']"
     );
     if (iframe) {
-      iframe.srcdoc = activeSlide.htmlSource;
+      iframe.srcdoc = injectBaseTag(activeSlide.htmlSource, activeSlide.sourceFile);
     }
   }, [activeSlide]);
 

@@ -162,7 +162,7 @@ describe("generated deck import", () => {
     const secondSlide = parseSlide(secondSlideHtml, "generated-slide-2");
 
     expect(manifest.deckTitle).toBe(regressionDeckConfig.deckTitle);
-    expect(manifest.slides).toHaveLength(16);
+    expect(manifest.slides).toHaveLength(17);
     expect(firstSlide.id).toBe("generated-slide-1");
     expect(firstSlide.width).toBe(DEFAULT_SLIDE_WIDTH);
     expect(firstSlide.height).toBe(DEFAULT_SLIDE_HEIGHT);

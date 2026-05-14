@@ -27,6 +27,7 @@ function Toolbar({
   attributeValues,
   isSidebarCollapsed,
   onStyleChange,
+  onStyleChanges,
   onStylePreview,
   onAttributeChange,
   onAlignToSlide,
@@ -143,8 +144,10 @@ function Toolbar({
           "background-color": nextValue,
           "background-image": "",
         }));
-        onStyleChange("background-color", nextValue);
-        onStyleChange("background-image", "");
+        onStyleChanges([
+          { propertyName: "background-color", nextValue },
+          { propertyName: "background-image", nextValue: "" },
+        ]);
       }
       return;
     }
@@ -234,7 +237,7 @@ function Toolbar({
   function getCurrentValue(feature: ElementToolFeature) {
     if (feature.id === "background-color") {
       const optimisticBackgroundImage = optimisticStyles["background-image"];
-      if (optimisticBackgroundImage?.trim().startsWith("linear-gradient")) {
+      if (optimisticBackgroundImage && optimisticBackgroundImage.trim().startsWith("linear-gradient")) {
         return optimisticBackgroundImage;
       }
 

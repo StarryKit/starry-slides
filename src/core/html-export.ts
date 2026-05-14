@@ -1,8 +1,6 @@
 import { planPresentationSlides } from "./presentation";
-import {
-  type SlideDeckManifestEntry,
-  readBodyDimensionsFromHtmlSource,
-} from "./slide-contract";
+import { type SlideDeckManifestEntry, readBodyDimensionsFromHtmlSource } from "./slide-contract";
+import { injectBaseTag } from "./slide-html-base";
 
 export interface HtmlExportSlide extends SlideDeckManifestEntry {
   htmlSource: string;
@@ -50,7 +48,7 @@ export function createSingleHtmlExportDocument({
     slides: resolvedSlides.map((slide) => ({
       file: slide.file,
       title: slide.title ?? slide.file,
-      htmlSource: slide.htmlSource,
+      htmlSource: injectBaseTag(slide.htmlSource, slide.file),
       width: slide.width,
       height: slide.height,
     })),
