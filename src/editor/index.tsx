@@ -390,7 +390,6 @@ function SlidesEditor({
         setActiveSlideId(slideId);
         setSelectedElementId(null);
       }}
-      onSidebarSlideFocusChange={setIsSidebarFocused}
       onAddSlide={slideActions.addSlideAfterActive}
       onAddSlideAbove={slideActions.addSlideAbove}
       onAddSlideBelow={slideActions.addSlideBelow}

@@ -65,6 +65,7 @@ interface EditorWorkspaceProps {
   onToggleSlideHidden: (slideId: string) => void;
   onRenameSlide: (slideId: string, nextTitle: string) => void;
   onReorderSlide: (slideId: string, targetIndex: number) => void;
+  onSidebarFocusChange?: (focused: boolean) => void;
   onSelectionOverlayMouseDown: (event: ReactMouseEvent<HTMLDivElement>) => void;
   onSelectionOverlayMouseUp: (event: ReactMouseEvent<HTMLDivElement>) => void;
   onSelectionOverlayMouseMove: (event: ReactMouseEvent<HTMLDivElement>) => void;
@@ -83,6 +84,7 @@ interface EditorWorkspaceProps {
   onBackgroundClick: () => void;
   onStyleChange: (propertyName: string, nextValue: string) => void;
   onStylePreview: (propertyName: string, nextValue: string | null) => void;
+  onStyleChanges: (changes: Array<{ propertyName: string; nextValue: string }>) => void;
   onAttributeChange: (attributeName: string, nextValue: string) => void;
   onAlignToSlide: (action: string) => void;
   onCropImage: () => void;
@@ -141,6 +143,7 @@ function EditorWorkspace({
   onToggleSlideHidden,
   onRenameSlide,
   onReorderSlide,
+  onSidebarFocusChange,
   onSelectionOverlayMouseDown,
   onSelectionOverlayMouseUp,
   onSelectionOverlayMouseMove,
@@ -153,6 +156,7 @@ function EditorWorkspace({
   onBackgroundClick,
   onStyleChange,
   onStylePreview,
+  onStyleChanges,
   onAttributeChange,
   onAlignToSlide,
   onCropImage,
@@ -212,6 +216,7 @@ function EditorWorkspace({
                 onToggleHidden={onToggleSlideHidden}
                 onRename={onRenameSlide}
                 onReorder={onReorderSlide}
+                onSidebarFocusChange={onSidebarFocusChange}
               />
             ) : null}
 
@@ -255,6 +260,7 @@ function EditorWorkspace({
                       onGroup={onGroup}
                       onLayerOrder={onLayerOrder}
                       onUngroup={onUngroup}
+                      onStyleChanges={onStyleChanges}
                     />
                   ) : toolbarKey === null ? (
                     <div className="flex h-8 items-center text-sm text-foreground/45">
