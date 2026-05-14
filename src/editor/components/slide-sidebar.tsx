@@ -27,6 +27,7 @@ interface SlideSidebarProps {
   onRename?: (slideId: string, nextTitle: string) => void;
   onReorder?: (slideId: string, targetIndex: number) => void;
   onSlideFocusChange?: (isFocused: boolean) => void;
+  onSidebarFocusChange?: (focused: boolean) => void;
 }
 
 function SlideSidebar({
@@ -44,6 +45,7 @@ function SlideSidebar({
   onRename,
   onReorder,
   onSlideFocusChange,
+  onSidebarFocusChange,
 }: SlideSidebarProps) {
   const [draggingId, setDraggingId] = useState<string | null>(null);
   const [dropIndex, setDropIndex] = useState<number | null>(null);

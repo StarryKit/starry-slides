@@ -50,6 +50,4 @@ export interface UseEditorKeyboardShortcutsOptions {
   onDeleteSlide: (slideId: string) => boolean;
   onUndo: () => void;
   onRedo: () => void;
-  isSidebarFocused: boolean;
-  onDeleteSlide: (slideId: string) => void;
 }

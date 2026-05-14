@@ -41,8 +41,6 @@ function useEditorKeyboardShortcuts({
   onDeleteSlide,
   onUndo,
   onRedo,
-  isSidebarFocused,
-  onDeleteSlide,
 }: UseEditorKeyboardShortcutsOptions) {
   const clipboardRef = useRef<ClipboardPayload | null>(null);
   const activeSlideRef = useRef(activeSlide);
