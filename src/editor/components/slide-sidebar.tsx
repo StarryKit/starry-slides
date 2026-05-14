@@ -27,6 +27,7 @@ interface SlideSidebarProps {
   onRename?: (slideId: string, nextTitle: string) => void;
   onReorder?: (slideId: string, targetIndex: number) => void;
   onSlideFocusChange?: (isFocused: boolean) => void;
+  onSidebarFocusChange?: (focused: boolean) => void;
 }
 
 function SlideSidebar({
@@ -44,6 +45,7 @@ function SlideSidebar({
   onRename,
   onReorder,
   onSlideFocusChange,
+  onSidebarFocusChange,
 }: SlideSidebarProps) {
   const [draggingId, setDraggingId] = useState<string | null>(null);
   const [dropIndex, setDropIndex] = useState<number | null>(null);
@@ -110,6 +112,12 @@ function SlideSidebar({
       <aside
         className="flex h-[calc(100vh-3.5rem)] w-[212px] shrink-0 flex-col border-r border-foreground/[0.06] bg-white"
         data-testid="slide-sidebar"
+        onFocus={() => onSidebarFocusChange?.(true)}
+        onBlur={(event) => {
+          if (!event.currentTarget.contains(event.relatedTarget as Node)) {
+            onSidebarFocusChange?.(false);
+          }
+        }}
       >
         <div
           className="flex h-full min-h-0 w-full min-w-0 flex-col"

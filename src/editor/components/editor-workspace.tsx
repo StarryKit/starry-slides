@@ -64,6 +64,7 @@ interface EditorWorkspaceProps {
   onToggleSlideHidden: (slideId: string) => void;
   onRenameSlide: (slideId: string, nextTitle: string) => void;
   onReorderSlide: (slideId: string, targetIndex: number) => void;
+  onSidebarFocusChange?: (focused: boolean) => void;
   onSelectionOverlayMouseDown: (event: ReactMouseEvent<HTMLDivElement>) => void;
   onSelectionOverlayMouseUp: (event: ReactMouseEvent<HTMLDivElement>) => void;
   onSelectionOverlayMouseMove: (event: ReactMouseEvent<HTMLDivElement>) => void;
@@ -141,6 +142,7 @@ function EditorWorkspace({
   onToggleSlideHidden,
   onRenameSlide,
   onReorderSlide,
+  onSidebarFocusChange,
   onSelectionOverlayMouseDown,
   onSelectionOverlayMouseUp,
   onSelectionOverlayMouseMove,
@@ -203,6 +205,7 @@ function EditorWorkspace({
               onToggleHidden={onToggleSlideHidden}
               onRename={onRenameSlide}
               onReorder={onReorderSlide}
+              onSidebarFocusChange={onSidebarFocusChange}
             />
 
             <main className="flex min-h-0 min-w-0 flex-auto overflow-visible max-[1200px]:block">

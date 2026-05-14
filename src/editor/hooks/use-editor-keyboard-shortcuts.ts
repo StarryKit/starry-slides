@@ -332,6 +332,8 @@ function useEditorKeyboardShortcuts({
     onUndo,
     slideHeight,
     slideWidth,
+    isSidebarFocused,
+    onDeleteSlide,
   ]);
 }
 
