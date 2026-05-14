@@ -36,18 +36,50 @@ export function createBlockManipulationOverlay({
     resizeHandles: isManipulating
       ? []
       : [
-          { corner: "top-left", x: stageRect.x, y: stageRect.y },
-          { corner: "top-right", x: stageRect.x + stageRect.width, y: stageRect.y },
+          { position: "top-left", x: stageRect.x, y: stageRect.y },
+          { position: "top-center", x: stageRect.x + stageRect.width / 2, y: stageRect.y },
+          { position: "top-right", x: stageRect.x + stageRect.width, y: stageRect.y },
           {
-            corner: "bottom-right",
+            position: "right-center",
+            x: stageRect.x + stageRect.width,
+            y: stageRect.y + stageRect.height / 2,
+          },
+          {
+            position: "bottom-right",
             x: stageRect.x + stageRect.width,
             y: stageRect.y + stageRect.height,
           },
-          { corner: "bottom-left", x: stageRect.x, y: stageRect.y + stageRect.height },
+          {
+            position: "bottom-center",
+            x: stageRect.x + stageRect.width / 2,
+            y: stageRect.y + stageRect.height,
+          },
+          { position: "bottom-left", x: stageRect.x, y: stageRect.y + stageRect.height },
+          {
+            position: "left-center",
+            x: stageRect.x,
+            y: stageRect.y + stageRect.height / 2,
+          },
         ],
-    rotationHandle: {
-      x: stageRect.x + stageRect.width / 2,
-      y: stageRect.y + stageRect.height + 20,
-    },
+    rotationZones: isManipulating
+      ? []
+      : [
+          { corner: "top-left", x: stageRect.x - 18, y: stageRect.y - 18 },
+          {
+            corner: "top-right",
+            x: stageRect.x + stageRect.width + 18,
+            y: stageRect.y - 18,
+          },
+          {
+            corner: "bottom-right",
+            x: stageRect.x + stageRect.width + 18,
+            y: stageRect.y + stageRect.height + 18,
+          },
+          {
+            corner: "bottom-left",
+            x: stageRect.x - 18,
+            y: stageRect.y + stageRect.height + 18,
+          },
+        ],
   };
 }

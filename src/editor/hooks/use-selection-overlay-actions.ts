@@ -6,7 +6,7 @@ import {
   isPersistedGroupNode,
   querySlideElement,
 } from "../../core";
-import type { ResizeHandleCorner } from "../lib/block-snap-types";
+import type { ResizeHandlePosition } from "../lib/block-snap-types";
 import { getScopedTextTargetAtPoint } from "../lib/editor-selection-structure";
 import type { PointerStartLike } from "./block-manipulation-types";
 import { getOutermostSelectedAncestorFromPoint } from "./iframe-text-editing-dom";
@@ -32,7 +32,7 @@ interface UseSelectionOverlayActionsOptions {
   onPointerSelectionRetarget: (clientX: number, clientY: number, additive: boolean) => void;
   onSelectionContextMenuOpen: (clientX: number, clientY: number) => void;
   onBeginMove: (event: PointerStartLike, targetElementId?: string) => void;
-  onBeginResize: (corner: ResizeHandleCorner, event: PointerStartLike) => void;
+  onBeginResize: (position: ResizeHandlePosition, event: PointerStartLike) => void;
   onBeginRotate: (event: PointerStartLike) => void;
   onBeginTextEditing: (elementId: string) => void;
   onBeginGroupEditingScope: (elementId: string) => void;
@@ -236,21 +236,21 @@ function useSelectionOverlayActions({
       onPointerSelectionRetarget(event.clientX, event.clientY, pointerDown.additive);
     },
     onResizeHandleMouseDown: (
-      corner: ResizeHandleCorner,
+      position: ResizeHandlePosition,
       event: ReactMouseEvent<HTMLButtonElement>
     ) => {
       if (!selectedElementIds.length) {
         return;
       }
 
-      onBeginResize(corner, {
+      onBeginResize(position, {
         clientX: event.clientX,
         clientY: event.clientY,
         preventDefault: () => event.preventDefault(),
         stopPropagation: () => event.stopPropagation(),
       });
     },
-    onRotateHandleMouseDown: (event: ReactMouseEvent<HTMLButtonElement>) => {
+    onCornerRotationZoneMouseDown: (event: ReactMouseEvent<HTMLButtonElement>) => {
       if (selectedElementIds.length !== 1) {
         return;
       }

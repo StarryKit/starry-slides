@@ -2,6 +2,10 @@ import type { MouseEvent as ReactMouseEvent, RefObject } from "react";
 import type { EditableType, PdfExportSelection, SlideModel, StageRect } from "../../core";
 import type { BlockManipulationOverlay as BlockManipulationOverlayModel } from "../hooks/block-manipulation-types";
 import type { ImageCropOverlay as ImageCropOverlayModel } from "../hooks/use-image-crop";
+import type {
+  ResizeHandleCorner,
+  ResizeHandlePosition,
+} from "../lib/block-snap-types";
 import type { CssPropertyRow } from "../lib/collect-css-properties";
 import { EditorHeader } from "./editor-header";
 import type { SelectionCommandAvailability } from "./floating-toolbar";
@@ -9,8 +13,6 @@ import { PresenterView } from "./presenter-view";
 import { SlideSidebar } from "./slide-sidebar";
 import { StageCanvas } from "./stage-canvas";
 import { TooltipProvider } from "./ui/tooltip";
-
-type ResizeHandleCorner = "top-left" | "top-right" | "bottom-right" | "bottom-left";
 
 interface EditorWorkspaceProps {
   slides: SlideModel[];
@@ -71,10 +73,10 @@ interface EditorWorkspaceProps {
   onSelectionOverlayContextMenu: (event: ReactMouseEvent<HTMLDivElement>) => void;
   onStageMouseLeave: () => void;
   onResizeHandleMouseDown: (
-    corner: ResizeHandleCorner,
+    position: ResizeHandlePosition,
     event: ReactMouseEvent<HTMLButtonElement>
   ) => void;
-  onRotateHandleMouseDown: (event: ReactMouseEvent<HTMLButtonElement>) => void;
+  onCornerRotationZoneMouseDown: (event: ReactMouseEvent<HTMLButtonElement>) => void;
   onCropHandleMouseDown: (
     corner: ResizeHandleCorner,
     event: ReactMouseEvent<HTMLButtonElement>
@@ -150,7 +152,7 @@ function EditorWorkspace({
   onSelectionOverlayContextMenu,
   onStageMouseLeave,
   onResizeHandleMouseDown,
-  onRotateHandleMouseDown,
+  onCornerRotationZoneMouseDown,
   onCropHandleMouseDown,
   onSelectionOverlayDoubleClick,
   onBackgroundClick,
@@ -242,7 +244,7 @@ function EditorWorkspace({
                 onSelectionOverlayMouseUp={onSelectionOverlayMouseUp}
                 onStageMouseLeave={onStageMouseLeave}
                 onResizeHandleMouseDown={onResizeHandleMouseDown}
-                onRotateHandleMouseDown={onRotateHandleMouseDown}
+                onCornerRotationZoneMouseDown={onCornerRotationZoneMouseDown}
                 onCropHandleMouseDown={onCropHandleMouseDown}
                 onSelectionOverlayDoubleClick={onSelectionOverlayDoubleClick}
                 onBackgroundClick={onBackgroundClick}

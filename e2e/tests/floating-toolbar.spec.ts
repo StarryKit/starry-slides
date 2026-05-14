@@ -336,7 +336,7 @@ test("image floating toolbar hides text and color tools and supports crop handle
   await expectInlineStyle(editableImage, "object-fit", "cover");
   await expect(page.getByTestId("image-crop-overlay")).toBeVisible();
   await expect(page.getByTestId("image-crop-overlay")).toHaveCSS("border-radius", "48px");
-  await expect(page.getByTestId("block-rotate-handle")).toBeHidden();
+  await expect(page.getByTestId("block-rotation-zone-top-left")).toBeHidden();
   await expect(page.getByTestId("block-resize-handle-top-left")).toBeHidden();
 
   const cropHandle = page.getByTestId("image-crop-handle-top-left");

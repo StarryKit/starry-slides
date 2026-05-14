@@ -121,3 +121,41 @@ test("group resize scales child geometry without scaling visual styling", async 
   await expect(firstCard).toHaveCSS("padding-top", initialPadding);
   await expect(selectionOverlay).toBeVisible();
 });
+
+test("group edge resize scales child geometry on one axis", async ({ page }) => {
+  await gotoEditor(page);
+  const group = await createGroupFromGeometryCards(page);
+
+  const frame = coverFrame(page);
+  const firstCard = frame.locator('[data-editable-id="group-card-a"]');
+  const resizeHandle = page.getByTestId("block-resize-handle-bottom-center");
+
+  await expect(group).toBeVisible();
+  await expect(resizeHandle).toBeVisible();
+
+  const groupBefore = await getRequiredBoundingBox(group, "group before edge resize");
+  const cardBefore = await getRequiredBoundingBox(firstCard, "group child before edge resize");
+  const handleBefore = await getRequiredBoundingBox(resizeHandle, "bottom edge resize handle");
+  const resizeStart = {
+    x: handleBefore.x + handleBefore.width / 2,
+    y: handleBefore.y + handleBefore.height / 2,
+  };
+
+  await resizeHandle.dispatchEvent("mousedown", {
+    bubbles: true,
+    cancelable: true,
+    clientX: resizeStart.x,
+    clientY: resizeStart.y,
+  });
+  await page.keyboard.down("Alt");
+  await page.mouse.move(resizeStart.x + 100, resizeStart.y + 90, { steps: 8 });
+  await page.keyboard.up("Alt");
+  await page.mouse.up();
+
+  const groupAfter = await getRequiredBoundingBox(group, "group after edge resize");
+  const cardAfter = await getRequiredBoundingBox(firstCard, "group child after edge resize");
+  expect(groupAfter.height).toBeGreaterThan(groupBefore.height + 30);
+  expect(cardAfter.height).toBeGreaterThan(cardBefore.height + 10);
+  expect(Math.abs(groupAfter.width - groupBefore.width)).toBeLessThanOrEqual(2);
+  expect(Math.abs(cardAfter.width - cardBefore.width)).toBeLessThanOrEqual(2);
+});

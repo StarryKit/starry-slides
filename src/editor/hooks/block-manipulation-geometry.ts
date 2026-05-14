@@ -9,7 +9,7 @@ import {
   parseTransformParts,
   querySlideElement,
 } from "../../core";
-import type { ResizeHandleCorner } from "../lib/block-snap-types";
+import type { ResizeHandlePosition } from "../lib/block-snap-types";
 import { applyLayoutSnapshot } from "./block-manipulation-operations";
 import type { ManipulationSession } from "./block-manipulation-types";
 
@@ -74,13 +74,13 @@ export function getRotationDeltaDegrees(
 }
 
 export function createResizedStageRect({
-  resizeCorner,
+  resizeHandle,
   scale,
   stageDeltaX,
   stageDeltaY,
   startStageRect,
 }: {
-  resizeCorner: ResizeHandleCorner | null;
+  resizeHandle: ResizeHandlePosition | null;
   scale: number;
   stageDeltaX: number;
   stageDeltaY: number;
@@ -91,7 +91,7 @@ export function createResizedStageRect({
   let nextStageWidth = startStageRect.width;
   let nextStageHeight = startStageRect.height;
 
-  switch (resizeCorner) {
+  switch (resizeHandle) {
     case "top-left": {
       nextStageWidth = clampStageSize(startStageRect.width - stageDeltaX, scale);
       nextStageHeight = clampStageSize(startStageRect.height - stageDeltaY, scale);
@@ -111,9 +111,27 @@ export function createResizedStageRect({
       nextStageX = startStageRect.x + (startStageRect.width - nextStageWidth);
       break;
     }
-    default: {
+    case "bottom-right": {
       nextStageWidth = clampStageSize(startStageRect.width + stageDeltaX, scale);
       nextStageHeight = clampStageSize(startStageRect.height + stageDeltaY, scale);
+      break;
+    }
+    case "top-center": {
+      nextStageHeight = clampStageSize(startStageRect.height - stageDeltaY, scale);
+      nextStageY = startStageRect.y + (startStageRect.height - nextStageHeight);
+      break;
+    }
+    case "right-center": {
+      nextStageWidth = clampStageSize(startStageRect.width + stageDeltaX, scale);
+      break;
+    }
+    case "bottom-center": {
+      nextStageHeight = clampStageSize(startStageRect.height + stageDeltaY, scale);
+      break;
+    }
+    case "left-center": {
+      nextStageWidth = clampStageSize(startStageRect.width - stageDeltaX, scale);
+      nextStageX = startStageRect.x + (startStageRect.width - nextStageWidth);
       break;
     }
   }

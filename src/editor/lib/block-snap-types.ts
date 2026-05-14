@@ -26,3 +26,7 @@ export interface SnapCandidate {
 }
 
 export type ResizeHandleCorner = "top-left" | "top-right" | "bottom-right" | "bottom-left";
+
+export type ResizeHandleEdge = "top-center" | "right-center" | "bottom-center" | "left-center";
+
+export type ResizeHandlePosition = ResizeHandleCorner | ResizeHandleEdge;

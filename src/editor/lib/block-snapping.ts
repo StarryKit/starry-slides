@@ -7,7 +7,12 @@ import {
 } from "./block-snap-constants";
 import { buildSnapGuides } from "./block-snap-guides";
 export { collectSnapTargets } from "./block-snap-targets";
-import type { ResizeHandleCorner, SnapCandidate, SnapGuide, SnapTarget } from "./block-snap-types";
+import type {
+  ResizeHandlePosition,
+  SnapCandidate,
+  SnapGuide,
+  SnapTarget,
+} from "./block-snap-types";
 
 export function snapStageRect(
   rect: StageRect,
@@ -50,36 +55,38 @@ export function snapStageRect(
 
 export function snapResizeRect(
   rect: StageRect,
-  resizeCorner: ResizeHandleCorner,
+  resizeHandle: ResizeHandlePosition,
   targets: { vertical: SnapTarget[]; horizontal: SnapTarget[] }
 ): { rect: StageRect; guides: SnapGuide[] } {
   const nextRect = { ...rect };
-  const horizontalAnchor =
-    resizeCorner === "top-left" || resizeCorner === "bottom-left" ? "start" : "end";
-  const verticalAnchor =
-    resizeCorner === "top-left" || resizeCorner === "top-right" ? "start" : "end";
-  const horizontalSnap = findSnapCandidate(
-    [
-      {
-        anchor: horizontalAnchor,
-        position: horizontalAnchor === "start" ? rect.x : rect.x + rect.width,
-      },
-    ],
-    targets.vertical,
-    rect,
-    "vertical"
-  );
-  const verticalSnap = findSnapCandidate(
-    [
-      {
-        anchor: verticalAnchor,
-        position: verticalAnchor === "start" ? rect.y : rect.y + rect.height,
-      },
-    ],
-    targets.horizontal,
-    rect,
-    "horizontal"
-  );
+  const horizontalAnchor = getResizeHorizontalAnchor(resizeHandle);
+  const verticalAnchor = getResizeVerticalAnchor(resizeHandle);
+  const horizontalSnap = horizontalAnchor
+    ? findSnapCandidate(
+        [
+          {
+            anchor: horizontalAnchor,
+            position: horizontalAnchor === "start" ? rect.x : rect.x + rect.width,
+          },
+        ],
+        targets.vertical,
+        rect,
+        "vertical"
+      )
+    : null;
+  const verticalSnap = verticalAnchor
+    ? findSnapCandidate(
+        [
+          {
+            anchor: verticalAnchor,
+            position: verticalAnchor === "start" ? rect.y : rect.y + rect.height,
+          },
+        ],
+        targets.horizontal,
+        rect,
+        "horizontal"
+      )
+    : null;
 
   if (horizontalSnap) {
     if (horizontalAnchor === "start") {
@@ -118,6 +125,50 @@ export function snapResizeRect(
       horizontal: horizontalSnap,
     }),
   };
+}
+
+function getResizeHorizontalAnchor(
+  resizeHandle: ResizeHandlePosition
+): SnapCandidate["anchor"] | null {
+  if (
+    resizeHandle === "top-left" ||
+    resizeHandle === "bottom-left" ||
+    resizeHandle === "left-center"
+  ) {
+    return "start";
+  }
+
+  if (
+    resizeHandle === "top-right" ||
+    resizeHandle === "bottom-right" ||
+    resizeHandle === "right-center"
+  ) {
+    return "end";
+  }
+
+  return null;
+}
+
+function getResizeVerticalAnchor(
+  resizeHandle: ResizeHandlePosition
+): SnapCandidate["anchor"] | null {
+  if (
+    resizeHandle === "top-left" ||
+    resizeHandle === "top-right" ||
+    resizeHandle === "top-center"
+  ) {
+    return "start";
+  }
+
+  if (
+    resizeHandle === "bottom-left" ||
+    resizeHandle === "bottom-right" ||
+    resizeHandle === "bottom-center"
+  ) {
+    return "end";
+  }
+
+  return null;
 }
 
 function findSnapCandidate(

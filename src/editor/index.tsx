@@ -406,7 +406,7 @@ function SlidesEditor({
       onSelectionOverlayMouseUp={selectionOverlayActions.onSelectionOverlayMouseUp}
       onStageMouseLeave={clearPreselection}
       onResizeHandleMouseDown={selectionOverlayActions.onResizeHandleMouseDown}
-      onRotateHandleMouseDown={selectionOverlayActions.onRotateHandleMouseDown}
+      onCornerRotationZoneMouseDown={selectionOverlayActions.onCornerRotationZoneMouseDown}
       onCropHandleMouseDown={imageCrop.beginCropResize}
       onSelectionOverlayDoubleClick={selectionOverlayActions.onSelectionOverlayDoubleClick}
       onBackgroundClick={handleBackgroundClick}

@@ -100,7 +100,7 @@ test("hovering an editable element shows a passive preselection overlay for the 
   await expect(preselectionOverlay).toBeVisible();
   await expect(selectionOverlay).toBeHidden();
   await expect(page.getByTestId("block-resize-handle-top-left")).toHaveCount(0);
-  await expect(page.getByTestId("block-rotate-handle")).toHaveCount(0);
+  await expect(page.getByTestId("block-rotation-zone-top-left")).toHaveCount(0);
 
   const [textBox, preselectionBox] = await Promise.all([
     getRequiredBoundingBox(nestedText, "nested text"),

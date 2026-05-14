@@ -391,13 +391,13 @@ test("floating toolbar hides while dragging a selected element", async ({ page }
   const { selectionOverlay } = getHistoryControls(page);
   const { floatingToolbarAnchor } = getHeaderControls(page);
   const resizeHandle = page.getByTestId("block-resize-handle-bottom-right");
-  const rotateHandle = page.getByTestId("block-rotate-handle");
+  const rotateZone = page.getByTestId("block-rotation-zone-bottom-right");
 
   await blockCard.click({ position: { x: 12, y: 12 } });
   await expect(selectionOverlay).toBeVisible();
   await expect(floatingToolbarAnchor).toBeVisible();
   await expect(resizeHandle).toBeVisible();
-  await expect(rotateHandle).toBeVisible();
+  await expect(rotateZone).toBeVisible();
 
   const overlayBefore = await selectionOverlay.boundingBox();
   if (!overlayBefore) {
@@ -414,12 +414,12 @@ test("floating toolbar hides while dragging a selected element", async ({ page }
   await expect(floatingToolbarAnchor).toBeHidden();
   await page.mouse.move(start.x + 8, start.y + 6, { steps: 2 });
   await expect(resizeHandle).toHaveCount(0);
-  await expect(rotateHandle).toHaveCount(0);
+  await expect(rotateZone).toHaveCount(0);
   await page.mouse.move(start.x + 40, start.y + 30, { steps: 4 });
   await page.mouse.up();
   await expect(floatingToolbarAnchor).toBeVisible();
   await expect(resizeHandle).toBeVisible();
-  await expect(rotateHandle).toBeVisible();
+  await expect(rotateZone).toBeVisible();
 });
 
 test("after dragging and clearing selection, clicking the same element selects it again", async ({
@@ -520,7 +520,7 @@ test("dragging a different element immediately after a drag moves the pointer ta
   expect(Math.abs(firstAfterSecondDrag.y - firstAfterFirstDrag.y)).toBeLessThanOrEqual(2);
 });
 
-test("all four resize handles are visible for a selected element", async ({ page }) => {
+test("all eight resize handles are visible for a selected element", async ({ page }) => {
   await gotoEditor(page);
 
   const frame = coverFrame(page);
@@ -529,9 +529,124 @@ test("all four resize handles are visible for a selected element", async ({ page
   await blockCard.click({ position: { x: 12, y: 12 } });
 
   await expect(page.getByTestId("block-resize-handle-top-left")).toBeVisible();
+  await expect(page.getByTestId("block-resize-handle-top-center")).toBeVisible();
   await expect(page.getByTestId("block-resize-handle-top-right")).toBeVisible();
+  await expect(page.getByTestId("block-resize-handle-right-center")).toBeVisible();
   await expect(page.getByTestId("block-resize-handle-bottom-right")).toBeVisible();
+  await expect(page.getByTestId("block-resize-handle-bottom-center")).toBeVisible();
   await expect(page.getByTestId("block-resize-handle-bottom-left")).toBeVisible();
+  await expect(page.getByTestId("block-resize-handle-left-center")).toBeVisible();
+});
+
+test("edge handle resizes only horizontally", async ({ page }) => {
+  await gotoEditor(page);
+
+  const frame = coverFrame(page);
+  const blockCard = frame.locator('[data-editable-id="block-4"]');
+  const rightHandle = page.getByTestId("block-resize-handle-right-center");
+
+  await blockCard.click({ position: { x: 12, y: 12 } });
+  await expect(rightHandle).toBeVisible();
+
+  const before = await getRequiredBoundingBox(blockCard, "block before right-edge resize");
+  const handleBefore = await getRequiredBoundingBox(rightHandle, "right edge resize handle");
+  const resizeStart = {
+    x: handleBefore.x + handleBefore.width / 2,
+    y: handleBefore.y + handleBefore.height / 2,
+  };
+
+  await rightHandle.dispatchEvent("mousedown", {
+    bubbles: true,
+    cancelable: true,
+    clientX: resizeStart.x,
+    clientY: resizeStart.y,
+  });
+  await page.keyboard.down("Alt");
+  await page.mouse.move(resizeStart.x + 120, resizeStart.y + 80, { steps: 8 });
+  await page.keyboard.up("Alt");
+  await page.mouse.up();
+
+  const afterHorizontal = await getRequiredBoundingBox(
+    blockCard,
+    "block after right-edge resize"
+  );
+  expect(afterHorizontal.width).toBeGreaterThan(before.width + 60);
+  expect(Math.abs(afterHorizontal.x - before.x)).toBeLessThanOrEqual(2);
+  expect(Math.abs(afterHorizontal.y - before.y)).toBeLessThanOrEqual(2);
+  expect(Math.abs(afterHorizontal.height - before.height)).toBeLessThanOrEqual(2);
+});
+
+test("edge handle resizes only vertically", async ({ page }) => {
+  await gotoEditor(page);
+
+  const frame = coverFrame(page);
+  const blockCard = frame.locator('[data-editable-id="block-4"]');
+
+  const topHandle = page.getByTestId("block-resize-handle-top-center");
+  await blockCard.click({ position: { x: 12, y: 12 } });
+  await expect(topHandle).toBeVisible();
+  const beforeVertical = await getRequiredBoundingBox(blockCard, "block before top-edge resize");
+  const topHandleBefore = await getRequiredBoundingBox(topHandle, "top edge resize handle");
+  const topResizeStart = {
+    x: topHandleBefore.x + topHandleBefore.width / 2,
+    y: topHandleBefore.y + topHandleBefore.height / 2,
+  };
+
+  await topHandle.dispatchEvent("mousedown", {
+    bubbles: true,
+    cancelable: true,
+    clientX: topResizeStart.x,
+    clientY: topResizeStart.y,
+  });
+  await page.keyboard.down("Alt");
+  await page.mouse.move(topResizeStart.x + 80, topResizeStart.y - 90, { steps: 8 });
+  await page.keyboard.up("Alt");
+  await page.mouse.up();
+
+  const afterVertical = await getRequiredBoundingBox(blockCard, "block after top-edge resize");
+  expect(afterVertical.height).toBeGreaterThan(beforeVertical.height + 45);
+  expect(Math.abs(afterVertical.x - beforeVertical.x)).toBeLessThanOrEqual(2);
+  expect(Math.abs(afterVertical.width - beforeVertical.width)).toBeLessThanOrEqual(2);
+  expect(
+    Math.abs(afterVertical.y + afterVertical.height - (beforeVertical.y + beforeVertical.height))
+  ).toBeLessThanOrEqual(2);
+});
+
+test("corner rotation zone triggers rotation", async ({ page }) => {
+  await gotoEditor(page);
+
+  const frame = coverFrame(page);
+  const blockCard = frame.locator('[data-editable-id="block-4"]');
+  const rotateZone = page.getByTestId("block-rotation-zone-bottom-right");
+
+  await blockCard.click({ position: { x: 12, y: 12 } });
+  await expect(rotateZone).toBeVisible();
+
+  const before = await getRequiredBoundingBox(blockCard, "block before corner rotation");
+  const zoneBefore = await getRequiredBoundingBox(rotateZone, "corner rotation zone");
+  const rotationStart = {
+    x: zoneBefore.x + zoneBefore.width / 2,
+    y: zoneBefore.y + zoneBefore.height / 2,
+  };
+
+  await rotateZone.dispatchEvent("mousedown", {
+    bubbles: true,
+    cancelable: true,
+    clientX: rotationStart.x,
+    clientY: rotationStart.y,
+  });
+  await page.mouse.move(rotationStart.x - 120, rotationStart.y + 40, { steps: 8 });
+
+  await expect
+    .poll(async () => getComputedStyleValue(blockCard, "transform"), { timeout: 1000 })
+    .not.toBe("none");
+  await page.mouse.up();
+
+  const after = await getRequiredBoundingBox(blockCard, "block after corner rotation");
+  const transform = await getComputedStyleValue(blockCard, "transform");
+  expect(transform).not.toBe("none");
+  expect(Math.abs(after.width - before.width)).toBeLessThanOrEqual(60);
+  expect(Math.abs(after.height - before.height)).toBeLessThanOrEqual(60);
 });
 
 test("resizing a flow-layout title keeps it in document layout", async ({ page }) => {

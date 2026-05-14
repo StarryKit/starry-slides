@@ -8,7 +8,12 @@ import type {
   StageGeometry,
   StageRect,
 } from "../../core";
-import type { ResizeHandleCorner, SnapGuide, SnapTarget } from "../lib/block-snap-types";
+import type {
+  ResizeHandleCorner,
+  ResizeHandlePosition,
+  SnapGuide,
+  SnapTarget,
+} from "../lib/block-snap-types";
 
 export type ManipulationMode = "move" | "resize" | "rotate";
 
@@ -16,11 +21,15 @@ export interface BlockManipulationOverlay {
   selectionBounds: StageRect;
   snapGuides: SnapGuide[];
   resizeHandles: Array<{
+    position: ResizeHandlePosition;
+    x: number;
+    y: number;
+  }>;
+  rotationZones: Array<{
     corner: ResizeHandleCorner;
     x: number;
     y: number;
   }>;
-  rotationHandle: { x: number; y: number };
 }
 
 export interface ManipulationSession {
@@ -28,7 +37,7 @@ export interface ManipulationSession {
   elementId: string;
   elementIds: string[];
   mode: ManipulationMode;
-  resizeCorner: ResizeHandleCorner | null;
+  resizeHandle: ResizeHandlePosition | null;
   startPointer: { x: number; y: number };
   startStageRect: StageRect;
   centerPoint: { x: number; y: number };
@@ -66,7 +75,7 @@ export interface UseBlockManipulationResult {
   isManipulating: boolean;
   suppressBackgroundClear: boolean;
   beginMove: (event: PointerStartLike, targetElementId?: string) => void;
-  beginResize: (corner: ResizeHandleCorner, event: PointerStartLike) => void;
+  beginResize: (position: ResizeHandlePosition, event: PointerStartLike) => void;
   beginRotate: (event: PointerStartLike) => void;
 }
 

@@ -2,6 +2,10 @@ import type { CSSProperties, MouseEvent as ReactMouseEvent, RefObject } from "re
 import type { EditableType, StageRect } from "../../core";
 import type { ImageCropOverlay as ImageCropOverlayModel } from "../hooks/use-image-crop";
 import type { CssPropertyRow } from "../lib/collect-css-properties";
+import type {
+  ResizeHandleCorner,
+  ResizeHandlePosition,
+} from "../lib/block-snap-types";
 import { cn } from "../lib/utils";
 import { BlockManipulationOverlay } from "./block-manipulation-overlay";
 import { SelectionContextMenuContent } from "./context-menu";
@@ -9,7 +13,6 @@ import { FloatingToolbar, type SelectionCommandAvailability } from "./floating-t
 import { ImageCropOverlay } from "./image-crop-overlay";
 import { ContextMenu, ContextMenuTrigger } from "./ui/context-menu";
 
-type ResizeHandleCorner = "top-left" | "top-right" | "bottom-right" | "bottom-left";
 const SELECTION_CHROME_STYLE = {
   borderColor: "#facc15",
   backgroundColor: "rgba(250, 204, 21, 0.08)",
@@ -43,11 +46,15 @@ interface StageCanvasProps {
       variant: "alignment" | "spacing";
     }>;
     resizeHandles: Array<{
+      position: ResizeHandlePosition;
+      x: number;
+      y: number;
+    }>;
+    rotationZones: Array<{
       corner: ResizeHandleCorner;
       x: number;
       y: number;
     }>;
-    rotationHandle: { x: number; y: number };
   } | null;
   attributeValues: {
     locked: string;
@@ -66,10 +73,10 @@ interface StageCanvasProps {
   onSelectionOverlayContextMenu: (event: ReactMouseEvent<HTMLDivElement>) => void;
   onStageMouseLeave: () => void;
   onResizeHandleMouseDown: (
-    corner: ResizeHandleCorner,
+    position: ResizeHandlePosition,
     event: ReactMouseEvent<HTMLButtonElement>
   ) => void;
-  onRotateHandleMouseDown: (event: ReactMouseEvent<HTMLButtonElement>) => void;
+  onCornerRotationZoneMouseDown: (event: ReactMouseEvent<HTMLButtonElement>) => void;
   onCropHandleMouseDown: (
     corner: ResizeHandleCorner,
     event: ReactMouseEvent<HTMLButtonElement>
@@ -122,7 +129,7 @@ function StageCanvas({
   onSelectionOverlayContextMenu,
   onStageMouseLeave,
   onResizeHandleMouseDown,
-  onRotateHandleMouseDown,
+  onCornerRotationZoneMouseDown,
   onCropHandleMouseDown,
   onSelectionOverlayDoubleClick,
   onBackgroundClick,
@@ -294,9 +301,9 @@ function StageCanvas({
           selectionBounds={manipulationOverlay.selectionBounds}
           snapGuides={manipulationOverlay.snapGuides}
           resizeHandles={manipulationOverlay.resizeHandles}
-          rotationHandle={manipulationOverlay.rotationHandle}
+          rotationZones={manipulationOverlay.rotationZones}
           onResizeHandleMouseDown={onResizeHandleMouseDown}
-          onRotateHandleMouseDown={onRotateHandleMouseDown}
+          onCornerRotationZoneMouseDown={onCornerRotationZoneMouseDown}
         />
       ) : null}
     </section>

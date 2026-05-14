@@ -9,7 +9,7 @@ import {
   querySlideElement,
 } from "../../core";
 import type { SnapGuide } from "../lib/block-snap-types";
-import type { ResizeHandleCorner } from "../lib/block-snap-types";
+import type { ResizeHandlePosition } from "../lib/block-snap-types";
 import { collectSnapTargets, snapResizeRect, snapStageRect } from "../lib/block-snapping";
 import {
   applyGeometryScaledResize,
@@ -107,7 +107,7 @@ function useBlockManipulation({
     (
       mode: ManipulationMode,
       event: PointerStartLike,
-      resizeCorner: ResizeHandleCorner | null = null,
+      resizeHandle: ResizeHandlePosition | null = null,
       targetElementId = selectedElementId
     ) => {
       const targetElement = targetElementId
@@ -237,7 +237,7 @@ function useBlockManipulation({
         elementId: targetElementId,
         elementIds: Object.keys(targetNodes),
         mode,
-        resizeCorner,
+        resizeHandle,
         startPointer,
         startStageRect: freshSelectedStageRect,
         centerPoint: {
@@ -311,16 +311,16 @@ function useBlockManipulation({
 
         if (session.mode === "resize") {
           const unsnappedRect = createResizedStageRect({
-            resizeCorner: session.resizeCorner,
+            resizeHandle: session.resizeHandle,
             scale,
             stageDeltaX,
             stageDeltaY,
             startStageRect: session.startStageRect,
           });
           const snapResult =
-            moveEvent.altKey || !session.resizeCorner
+            moveEvent.altKey || !session.resizeHandle
               ? { rect: unsnappedRect, guides: [] }
-              : snapResizeRect(unsnappedRect, session.resizeCorner, session.snapTargets);
+              : snapResizeRect(unsnappedRect, session.resizeHandle, session.snapTargets);
 
           setTransientStageRect(snapResult.rect);
           setSnapGuides(snapResult.guides);
@@ -460,8 +460,8 @@ function useBlockManipulation({
     beginMove: (event, targetElementId) => {
       beginManipulation("move", event, null, targetElementId);
     },
-    beginResize: (corner, event) => {
-      beginManipulation("resize", event, corner);
+    beginResize: (position, event) => {
+      beginManipulation("resize", event, position);
     },
     beginRotate: (event) => {
       beginManipulation("rotate", event);
