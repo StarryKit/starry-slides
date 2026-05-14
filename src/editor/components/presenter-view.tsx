@@ -43,6 +43,7 @@ function PresenterView({ slides, startSlideId, onExit }: PresenterViewProps) {
   const inkPathRef = useRef<{ color: string; points: string } | null>(null);
   const hideTimerRef = useRef<number | null>(null);
   const previousActiveIndexRef = useRef(activeIndex);
+  const onKeyDownRef = useRef<((event: KeyboardEvent) => void) | null>(null);
 
   const presentationSlides = useMemo(() => planPresentationSlides(slides), [slides]);
 
@@ -239,33 +240,38 @@ function PresenterView({ slides, startSlideId, onExit }: PresenterViewProps) {
     };
 
     window.addEventListener("keydown", onKeyDown, { capture: true });
+    onKeyDownRef.current = onKeyDown;
     return () => window.removeEventListener("keydown", onKeyDown, { capture: true });
   }, [clearInk, onExit, presentationSlides.length, showToolbar, tool]);
 
   useEffect(() => {
-    if (!activeSlide) {
-      return;
-    }
+    if (!activeSlide) return;
 
     const iframe = frameRef.current?.querySelector<HTMLIFrameElement>(
       "[data-testid='presenter-slide-iframe']"
     );
     if (iframe) {
-      const keydownForwarder = `<script>window.addEventListener("keydown",function(e){window.parent.postMessage({t:"pk",k:e.key},"*")})</script>`;
-      iframe.srcdoc = injectBaseTag(activeSlide.htmlSource, activeSlide.sourceFile) + keydownForwarder;
+      iframe.srcdoc = injectBaseTag(activeSlide.htmlSource, activeSlide.sourceFile);
     }
   }, [activeSlide]);
 
-  // Forward keyboard events from the iframe to the parent handler
+  // Forward keydown events from the slide iframe to the presenter navigation
+  // handler.  page.keyboard.press() dispatches to the focused element, which
+  // may be inside the iframe — a separate browsing context whose events don't
+  // bubble to the parent window's capture-phase listener.
   useEffect(() => {
-    const onMessage = (event: MessageEvent) => {
-      if (event.data?.t === "pk") {
-        window.dispatchEvent(new KeyboardEvent("keydown", { key: event.data.k, bubbles: true }));
-      }
+    const iframe = frameRef.current?.querySelector<HTMLIFrameElement>(
+      "[data-testid='presenter-slide-iframe']"
+    );
+    const iframeWindow = iframe?.contentWindow;
+    if (!iframeWindow) return;
+
+    const forwardKeyDown = (event: KeyboardEvent) => {
+      onKeyDownRef.current?.(event);
     };
-    window.addEventListener("message", onMessage);
-    return () => window.removeEventListener("message", onMessage);
-  }, []);
+    iframeWindow.addEventListener("keydown", forwardKeyDown);
+    return () => iframeWindow.removeEventListener("keydown", forwardKeyDown);
+  }, [activeSlide]);
 
   if (!activeSlide) {
     return null;
