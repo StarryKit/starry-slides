@@ -561,17 +561,17 @@ test("text editing hides editor chrome and suppresses inline editing outline", a
 
   const frame = coverFrame(page);
   const editableHeading = frame.locator('[data-editable-id="text-1"]');
-  const { floatingToolbarAnchor } = getHeaderControls(page);
+  const { toolbarAnchor } = getHeaderControls(page);
   const { selectionOverlay } = getHistoryControls(page);
 
   await editableHeading.dblclick();
 
   await expect(selectionOverlay).toBeHidden();
-  await expect(floatingToolbarAnchor).toBeVisible();
+  await expect(toolbarAnchor).toBeVisible();
   // During text editing the toolbar anchor stays visible (layout stability)
   // but shows an empty spacer, not "Select element to edit" — that text only
   // appears when nothing is selected (toolbarKey === null).
-  await expect(floatingToolbarAnchor.getByText("Select element to edit")).toBeHidden();
+  await expect(toolbarAnchor.getByText("Select element to edit")).toBeHidden();
   await expect(editableHeading).toHaveAttribute("data-hse-editing", "true");
   await expect(editableHeading).toHaveJSProperty("contentEditable", "plaintext-only");
   await expect(editableHeading).toHaveCSS("outline-style", "none");
