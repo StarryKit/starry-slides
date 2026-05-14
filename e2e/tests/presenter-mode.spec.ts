@@ -48,7 +48,15 @@ test("editor Present mode supports navigation laser pen color and exit", async (
   await expect(
     page.frameLocator('[data-testid="presenter-slide-iframe"]').locator("body")
   ).toContainText("Agenda");
+<<<<<<< HEAD
   await page.getByRole("button", { name: "Next slide" }).click();
+=======
+  await page.evaluate(() =>
+    document.body.dispatchEvent(
+      new KeyboardEvent("keydown", { key: "ArrowDown", bubbles: true })
+    )
+  );
+>>>>>>> fix: dispatch ArrowDown on document.body instead of window
   await expect(toolbar).toContainText(pageNumber(3));
 
   await page.waitForTimeout(1700);
