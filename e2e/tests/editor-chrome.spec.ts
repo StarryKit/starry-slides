@@ -198,14 +198,18 @@ test("sidebar context menu adds slides above and below the clicked slide", async
 
   await expect(page.getByText(`${REGRESSION_DECK_SLIDE_COUNT + 1} slides`)).toBeVisible();
   await expect(page.getByLabel("Slide 2")).toHaveAttribute("aria-current", "true");
-  await expect(coverFrame(page).locator('[data-editable-id="text-1"]')).toHaveText("Untitled Slide");
+  await expect(coverFrame(page).locator('[data-editable-id="text-1"]')).toHaveText(
+    "Untitled Slide"
+  );
 
   await page.getByTestId("slide-card").nth(3).click({ button: "right" });
   await page.getByRole("menu", { name: "Slide actions" }).getByText("Add Slide Below").click();
 
   await expect(page.getByText(`${REGRESSION_DECK_SLIDE_COUNT + 2} slides`)).toBeVisible();
   await expect(page.getByLabel("Slide 5")).toHaveAttribute("aria-current", "true");
-  await expect(coverFrame(page).locator('[data-editable-id="text-1"]')).toHaveText("Untitled Slide");
+  await expect(coverFrame(page).locator('[data-editable-id="text-1"]')).toHaveText(
+    "Untitled Slide"
+  );
 });
 
 test("sidebar context menu renames a slide and persists after refresh", async ({ page }) => {
@@ -261,7 +265,9 @@ test("sidebar slide actions add duplicate hide and delete slides", async ({ page
 
   await expect(page.getByText(`${REGRESSION_DECK_SLIDE_COUNT + 1} slides`)).toBeVisible();
   await expect(page.getByLabel("Slide 3")).toHaveAttribute("aria-current", "true");
-  await expect(coverFrame(page).locator('[data-editable-id="text-1"]')).toHaveText("Untitled Slide");
+  await expect(coverFrame(page).locator('[data-editable-id="text-1"]')).toHaveText(
+    "Untitled Slide"
+  );
 
   const newSlideCard = page.getByTestId("slide-card").nth(2);
   await newSlideCard.click({ button: "right" });
@@ -289,46 +295,86 @@ test("sidebar slide actions add duplicate hide and delete slides", async ({ page
   );
 });
 
-test("Backspace deletes the selected sidebar slide", async ({ page }) => {
+test("sidebar Backspace removes the selected slide and focuses the fallback slide", async ({
+  page,
+}) => {
   await gotoEditor(page);
+
+  const slideTwoTitleLabel = await page
+    .getByRole("button", { name: /Slide title:/ })
+    .nth(1)
+    .getAttribute("aria-label");
+  const slideThreeTitleLabel = await page
+    .getByRole("button", { name: /Slide title:/ })
+    .nth(2)
+    .getAttribute("aria-label");
 
   await page.getByLabel("Slide 2").click();
   await expect(page.getByLabel("Slide 2")).toHaveAttribute("aria-current", "true");
-
-  await page.getByTestId("slide-sidebar").press("Backspace");
-
-  await expect(page.getByText(`${REGRESSION_DECK_SLIDE_COUNT - 1} slides`)).toBeVisible();
-  await expect(page.getByLabel("Slide 1")).toHaveAttribute("aria-current", "true");
-});
-
-test("Delete key deletes the selected sidebar slide", async ({ page }) => {
-  await gotoEditor(page);
-
-  await page.getByLabel("Slide 3").click();
-  await expect(page.getByLabel("Slide 3")).toHaveAttribute("aria-current", "true");
-
-  await page.getByTestId("slide-sidebar").press("Delete");
+  await page.keyboard.press("Backspace");
 
   await expect(page.getByText(`${REGRESSION_DECK_SLIDE_COUNT - 1} slides`)).toBeVisible();
   await expect(page.getByLabel("Slide 2")).toHaveAttribute("aria-current", "true");
+  await expect(page.getByRole("button", { name: /Slide title:/ }).nth(1)).toHaveAttribute(
+    "aria-label",
+    slideThreeTitleLabel ?? ""
+  );
+  await expect(page.getByRole("button", { name: slideTwoTitleLabel ?? "" })).toHaveCount(0);
+  await expect(page.getByLabel("Slide 2")).toBeFocused();
 });
 
-test("keyboard slide deletion is blocked when only one slide remains", async ({ page }) => {
+test("sidebar Delete removes the selected slide", async ({ page }) => {
   await gotoEditor(page);
 
-  for (let i = REGRESSION_DECK_SLIDE_COUNT; i > 1; i--) {
-    const card = page.getByTestId("slide-card").last();
-    await card.click({ button: "right" });
-    await page.getByRole("menu", { name: "Slide actions" }).getByText("Delete").click();
+  const slideTwoTitleLabel = await page
+    .getByRole("button", { name: /Slide title:/ })
+    .nth(1)
+    .getAttribute("aria-label");
+  const slideThreeTitleLabel = await page
+    .getByRole("button", { name: /Slide title:/ })
+    .nth(2)
+    .getAttribute("aria-label");
+
+  await page.getByLabel("Slide 2").click();
+  await page.keyboard.press("Delete");
+
+  await expect(page.getByText(`${REGRESSION_DECK_SLIDE_COUNT - 1} slides`)).toBeVisible();
+  await expect(page.getByLabel("Slide 2")).toHaveAttribute("aria-current", "true");
+  await expect(page.getByRole("button", { name: /Slide title:/ }).nth(1)).toHaveAttribute(
+    "aria-label",
+    slideThreeTitleLabel ?? ""
+  );
+  await expect(page.getByRole("button", { name: slideTwoTitleLabel ?? "" })).toHaveCount(0);
+});
+
+test("sidebar keyboard deletion leaves the final slide intact", async ({ page }) => {
+  await gotoEditor(page);
+
+  while ((await page.getByTestId("slide-card").count()) > 1) {
+    await page.getByLabel("Slide 1", { exact: true }).click();
+    await page.keyboard.press("Backspace");
   }
 
   await expect(page.getByText("1 slides")).toBeVisible();
+  await expect(page.getByLabel("Slide 1", { exact: true })).toHaveAttribute("aria-current", "true");
 
-  await page.getByTestId("slide-sidebar").press("Backspace");
+  await page.keyboard.press("Delete");
   await expect(page.getByText("1 slides")).toBeVisible();
+  await expect(page.getByTestId("slide-card")).toHaveCount(1);
+});
 
-  await page.getByTestId("slide-sidebar").press("Delete");
-  await expect(page.getByText("1 slides")).toBeVisible();
+test("canvas element deletion still works after sidebar focus moves away", async ({ page }) => {
+  await gotoEditor(page);
+
+  await page.getByLabel("Slide 2").click();
+  const frame = coverFrame(page);
+  const agendaTitle = frame.locator('[data-editable-id="text-6"]');
+  await agendaTitle.click();
+
+  await page.keyboard.press("Backspace");
+
+  await expect(agendaTitle).toBeHidden();
+  await expect(page.getByText(`${REGRESSION_DECK_SLIDE_COUNT} slides`)).toBeVisible();
 });
 
 test("sidebar drag reorder persists slide order after refresh", async ({ page }) => {

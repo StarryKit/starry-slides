@@ -103,13 +103,13 @@ function useEditorSlideActions({
       },
       deleteSlide: (slideId: string) => {
         if (slides.length <= 1) {
-          return;
+          return false;
         }
 
         const index = slides.findIndex((slide) => slide.id === slideId);
         const slide = slides[index];
         if (!slide) {
-          return;
+          return false;
         }
 
         const fallbackSlide = slides[index + 1] ?? slides[index - 1] ?? slides[0];
@@ -123,6 +123,7 @@ function useEditorSlideActions({
           onActiveSlideChange(fallbackSlide?.id ?? "");
         }
         onClearSelection();
+        return true;
       },
       toggleSlideHidden: (slideId: string) => {
         const slide = slides.find((item) => item.id === slideId);

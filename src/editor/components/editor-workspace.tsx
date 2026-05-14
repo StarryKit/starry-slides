@@ -55,6 +55,7 @@ interface EditorWorkspaceProps {
   onPresent: () => void;
   onExitPresenting: () => void;
   onSelectSlide: (slideId: string) => void;
+  onSidebarSlideFocusChange: (isFocused: boolean) => void;
   onAddSlide: () => void;
   onAddSlideAbove: (slideId: string) => void;
   onAddSlideBelow: (slideId: string) => void;
@@ -132,6 +133,7 @@ function EditorWorkspace({
   onPresent,
   onExitPresenting,
   onSelectSlide,
+  onSidebarSlideFocusChange,
   onAddSlide,
   onAddSlideAbove,
   onAddSlideBelow,
@@ -194,6 +196,7 @@ function EditorWorkspace({
               slideCount={slides.length}
               thumbnails={thumbnails}
               onSelectSlide={onSelectSlide}
+              onSlideFocusChange={onSidebarSlideFocusChange}
               onAdd={onAddSlide}
               onAddSlideAbove={onAddSlideAbove}
               onAddSlideBelow={onAddSlideBelow}
