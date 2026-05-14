@@ -48,6 +48,7 @@ test("editor Present mode supports navigation laser pen color and exit", async (
   await expect(
     page.frameLocator('[data-testid="presenter-slide-iframe"]').locator("body")
   ).toContainText("Agenda");
+  await toolbar.click(); // ensure parent window focus before keyboard nav
   await page.keyboard.press("ArrowDown");
   await expect(toolbar).toContainText(pageNumber(3));
 
