@@ -48,11 +48,7 @@ test("editor Present mode supports navigation laser pen color and exit", async (
   await expect(
     page.frameLocator('[data-testid="presenter-slide-iframe"]').locator("body")
   ).toContainText("Agenda");
-  await page.evaluate(() =>
-    document.body.dispatchEvent(
-      new KeyboardEvent("keydown", { key: "ArrowDown", bubbles: true })
-    )
-  );
+  await page.getByRole("button", { name: "Next slide" }).click();
   await expect(toolbar).toContainText(pageNumber(3));
 
   await page.waitForTimeout(1700);
