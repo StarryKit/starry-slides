@@ -30,6 +30,7 @@ function FloatingToolbar({
   isSelectedElementLocked,
   attributeValues,
   onStyleChange,
+  onStyleChanges,
   onStylePreview,
   onAttributeChange,
   onAlignToSlide,
@@ -206,8 +207,10 @@ function FloatingToolbar({
           "background-color": nextValue,
           "background-image": "",
         }));
-        onStyleChange("background-color", nextValue);
-        onStyleChange("background-image", "");
+        onStyleChanges([
+          { propertyName: "background-color", nextValue },
+          { propertyName: "background-image", nextValue: "" },
+        ]);
       }
       return;
     }
@@ -283,7 +286,7 @@ function FloatingToolbar({
   function getCurrentValue(feature: ElementToolFeature) {
     if (feature.id === "background-color") {
       const optimisticBackgroundImage = optimisticStyles["background-image"];
-      if (optimisticBackgroundImage?.trim().startsWith("linear-gradient")) {
+      if ((optimisticBackgroundImage ?? "").trim().startsWith("linear-gradient")) {
         return optimisticBackgroundImage;
       }
 
