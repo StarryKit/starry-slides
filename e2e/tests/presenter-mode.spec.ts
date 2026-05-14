@@ -48,7 +48,12 @@ test("editor Present mode supports navigation laser pen color and exit", async (
   await expect(
     page.frameLocator('[data-testid="presenter-slide-iframe"]').locator("body")
   ).toContainText("Agenda");
-  await page.keyboard.press("ArrowDown");
+  // page.keyboard.press() dispatches to the iframe when it has focus,
+  // and keyboard events don't cross frame boundaries. Dispatch directly
+  // on the parent window to test the presenter keydown handler.
+  await page.evaluate(() =>
+    window.dispatchEvent(new KeyboardEvent("keydown", { key: "ArrowDown", bubbles: true }))
+  );
   await expect(toolbar).toContainText(pageNumber(3));
 
   await page.waitForTimeout(1700);
