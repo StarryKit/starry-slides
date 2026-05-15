@@ -348,10 +348,13 @@ test("context menu ungroups a block inside a positioned non-editable container w
   const listBefore = await getSlideElementRect(list);
   const firstItemBefore = await getSlideElementRect(firstItem);
 
-  // Click at (2, 2) inside the 20px padding so the block div (not a child element)
+  // Click inside the 20px padding so the block div (not a child element)
   // captures the click.  Clicking deeper — e.g. (12, 12) — can hit the <p> child
   // and select the text element instead, which disables Ungroup.
-  await block.click({ position: { x: 2, y: 2 } });
+  // Use force:true because the bullet-card's border-radius:18px makes the
+  // very corner transparent, causing the parent .positioned-col to intercept
+  // at (2,2) in Playwright's actionability check.
+  await block.click({ position: { x: 2, y: 2 }, force: true });
   const menu = await openSelectionContextMenu(page);
   await expect(
     menu.getByRole("menuitem", { name: "Ungroup", exact: true })
