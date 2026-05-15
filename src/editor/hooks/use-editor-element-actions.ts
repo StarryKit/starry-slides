@@ -281,8 +281,8 @@ function useEditorElementActions({
           const parentStyle = getComputedStyle(positionedAncestor);
           const borderLeft = parseFloat(parentStyle.borderLeftWidth) || 0;
           const borderTop = parseFloat(parentStyle.borderTopWidth) || 0;
-          const offsetX = parentBCR.left - rootRect.left - borderLeft;
-          const offsetY = parentBCR.top - rootRect.top - borderTop;
+          const offsetX = parentBCR.left - rootRect.left + borderLeft;
+          const offsetY = parentBCR.top - rootRect.top + borderTop;
           // Skip when offset is zero — this is the slide-container / root-edge
           // case where the fallback (getEditableAncestorRect → {0,0}) is identical.
           if (offsetX !== 0 || offsetY !== 0) {
