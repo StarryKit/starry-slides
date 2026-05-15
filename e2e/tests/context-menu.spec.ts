@@ -14,7 +14,8 @@ import {
 async function openSelectionContextMenu(page: Page) {
   const overlay = page.getByTestId("selection-overlay");
   await expect(overlay).toBeVisible();
-  await overlay.click({ button: "right" });
+  // Click near the top-left to avoid resize handles (z-[5] > z-[3]).
+  await overlay.click({ button: "right", position: { x: 20, y: 20 } });
   const menu = page.getByRole("menu", { name: "Selection actions" });
   await expect(menu).toBeVisible();
   return menu;
