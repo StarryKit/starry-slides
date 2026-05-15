@@ -18,6 +18,7 @@ import { copyDirectory, resetDirectory, slugify, splitPoints } from "./regressio
 import {
   buildBlockFlattenSlide,
   buildGroupGeometrySlide,
+  buildPositionedUngroupSlide,
   buildSnapCenterSlide,
   buildSnapSiblingSlide,
 } from "./regression-deck/snap-slides.mjs";
@@ -135,6 +136,11 @@ const slides = [
     file: "17-deck-local-image.html",
     title: "Deck-local image fixture",
     html: buildDeckLocalImageSlide(),
+  },
+  {
+    file: "18-positioned-ungroup.html",
+    title: "Positioned ungroup fixture",
+    html: buildPositionedUngroupSlide(),
   },
 ];
 

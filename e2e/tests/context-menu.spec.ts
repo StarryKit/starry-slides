@@ -322,6 +322,63 @@ test("context menu ungroups a card with list bullets without moving the list", a
     .toContain("problem-card");
 });
 
+test("context menu ungroups a block inside a positioned non-editable container without shifting children", async ({
+  page,
+}) => {
+  await gotoEditor(page);
+  await page.getByLabel("Slide 18").click();
+
+  const frame = coverFrame(page);
+  const block = frame.locator('[data-editable-id="positioned-block"]');
+  const label = block.locator('[data-editable-id="positioned-label"]');
+  const list = block.locator("ul");
+  const firstItem = list.locator("li").nth(0);
+
+  await expect(block).toBeVisible();
+  await expect(list).toBeVisible();
+
+  const blockBefore = await getSlideElementRect(block);
+  const labelBefore = await getSlideElementRect(label);
+  const listBefore = await getSlideElementRect(list);
+  const firstItemBefore = await getSlideElementRect(firstItem);
+
+  await block.click({ position: { x: 12, y: 12 } });
+  const menu = await openSelectionContextMenu(page);
+  await expect(
+    menu.getByRole("menuitem", { name: "Ungroup", exact: true })
+  ).not.toHaveAttribute("data-disabled", "");
+  await menu.getByRole("menuitem", { name: "Ungroup", exact: true }).click();
+
+  // After ungroup, the block is gone; children are promoted to the positioned-col container.
+  // The list wrapper gets promoted as an editable block.
+  const promotedLabel = frame.locator('[data-editable-id="positioned-label"]');
+  const promotedList = frame.locator('ul[data-editable="block"]').first();
+  const promotedFirstItem = promotedList.locator("li").nth(0);
+
+  await expect(promotedLabel).toBeVisible();
+  await expect(promotedList).toBeVisible();
+
+  // Verify children stay in the parent container (not the slide root)
+  await expect
+    .poll(async () =>
+      promotedList.evaluate(
+        (node) => node.parentElement?.className === "positioned-col"
+      )
+    )
+    .toBe(true);
+
+  // Verify positions are unchanged
+  await expectSameRect(promotedLabel, labelBefore);
+  await expectSameRect(promotedList, listBefore);
+  await expectSameRect(promotedFirstItem, firstItemBefore);
+
+  // Undo should restore the block
+  await page.keyboard.press(`${MODIFIER}+Z`);
+  await expect
+    .poll(async () => block.evaluate((node) => node.parentElement?.className))
+    .toContain("positioned-col");
+});
+
 test("context menu distributes three selected snap cards horizontally", async ({ page }) => {
   await gotoEditor(page);
   await page.getByLabel("Slide 12").click();

@@ -417,7 +417,12 @@ export function createGroupUngroupOperation({
   }
 
   const parent = groupNode.parentElement;
-  const parentRect = getEditableAncestorRect(groupNode, elementRects);
+  const groupAbsoluteRect = getAbsoluteNodeRect(groupNode, elementRects);
+  const groupNodeRect = getNodeRect(groupNode);
+  const parentRect = {
+    x: groupAbsoluteRect.x - groupNodeRect.x,
+    y: groupAbsoluteRect.y - groupNodeRect.y,
+  };
   const isGroup = isPersistedGroupNode(groupNode) && isStructuralGroup(groupNode);
   const normalizedChildren = isGroup
     ? structuralGroupChildren(groupNode, doc)

@@ -330,3 +330,75 @@ export function buildBlockFlattenSlide() {
     `
   );
 }
+
+export function buildPositionedUngroupSlide() {
+  return wrapHtml(
+    `${baseStyles("linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 52%, #f0fdf4 100%)")}
+    .stage-label {
+      position: absolute;
+      left: 96px;
+      top: 72px;
+      display: grid;
+      gap: 14px;
+    }
+    .stage-label .kicker {
+      width: fit-content;
+      background: rgba(2, 132, 199, 0.12);
+      color: #0284c7;
+    }
+    .stage-label h1 {
+      max-width: 960px;
+      font-size: 62px;
+      line-height: 1;
+      letter-spacing: -0.03em;
+    }
+    .positioned-col {
+      position: relative;
+      left: 280px;
+      top: 340px;
+      width: 800px;
+      border-radius: 28px;
+      padding: 36px;
+      background: rgba(255, 255, 255, 0.86);
+      border: 1px solid rgba(148, 163, 184, 0.24);
+      box-shadow: 0 18px 48px rgba(30, 41, 59, 0.1);
+    }
+    .bullet-card {
+      padding: 20px;
+      border-radius: 18px;
+      background: rgba(248, 250, 252, 0.9);
+    }
+    .bullet-card .bullet-label {
+      margin-bottom: 12px;
+      font-size: 22px;
+      font-weight: 600;
+      color: #0f172a;
+    }
+    .bullet-card ul {
+      margin: 0;
+      padding-left: 22px;
+      color: rgba(51, 65, 85, 0.82);
+      font-size: 18px;
+      line-height: 1.6;
+    }`,
+    `
+      <section class="stage-label">
+        <div class="kicker" data-editable="text">Positioned ungroup fixture</div>
+        <h1 data-editable="text">Block inside a positioned non-editable container for ungroup stability tests</h1>
+      </section>
+      <div class="positioned-col">
+        <div class="bullet-card" data-editable="block" data-editable-id="positioned-block">
+          <p class="bullet-label" data-editable="text" data-editable-id="positioned-label">
+            The quality gap comes from context:
+          </p>
+          <ul>
+            <li data-editable="text" data-editable-id="positioned-bullet-1">Docs</li>
+            <li data-editable="text" data-editable-id="positioned-bullet-2">Reference Links</li>
+            <li data-editable="text" data-editable-id="positioned-bullet-3">Brand Assets</li>
+            <li data-editable="text" data-editable-id="positioned-bullet-4">Project-Specific Knowledge</li>
+          </ul>
+        </div>
+      </div>
+    `
+  );
+}
