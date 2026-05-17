@@ -14,6 +14,7 @@ function readJson(filePath: string) {
     types?: string;
     exports?: Record<string, unknown>;
     dependencies?: Record<string, string>;
+    devDependencies?: Record<string, string>;
     peerDependencies?: Record<string, string>;
     files?: string[];
     bin?: Record<string, string>;
@@ -100,7 +101,12 @@ describe("workspace package boundaries", () => {
     expect(pkg.name).toBe("starry-slides");
     expect(pkg.bin).toMatchObject({ "starry-slides": "dist/cli/index.js" });
     expect(pkg.files).toEqual(expect.arrayContaining(["dist", "skills", "README.md", "LICENSE"]));
-    expect(pkg.dependencies).toMatchObject({
+    for (const [name, version] of Object.entries(pkg.dependencies ?? {})) {
+      expect(version, `${name} must be publishable by npm`).not.toMatch(/^workspace:/);
+    }
+    expect(pkg.dependencies ?? {}).not.toHaveProperty("@starrykit/slides-core");
+    expect(pkg.dependencies ?? {}).not.toHaveProperty("@starrykit/slides-editor");
+    expect(pkg.devDependencies).toMatchObject({
       "@starrykit/slides-core": "workspace:*",
       "@starrykit/slides-editor": "workspace:*",
     });

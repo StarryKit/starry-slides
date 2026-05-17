@@ -11,12 +11,6 @@ importers:
       '@playwright/test':
         specifier: ^1.54.2
         version: 1.59.1
-      '@starrykit/slides-core':
-        specifier: workspace:*
-        version: link:packages/slides-core
-      '@starrykit/slides-editor':
-        specifier: workspace:*
-        version: link:packages/slides-editor
       class-variance-authority:
         specifier: ^0.7.1
         version: 0.7.1
@@ -57,6 +51,12 @@ importers:
       '@biomejs/biome':
         specifier: ^1.9.4
         version: 1.9.4
+      '@starrykit/slides-core':
+        specifier: workspace:*
+        version: link:packages/slides-core
+      '@starrykit/slides-editor':
+        specifier: workspace:*
+        version: link:packages/slides-editor
       '@tailwindcss/cli':
         specifier: ^4.2.4
         version: 4.2.4
