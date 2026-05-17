@@ -41,11 +41,7 @@ export const cyan = (text: string) => style(text, 96);
 export const brightWhite = (text: string) => style(text, 97);
 
 /** Draw a text label inside a coloured box line (top / middle / bottom). */
-export function boxLine(
-  edge: "top" | "mid" | "bottom",
-  content: string,
-  colourCode = 93,
-): string {
+export function boxLine(edge: "top" | "mid" | "bottom", content: string, colourCode = 93): string {
   const width = 60;
   const inner = width - 2;
   const pad = Math.max(0, inner - visibleLength(content));
@@ -61,7 +57,8 @@ export function boxLine(
 
 /** Strip ANSI codes to compute visible string length. */
 function visibleLength(text: string): number {
-  return text.replace(/\x1b\[[0-9;]*m/g, "").length;
+  const escapeCharacter = String.fromCharCode(27);
+  return text.replace(new RegExp(`${escapeCharacter}\\[[0-9;]*m`, "g"), "").length;
 }
 
 // ── Commander error output transformation ──────────────────────────
@@ -86,7 +83,7 @@ export function transformCommanderErrorOutput(raw: string): string {
         `${dim("→")} ${bold("Tip:")} run ${bold("starry-slides help <command>")} to see usage.\n`,
         "",
       ].join("\n");
-    },
+    }
   );
 
   // "unknown option '--flag'"
@@ -98,7 +95,7 @@ export function transformCommanderErrorOutput(raw: string): string {
         `${dim("→")} ${bold("Tip:")} run ${bold("starry-slides help <command>")} to see available options.\n`,
         "",
       ].join("\n");
-    },
+    }
   );
 
   // "error: unknown option '--flag'" (showHelpAfterError path)
@@ -110,20 +107,17 @@ export function transformCommanderErrorOutput(raw: string): string {
         `${dim("→")} ${bold("Tip:")} run ${bold("starry-slides help <command>")} to see available options.\n`,
         "",
       ].join("\n");
-    },
+    }
   );
 
   // "too many arguments"
-  transformed = transformed.replace(
-    /^too many arguments\n?/m,
-    () => {
-      return [
-        `${red("✖ Too many arguments:")} unexpected extra arguments were provided.`,
-        `${dim("→")} ${bold("Tip:")} run ${bold("starry-slides help")} to see usage.\n`,
-        "",
-      ].join("\n");
-    },
-  );
+  transformed = transformed.replace(/^too many arguments\n?/m, () => {
+    return [
+      `${red("✖ Too many arguments:")} unexpected extra arguments were provided.`,
+      `${dim("→")} ${bold("Tip:")} run ${bold("starry-slides help")} to see usage.\n`,
+      "",
+    ].join("\n");
+  });
 
   // "error: missing required argument '...'"
   transformed = transformed.replace(
@@ -134,20 +128,17 @@ export function transformCommanderErrorOutput(raw: string): string {
         `${dim("→")} ${bold("Tip:")} run ${bold("starry-slides help <command>")} to see usage.\n`,
         "",
       ].join("\n");
-    },
+    }
   );
 
   // "error: too many arguments" (with error: prefix, from showHelpAfterError path)
-  transformed = transformed.replace(
-    /^error: too many arguments.*\n?/m,
-    () => {
-      return [
-        `${red("✖ Too many arguments:")} unexpected extra arguments were provided.`,
-        `${dim("→")} ${bold("Tip:")} run ${bold("starry-slides help")} to see usage.\n`,
-        "",
-      ].join("\n");
-    },
-  );
+  transformed = transformed.replace(/^error: too many arguments.*\n?/m, () => {
+    return [
+      `${red("✖ Too many arguments:")} unexpected extra arguments were provided.`,
+      `${dim("→")} ${bold("Tip:")} run ${bold("starry-slides help")} to see usage.\n`,
+      "",
+    ].join("\n");
+  });
 
   return transformed;
 }
@@ -163,13 +154,17 @@ const BOX_H = "─";
 export function formatUpdateBanner(
   currentVersion: string,
   latestVersion: string,
-  upgradeCommand: string,
+  upgradeCommand: string
 ): string {
   const width = 54;
   const banner = [
     "",
     boxLine("top", "", 93),
-    boxLine("mid", `  ${bold("✨ Update available!")}  ${dim(`v${currentVersion}  →  v${latestVersion}`)}`, 93),
+    boxLine(
+      "mid",
+      `  ${bold("✨ Update available!")}  ${dim(`v${currentVersion}  →  v${latestVersion}`)}`,
+      93
+    ),
     boxLine("mid", "", 93),
     boxLine("mid", `  ${dim("Upgrade:")} ${bold(upgradeCommand)}`, 93),
     boxLine("bottom", "", 93),

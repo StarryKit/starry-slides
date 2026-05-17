@@ -5,7 +5,11 @@
     "emitDeclarationOnly": true,
     "noEmit": false,
     "outDir": "dist",
-    "rootDir": "src"
+    "rootDir": "src",
+    "paths": {
+      "@starrykit/slides-core": ["packages/slides-core/dist/index.d.ts"],
+      "@starrykit/slides-editor": ["packages/slides-editor/dist/index.d.ts"]
+    }
   },
   "include": ["src"],
   "exclude": ["src/**/*.test.ts"]

@@ -1,14 +1,13 @@
 import fs from "node:fs";
 import path from "node:path";
-import { JSDOM, VirtualConsole } from "jsdom";
 import {
   DEFAULT_SLIDE_HEIGHT,
   DEFAULT_SLIDE_WIDTH,
-  SELECTOR_ATTR,
   getElementId,
   parseFixedPixelDimension,
   readBodyStyleValueFromHtmlSource,
-} from "./slide-contract";
+} from "@starrykit/slides-core";
+import { JSDOM, VirtualConsole } from "jsdom";
 
 export type VerifyMode = "static" | "complete";
 export type VerifyCheck = "structure" | "static-overflow" | "rendered-overflow";
@@ -151,16 +150,16 @@ function validateSlideHtml(_filePath: string, slideFile: string, html: string): 
     if (!["text", "image", "block"].includes(editableType)) {
       issues.push(
         issue(
-            "error",
-            "structure.invalid-editable",
-            `invalid data-editable value "${editableType}" on <${node.tagName.toLowerCase()}>`,
-            {
-              slideFile,
-              selector: getElementId(node) ?? undefined,
-            }
-          )
-        );
-      }
+          "error",
+          "structure.invalid-editable",
+          `invalid data-editable value "${editableType}" on <${node.tagName.toLowerCase()}>`,
+          {
+            slideFile,
+            selector: getElementId(node) ?? undefined,
+          }
+        )
+      );
+    }
   }
 
   return issues;
@@ -175,7 +174,10 @@ function validateStaticOverflow(_filePath: string, slideFile: string, html: stri
   const { document } = dom.window;
   const issues: VerifyIssue[] = [];
   const root = document.body;
-  const candidates = [root, ...Array.from(document.querySelectorAll<HTMLElement>("[data-editable]"))];
+  const candidates = [
+    root,
+    ...Array.from(document.querySelectorAll<HTMLElement>("[data-editable]")),
+  ];
 
   for (const node of candidates) {
     const isRoot = node === root;
@@ -199,12 +201,17 @@ function validateStaticOverflow(_filePath: string, slideFile: string, html: stri
     }
 
     issues.push(
-      issue("error", isRoot ? "overflow.root-static" : "overflow.static", isRoot
-        ? "slide root must not allow visible or scrolling overflow"
-        : "explicit scrolling overflow is not allowed", {
-        slideFile,
-        selector: isRoot ? "body" : (getElementId(node) ?? undefined),
-      })
+      issue(
+        "error",
+        isRoot ? "overflow.root-static" : "overflow.static",
+        isRoot
+          ? "slide root must not allow visible or scrolling overflow"
+          : "explicit scrolling overflow is not allowed",
+        {
+          slideFile,
+          selector: isRoot ? "body" : (getElementId(node) ?? undefined),
+        }
+      )
     );
   }
 

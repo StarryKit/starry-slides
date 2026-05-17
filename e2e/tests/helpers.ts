@@ -270,7 +270,10 @@ export async function createGroupFromSnapCards(
   await page.getByLabel("Slide 12").click();
   const frame = coverFrame(page);
 
-  await frame.locator(`[data-editable-id="${elementIds[0]}"]`).locator(".snap-drag-surface").click();
+  await frame
+    .locator(`[data-editable-id="${elementIds[0]}"]`)
+    .locator(".snap-drag-surface")
+    .click();
   for (const elementId of elementIds.slice(1)) {
     await frame
       .locator(`[data-editable-id="${elementId}"]`)

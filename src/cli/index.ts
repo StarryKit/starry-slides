@@ -1,20 +1,18 @@
 #!/usr/bin/env node
 
 import { Command, CommanderError, InvalidArgumentError } from "commander/esm.mjs";
+import { transformCommanderErrorOutput } from "./cli-output";
 import { registerDefaultOpen, registerOpenCommand } from "./commands/open";
 import { registerVerifyCommand } from "./commands/verify";
 import { registerViewCommand } from "./commands/view";
 import { notifyIfRuntimeUpdateAvailable } from "./runtime-updates";
-import { transformCommanderErrorOutput } from "./cli-output";
 
 function createProgram() {
   const program = new Command();
 
   program
     .name("starry-slides")
-    .description(
-      "Local-first CLI for verifying, previewing, and opening HTML slide decks.",
-    )
+    .description("Local-first CLI for verifying, previewing, and opening HTML slide decks.")
     .helpCommand("help [command]")
     .showHelpAfterError()
     .allowExcessArguments(false)
@@ -48,8 +46,6 @@ main().catch((error) => {
     return;
   }
 
-  process.stderr.write(
-    `${error instanceof Error ? error.message : String(error)}\n`,
-  );
+  process.stderr.write(`${error instanceof Error ? error.message : String(error)}\n`);
   process.exitCode = 1;
 });

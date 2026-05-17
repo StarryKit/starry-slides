@@ -15,10 +15,7 @@ type ParsedVersion = {
   prerelease: string[];
 };
 
-export function shouldCheckForRuntimeUpdates(
-  argv = process.argv.slice(2),
-  env = process.env,
-) {
+export function shouldCheckForRuntimeUpdates(argv = process.argv.slice(2), env = process.env) {
   if (env.STARRY_SLIDES_DISABLE_UPDATE_CHECK === "1") {
     return false;
   }
@@ -50,9 +47,7 @@ async function runRuntimeUpdateNotification() {
     return;
   }
 
-  process.stderr.write(
-    formatUpdateBanner(currentVersion, latestVersion, RUNTIME_UPDATE_COMMAND),
-  );
+  process.stderr.write(formatUpdateBanner(currentVersion, latestVersion, RUNTIME_UPDATE_COMMAND));
 }
 
 async function resolveLatestRuntimeVersion() {
@@ -135,10 +130,8 @@ function comparePrerelease(left: string[], right: string[]) {
 
     const leftNumber = Number(leftPart);
     const rightNumber = Number(rightPart);
-    const leftIsNumber =
-      Number.isInteger(leftNumber) && String(leftNumber) === leftPart;
-    const rightIsNumber =
-      Number.isInteger(rightNumber) && String(rightNumber) === rightPart;
+    const leftIsNumber = Number.isInteger(leftNumber) && String(leftNumber) === leftPart;
+    const rightIsNumber = Number.isInteger(rightNumber) && String(rightNumber) === rightPart;
 
     if (leftIsNumber && rightIsNumber && leftNumber !== rightNumber) {
       return leftNumber - rightNumber;

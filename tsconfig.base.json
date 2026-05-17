@@ -7,6 +7,11 @@
     "skipLibCheck": true,
     "moduleResolution": "Bundler",
     "allowImportingTsExtensions": false,
+    "baseUrl": ".",
+    "paths": {
+      "@starrykit/slides-core": ["packages/slides-core/src/index.ts"],
+      "@starrykit/slides-editor": ["packages/slides-editor/src/index.tsx"]
+    },
     "resolveJsonModule": true,
     "isolatedModules": true,
     "esModuleInterop": true,

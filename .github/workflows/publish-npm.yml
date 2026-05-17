@@ -109,6 +109,10 @@ jobs:
         if: steps.release.outputs.mode == 'publish'
         run: pnpm build
 
+      - name: Validate publish package
+        if: steps.release.outputs.mode == 'publish'
+        run: npm pack --dry-run
+
       - name: Commit release version
         if: steps.release.outputs.mode == 'release_pr'
         env:

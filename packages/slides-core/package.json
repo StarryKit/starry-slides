@@ -1,0 +1,20 @@
+{
+  "name": "@starrykit/slides-core",
+  "version": "0.1.23",
+  "description": "Slide contract, document model, validation, history, operations, and export-planning logic for Starry Slides.",
+  "license": "MIT",
+  "type": "module",
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": ["dist"],
+  "scripts": {
+    "build": "tsc -p tsconfig.json && tsup src/index.ts --format esm"
+  }
+}
