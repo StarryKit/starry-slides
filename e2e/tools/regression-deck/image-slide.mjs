@@ -271,3 +271,24 @@ export function buildDeckLocalImageSlide() {
     `
   );
 }
+
+export function buildThumbnailEdgeSlide() {
+  return wrapHtml(
+    `${baseStyles("#ffffff")}
+    .slide-container {
+      padding: 0;
+      background: #ffffff;
+    }
+    .thumbnail-marker {
+      position: absolute;
+      right: 0;
+      bottom: 0;
+      width: 240px;
+      height: 160px;
+      background: #ff00ff;
+    }`,
+    `
+      <div class="thumbnail-marker" data-testid="thumbnail-bottom-right-marker"></div>
+    `
+  );
+}
