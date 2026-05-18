@@ -55,6 +55,26 @@ jobs:
           echo "version=$(node -p "require('./package.json').version")" >> "$GITHUB_OUTPUT"
           echo "head_subject=$(git log -1 --pretty=%s)" >> "$GITHUB_OUTPUT"
 
+      - name: Validate package versions
+        run: |
+          node - <<'NODE'
+          const root = require("./package.json");
+          const core = require("./packages/slides-core/package.json");
+          const editor = require("./packages/slides-editor/package.json");
+          if (root.version !== core.version || root.version !== editor.version) {
+            throw new Error(`Package versions must stay locked: root=${root.version}, core=${core.version}, editor=${editor.version}`);
+          }
+          if (root.dependencies["@starrykit/slides-core"] !== root.version) {
+            throw new Error("Root package must depend on the locked @starrykit/slides-core version.");
+          }
+          if (root.dependencies["@starrykit/slides-editor"] !== root.version) {
+            throw new Error("Root package must depend on the locked @starrykit/slides-editor version.");
+          }
+          if (editor.dependencies["@starrykit/slides-core"] !== root.version) {
+            throw new Error("@starrykit/slides-editor must depend on the locked @starrykit/slides-core version.");
+          }
+          NODE
+
       - name: Read npm metadata
         id: npm
         run: |
@@ -64,13 +84,25 @@ jobs:
             echo "published=false" >> "$GITHUB_OUTPUT"
           fi
 
+          if npm view "@starrykit/slides-core@${{ steps.pkg.outputs.version }}" version >/dev/null 2>&1; then
+            echo "core_published=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "core_published=false" >> "$GITHUB_OUTPUT"
+          fi
+
+          if npm view "@starrykit/slides-editor@${{ steps.pkg.outputs.version }}" version >/dev/null 2>&1; then
+            echo "editor_published=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "editor_published=false" >> "$GITHUB_OUTPUT"
+          fi
+
           latest_version="$(npm view "${{ steps.pkg.outputs.name }}" dist-tags.latest 2>/dev/null || true)"
           echo "latest_version=$latest_version" >> "$GITHUB_OUTPUT"
 
       - name: Decide release action
         id: release
         run: |
-          if [ "${{ steps.npm.outputs.published }}" != "true" ]; then
+          if [ "${{ steps.npm.outputs.published }}" != "true" ] || [ "${{ steps.npm.outputs.core_published }}" != "true" ] || [ "${{ steps.npm.outputs.editor_published }}" != "true" ]; then
             echo "mode=publish" >> "$GITHUB_OUTPUT"
             echo "version=${{ steps.pkg.outputs.version }}" >> "$GITHUB_OUTPUT"
             exit 0
@@ -102,7 +134,7 @@ jobs:
       - name: Prepare release PR version
         if: steps.release.outputs.mode == 'release_pr'
         run: |
-          npm version "${{ steps.release.outputs.version }}" --no-git-tag-version
+          node scripts/sync-release-version.mjs "${{ steps.release.outputs.version }}"
           pnpm install --lockfile-only
 
       - name: Build package
@@ -111,7 +143,10 @@ jobs:
 
       - name: Validate publish package
         if: steps.release.outputs.mode == 'publish'
-        run: npm pack --dry-run
+        run: |
+          npm pack --dry-run
+          npm pack --dry-run --workspace @starrykit/slides-core
+          npm pack --dry-run --workspace @starrykit/slides-editor
 
       - name: Commit release version
         if: steps.release.outputs.mode == 'release_pr'
@@ -122,7 +157,7 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           branch="release/v${{ steps.release.outputs.version }}"
           git checkout -b "$branch"
-          git add package.json pnpm-lock.yaml
+          git add package.json packages/slides-core/package.json packages/slides-editor/package.json pnpm-lock.yaml
           git commit -m "chore(release): v${{ steps.release.outputs.version }}"
           git push origin "HEAD:$branch" --force
           # Close any existing PR for this branch
@@ -138,7 +173,10 @@ jobs:
 
       - name: Publish package
         if: steps.release.outputs.mode == 'publish'
-        run: npm publish --access public
+        run: |
+          npm publish --access public --workspace @starrykit/slides-core
+          npm publish --access public --workspace @starrykit/slides-editor
+          npm publish --access public
 
       - name: Skip publish
         if: steps.release.outputs.mode == 'skip'

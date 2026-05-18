@@ -50,6 +50,8 @@
     "verify": "pnpm lint && pnpm test && pnpm build && pnpm test:packaged-cli && pnpm test:e2e"
   },
   "dependencies": {
+    "@starrykit/slides-core": "0.1.23",
+    "@starrykit/slides-editor": "0.1.23",
     "@playwright/test": "^1.54.2",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
@@ -66,8 +68,6 @@
   },
   "devDependencies": {
     "@biomejs/biome": "^1.9.4",
-    "@starrykit/slides-core": "workspace:*",
-    "@starrykit/slides-editor": "workspace:*",
     "@tailwindcss/cli": "^4.2.4",
     "@tailwindcss/vite": "^4.2.4",
     "@types/jsdom": "^21.1.7",

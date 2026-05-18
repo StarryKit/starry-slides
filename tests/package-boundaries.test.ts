@@ -104,12 +104,12 @@ describe("workspace package boundaries", () => {
     for (const [name, version] of Object.entries(pkg.dependencies ?? {})) {
       expect(version, `${name} must be publishable by npm`).not.toMatch(/^workspace:/);
     }
-    expect(pkg.dependencies ?? {}).not.toHaveProperty("@starrykit/slides-core");
-    expect(pkg.dependencies ?? {}).not.toHaveProperty("@starrykit/slides-editor");
-    expect(pkg.devDependencies).toMatchObject({
-      "@starrykit/slides-core": "workspace:*",
-      "@starrykit/slides-editor": "workspace:*",
+    expect(pkg.dependencies).toMatchObject({
+      "@starrykit/slides-core": "0.1.23",
+      "@starrykit/slides-editor": "0.1.23",
     });
+    expect(pkg.devDependencies ?? {}).not.toHaveProperty("@starrykit/slides-core");
+    expect(pkg.devDependencies ?? {}).not.toHaveProperty("@starrykit/slides-editor");
 
     const skill = fs.readFileSync(path.join(repo, "skills/starry-slides/SKILL.md"), "utf8");
     expect(skill).toContain("npm install -g starry-slides");
