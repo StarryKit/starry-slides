@@ -258,7 +258,7 @@ test("sidebar context menu adds slides above and below the clicked slide", async
   await page.getByRole("menu", { name: "Slide actions" }).getByText("Add Slide Above").click();
 
   await expect(page.getByText(`${REGRESSION_DECK_SLIDE_COUNT + 1} slides`)).toBeVisible();
-  await expect(page.getByLabel("Slide 2")).toHaveAttribute("aria-current", "true");
+  await expect(page.getByLabel("Slide 2", { exact: true })).toHaveAttribute("aria-current", "true");
   await expect(coverFrame(page).locator('[data-editable-id="text-1"]')).toHaveText(
     "Untitled Slide"
   );
