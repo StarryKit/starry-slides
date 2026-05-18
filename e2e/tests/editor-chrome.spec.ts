@@ -101,7 +101,7 @@ test("header deck switcher loads another local manifest-backed deck", async ({ p
   await deckSwitchButton.click();
   const deckMenu = page.getByRole("menu", { name: "Local decks" });
   await expect(deckMenu).toBeVisible();
-  await expect(deckMenu.getByRole("menuitem", { name: /Import deck/ })).toBeVisible();
+  await expect(deckMenu.getByRole("menuitem", { name: /Open deck path/ })).toBeVisible();
   await expect(
     deckMenu.getByRole("menuitemradio", { name: /Starry Slides Project Overview/ })
   ).toHaveAttribute("aria-checked", "true");
@@ -133,7 +133,7 @@ test("header deck switcher loads another local manifest-backed deck", async ({ p
   ).toHaveAttribute("aria-checked", "true");
 });
 
-test("header deck switcher imports a local manifest-backed deck", async ({ page }, testInfo) => {
+test("header deck switcher opens a local manifest-backed deck path", async ({ page }, testInfo) => {
   await gotoEditor(page);
 
   const manifest = {
@@ -154,21 +154,24 @@ test("header deck switcher imports a local manifest-backed deck", async ({ page 
   await fs.mkdir(`${importDeckDir}/slides`, { recursive: true });
   await fs.writeFile(`${importDeckDir}/manifest.json`, JSON.stringify(manifest), "utf8");
   await fs.writeFile(`${importDeckDir}/slides/01.html`, slideHtml, "utf8");
+  await page.route("**/__editor/pick-deck-path", async (route) => {
+    await route.fulfill({
+      contentType: "application/json",
+      body: JSON.stringify({ path: importDeckDir }),
+    });
+  });
 
-  const fileChooserPromise = page.waitForEvent("filechooser");
   await page.getByRole("button", { name: "Switch deck" }).click();
   await page
     .getByRole("menu", { name: "Local decks" })
-    .getByRole("menuitem", { name: /Import deck/ })
+    .getByRole("menuitem", { name: /Open deck path/ })
     .click();
-  const fileChooser = await fileChooserPromise;
-  await fileChooser.setFiles(importDeckDir);
 
   await expect(page.getByLabel("Deck title")).toHaveValue("Browser Imported Deck");
   await expect(coverFrame(page).locator('[data-editable-id="text-2"]')).toHaveText(
     "Imported through the deck switcher."
   );
-  await expect(page.getByText("Deck imported.")).toBeVisible();
+  await expect(page.getByText("Deck opened.")).toBeVisible();
 
   await expect
     .poll(async () => {

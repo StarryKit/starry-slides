@@ -44,7 +44,7 @@ function App() {
     saveSlides,
     saveDeckTitle,
     switchDeck,
-    importDeck,
+    importDeckFromPicker,
     exportPdf,
     exportHtml,
     exportSourceFiles,
@@ -89,14 +89,19 @@ function App() {
               });
             });
         }}
-        onDeckImport={(files) => {
-          const toastId = toast.loading("Importing deck...");
-          void importDeck(files)
-            .then(() => {
-              toast.success("Deck imported.", { id: toastId });
+        onDeckImportPath={() => {
+          const toastId = toast.loading("Choose a deck folder...");
+          void importDeckFromPicker()
+            .then((opened) => {
+              if (opened) {
+                toast.success("Deck opened.", { id: toastId });
+                return;
+              }
+
+              toast.dismiss(toastId);
             })
             .catch((error) => {
-              toast.error("Deck import failed.", {
+              toast.error("Deck open failed.", {
                 id: toastId,
                 description: error instanceof Error ? error.message : String(error),
               });

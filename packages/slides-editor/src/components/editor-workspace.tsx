@@ -59,6 +59,7 @@ interface EditorWorkspaceProps {
   onDeckTitleChange?: (title: string) => void;
   onDeckSwitch?: (deckId: string) => void;
   onDeckImport?: (files: FileList) => void;
+  onDeckImportPath?: () => void;
   onExportPdf?: (selection: PdfExportSelection) => void;
   onExportHtml?: () => void;
   onExportSourceFiles?: () => void;
@@ -143,6 +144,7 @@ function EditorWorkspace({
   onDeckTitleChange,
   onDeckSwitch,
   onDeckImport,
+  onDeckImportPath,
   onExportPdf,
   onExportHtml,
   onExportSourceFiles,
@@ -198,6 +200,7 @@ function EditorWorkspace({
             isSwitchingDeck={isSwitchingDeck}
             onDeckSwitch={onDeckSwitch}
             onDeckImport={onDeckImport}
+            onDeckImportPath={onDeckImportPath}
             isSaving={isSaving}
             onPresent={onPresent}
             onExportHtml={onExportHtml}

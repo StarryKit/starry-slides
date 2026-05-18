@@ -1,6 +1,9 @@
+import { execFile } from "node:child_process";
 import fs from "node:fs/promises";
 import type { IncomingMessage, ServerResponse } from "node:http";
+import os from "node:os";
 import path from "node:path";
+import { promisify } from "node:util";
 import { type PdfExportSelection, createSafeExportFilenameBase } from "@starrykit/slides-core";
 import type { Plugin, PreviewServer, ViteDevServer } from "vite";
 import { exportHtml } from "./html-export";
@@ -12,6 +15,7 @@ const RESET_ROUTE = "/__editor/reset-generated-deck";
 const DECKS_ROUTE = "/__editor/decks";
 const SELECT_DECK_ROUTE = "/__editor/select-deck";
 const IMPORT_DECK_ROUTE = "/__editor/import-deck";
+const PICK_DECK_PATH_ROUTE = "/__editor/pick-deck-path";
 const EXPORT_PDF_ROUTE = "/__editor/export-pdf";
 const EXPORT_HTML_ROUTE = "/__editor/export-html";
 const EXPORT_SOURCE_FILES_ROUTE = "/__editor/export-source-files";
@@ -37,6 +41,7 @@ const CONTENT_TYPES: Record<string, string> = {
   ".woff": "font/woff",
   ".woff2": "font/woff2",
 };
+const execFileAsync = promisify(execFile);
 
 interface SaveGeneratedDeckPayload {
   clientLoadedAt?: number;
@@ -63,6 +68,7 @@ interface ExportPdfPayload {
 }
 
 interface ImportDeckPayload {
+  path?: unknown;
   files?: Array<{
     path?: string;
     contentsBase64?: string;
@@ -79,6 +85,7 @@ interface DeckRuntimeMiddlewareOptions {
   previewDeckDir: string;
   saveTargetDirs: string[];
   deckLibraryDir?: string;
+  deckPathPicker?: () => Promise<string | null>;
 }
 
 export interface DeckRuntimeMiddleware {
@@ -91,12 +98,14 @@ export function createDeckRuntimeMiddlewarePlugin({
   previewDeckDir,
   saveTargetDirs,
   deckLibraryDir,
+  deckPathPicker,
 }: DeckRuntimeMiddlewareOptions): Plugin {
   const runtime = createDeckRuntimeMiddleware({
     runtimeDeckDir,
     previewDeckDir,
     saveTargetDirs,
     deckLibraryDir,
+    deckPathPicker,
   });
 
   return {
@@ -115,6 +124,7 @@ export function createDeckRuntimeMiddleware({
   previewDeckDir,
   saveTargetDirs,
   deckLibraryDir,
+  deckPathPicker = pickDeckPath,
 }: DeckRuntimeMiddlewareOptions): DeckRuntimeMiddleware {
   const initialRuntimeDeckDir = path.resolve(runtimeDeckDir);
   const initialPreviewDeckDir = path.resolve(previewDeckDir);
@@ -313,6 +323,20 @@ export function createDeckRuntimeMiddleware({
 
   async function handleImportDeckRequest(request: IncomingMessage, response: ServerResponse) {
     const payload = JSON.parse(await readRequestBody(request)) as ImportDeckPayload;
+    if (typeof payload.path === "string") {
+      const deckDir = await resolveImportDeckDir(payload.path);
+      if (!deckDir) {
+        writeJsonResponse(response, 400, {
+          error: "Deck path must point to a folder with manifest.json or to manifest.json.",
+        });
+        return;
+      }
+
+      selectedDeckDir = deckDir;
+      writeJsonResponse(response, 200, await getDeckListResponse());
+      return;
+    }
+
     const files = payload.files?.filter(
       (file): file is { path: string; contentsBase64: string } =>
         typeof file.path === "string" && typeof file.contentsBase64 === "string"
@@ -369,6 +393,24 @@ export function createDeckRuntimeMiddleware({
 
     selectedDeckDir = importedDeckDir;
     writeJsonResponse(response, 200, await getDeckListResponse());
+  }
+
+  async function handlePickDeckPathRequest(response: ServerResponse) {
+    const pickedPath = await deckPathPicker();
+    if (!pickedPath) {
+      writeJsonResponse(response, 200, { path: null });
+      return;
+    }
+
+    const deckDir = await resolveImportDeckDir(pickedPath);
+    if (!deckDir) {
+      writeJsonResponse(response, 400, {
+        error: "Selected path must point to a folder with manifest.json or to manifest.json.",
+      });
+      return;
+    }
+
+    writeJsonResponse(response, 200, { path: deckDir });
   }
 
   async function handleExportPdfRequest(request: IncomingMessage, response: ServerResponse) {
@@ -529,6 +571,15 @@ export function createDeckRuntimeMiddleware({
       return;
     }
 
+    if (request.method === "POST" && request.url === PICK_DECK_PATH_ROUTE) {
+      await runQueuedResponse(
+        response,
+        () => handlePickDeckPathRequest(response),
+        "Failed to pick a deck path."
+      );
+      return;
+    }
+
     if (request.method === "POST" && request.url === EXPORT_PDF_ROUTE) {
       await runQueuedResponse(
         response,
@@ -622,6 +673,133 @@ async function pathContainsManifest(deckDir: string) {
   } catch {
     return false;
   }
+}
+
+async function resolveImportDeckDir(rawPath: string) {
+  const trimmedPath = rawPath.trim();
+  if (!trimmedPath) {
+    return null;
+  }
+
+  const resolvedPath = path.resolve(expandHomePath(trimmedPath));
+
+  try {
+    const stat = await fs.stat(resolvedPath);
+    const deckDir = stat.isFile() ? path.dirname(resolvedPath) : resolvedPath;
+    const manifestPath = stat.isFile() ? resolvedPath : path.join(deckDir, "manifest.json");
+
+    if (path.basename(manifestPath) !== "manifest.json") {
+      return null;
+    }
+
+    if (!(await pathContainsManifest(deckDir))) {
+      return null;
+    }
+
+    return deckDir;
+  } catch {
+    return null;
+  }
+}
+
+function expandHomePath(value: string) {
+  if (value === "~") {
+    return os.homedir();
+  }
+
+  if (value.startsWith("~/") || value.startsWith("~\\")) {
+    return path.join(os.homedir(), value.slice(2));
+  }
+
+  return value;
+}
+
+async function pickDeckPath() {
+  if (process.env.STARRY_SLIDES_PICK_DECK_PATH) {
+    return process.env.STARRY_SLIDES_PICK_DECK_PATH;
+  }
+
+  if (process.platform === "darwin") {
+    return pickDeckPathMac();
+  }
+
+  if (process.platform === "win32") {
+    return pickDeckPathWindows();
+  }
+
+  return pickDeckPathLinux();
+}
+
+async function pickDeckPathMac() {
+  const script = [
+    'set pickedFolder to choose folder with prompt "Choose a Starry Slides deck folder"',
+    "POSIX path of pickedFolder",
+  ].join("\n");
+
+  return runPickerCommand("osascript", ["-e", script]);
+}
+
+async function pickDeckPathWindows() {
+  const script = `
+Add-Type -AssemblyName System.Windows.Forms
+$dialog = New-Object System.Windows.Forms.FolderBrowserDialog
+$dialog.Description = "Choose a Starry Slides deck folder"
+$dialog.ShowNewFolderButton = $false
+if ($dialog.ShowDialog() -eq [System.Windows.Forms.DialogResult]::OK) {
+  [Console]::Out.Write($dialog.SelectedPath)
+}
+`.trim();
+
+  return runPickerCommand("powershell.exe", [
+    "-NoProfile",
+    "-STA",
+    "-ExecutionPolicy",
+    "Bypass",
+    "-Command",
+    script,
+  ]);
+}
+
+async function pickDeckPathLinux() {
+  const zenityPath = await runPickerCommand("sh", ["-c", "command -v zenity"]).catch(() => null);
+  if (zenityPath) {
+    return runPickerCommand(zenityPath, [
+      "--file-selection",
+      "--directory",
+      "--title=Choose a Starry Slides deck folder",
+    ]);
+  }
+
+  const kdialogPath = await runPickerCommand("sh", ["-c", "command -v kdialog"]).catch(() => null);
+  if (kdialogPath) {
+    return runPickerCommand(kdialogPath, ["--getexistingdirectory", os.homedir()]);
+  }
+
+  throw new Error("No supported system folder picker was found.");
+}
+
+async function runPickerCommand(command: string, args: string[]) {
+  try {
+    const { stdout } = await execFileAsync(command, args, {
+      windowsHide: false,
+    });
+    const pickedPath = stdout.trim();
+    return pickedPath || null;
+  } catch (error) {
+    if (isCancelledPickerError(error)) {
+      return null;
+    }
+
+    throw error;
+  }
+}
+
+function isCancelledPickerError(error: unknown) {
+  if (!error || typeof error !== "object" || !("code" in error)) {
+    return false;
+  }
+
+  return error.code === 1;
 }
 
 export async function discoverLocalDecks({

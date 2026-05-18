@@ -21,6 +21,7 @@ interface SlidesDataResult {
   saveDeckTitle: (title: string) => void;
   switchDeck: (deckId: string) => Promise<void>;
   importDeck: (files: FileList) => Promise<void>;
+  importDeckFromPicker: () => Promise<boolean>;
   exportPdf: (selection: PdfExportSelection) => Promise<void>;
   exportHtml: () => Promise<void>;
   exportSourceFiles: () => Promise<void>;
@@ -30,6 +31,7 @@ const GENERATED_MANIFEST_URL = "/deck/manifest.json";
 const DECKS_URL = "/__editor/decks";
 const SELECT_DECK_URL = "/__editor/select-deck";
 const IMPORT_DECK_URL = "/__editor/import-deck";
+const PICK_DECK_PATH_URL = "/__editor/pick-deck-path";
 const GENERATED_SAVE_URL = "/__editor/save-generated-deck";
 const GENERATED_EXPORT_PDF_URL = "/__editor/export-pdf";
 const GENERATED_EXPORT_HTML_URL = "/__editor/export-html";
@@ -55,6 +57,10 @@ export interface LocalDeckOption {
 interface DeckListResponse {
   decks?: LocalDeckOption[];
   currentDeckId?: string | null;
+}
+
+interface PickDeckPathResponse {
+  path?: string | null;
 }
 
 export function useSlidesData(): SlidesDataResult {
@@ -409,6 +415,69 @@ export function useSlidesData(): SlidesDataResult {
     }
   };
 
+  const importDeckFromPicker = async () => {
+    if (isSwitchingDeck) {
+      return false;
+    }
+
+    setIsSwitchingDeck(true);
+    setErrorMessage(null);
+
+    if (saveTimerRef.current) {
+      window.clearTimeout(saveTimerRef.current);
+      saveTimerRef.current = null;
+    }
+
+    try {
+      await flushSave();
+
+      const pickResponse = await fetch(PICK_DECK_PATH_URL, {
+        method: "POST",
+      });
+
+      if (!pickResponse.ok) {
+        const message = await readErrorMessage(
+          pickResponse,
+          "The app could not open the deck picker."
+        );
+        setErrorMessage(message);
+        throw new Error(message || "The app could not open the deck picker.");
+      }
+
+      const pickPayload = (await pickResponse.json()) as PickDeckPathResponse;
+      const pickedPath =
+        typeof pickPayload.path === "string" && pickPayload.path.trim() ? pickPayload.path : null;
+      if (!pickedPath) {
+        return false;
+      }
+
+      const response = await fetch(IMPORT_DECK_URL, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ path: pickedPath }),
+      });
+
+      if (!response.ok) {
+        const message = await readErrorMessage(response, "The app could not open that deck path.");
+        setErrorMessage(message);
+        throw new Error(message || "The app could not open that deck path.");
+      }
+
+      const payload = (await response.json()) as DeckListResponse;
+      setDecks(Array.isArray(payload.decks) ? payload.decks : []);
+      setCurrentDeckId(typeof payload.currentDeckId === "string" ? payload.currentDeckId : null);
+      await loadCurrentDeck();
+      return true;
+    } catch (error) {
+      setErrorMessage(error instanceof Error ? error.message : "The app could not open that deck.");
+      throw error;
+    } finally {
+      setIsSwitchingDeck(false);
+    }
+  };
+
   const exportPdf = async (selection: PdfExportSelection) => {
     if (saveTimerRef.current) {
       window.clearTimeout(saveTimerRef.current);
@@ -487,6 +556,7 @@ export function useSlidesData(): SlidesDataResult {
     saveDeckTitle,
     switchDeck,
     importDeck,
+    importDeckFromPicker,
     exportPdf,
     exportHtml,
     exportSourceFiles,
