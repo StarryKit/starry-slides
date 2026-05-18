@@ -3,6 +3,15 @@
   "version": "0.1.27",
   "description": "Embeddable React editor UI for Starry Slides — host-driven through props and callbacks.",
   "license": "MIT",
+  "homepage": "https://github.com/StarryKit/starry-slides#readme",
+  "bugs": {
+    "url": "https://github.com/StarryKit/starry-slides/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/StarryKit/starry-slides",
+    "directory": "packages/slides-editor"
+  },
   "type": "module",
   "main": "./dist/index.js",
   "module": "./dist/index.js",

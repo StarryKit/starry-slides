@@ -3,6 +3,15 @@
   "version": "0.1.27",
   "description": "Slide contract, document model, validation, history, operations, and export-planning logic for Starry Slides.",
   "license": "MIT",
+  "homepage": "https://github.com/StarryKit/starry-slides#readme",
+  "bugs": {
+    "url": "https://github.com/StarryKit/starry-slides/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/StarryKit/starry-slides",
+    "directory": "packages/slides-core"
+  },
   "type": "module",
   "main": "./dist/index.js",
   "module": "./dist/index.js",
