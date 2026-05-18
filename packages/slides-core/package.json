@@ -1,6 +1,6 @@
 {
   "name": "@starrykit/slides-core",
-  "version": "0.1.30",
+  "version": "0.1.31",
   "description": "Slide contract, document model, validation, history, operations, and export-planning logic for Starry Slides.",
   "license": "MIT",
   "homepage": "https://github.com/StarryKit/starry-slides#readme",
