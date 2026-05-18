@@ -18,13 +18,9 @@ This section is just an index of where things live.
 
 ### Top-level directories
 
-- `src/core/`
-  Core slide/document logic, parsing, operations, history, HTML write-back, and
-  verification.
-- `src/editor/`
-  Browser editor UI and interaction code.
 - `src/node/`
-  Node-side runtime helpers used by the app and CLI.
+  Node-side runtime helpers used by the app and CLI, including deck
+  verification.
 - `src/cli/`
   `starry-slides` CLI entrypoint and command dispatch.
 - `docs/`
@@ -41,6 +37,11 @@ This section is just an index of where things live.
 - `skills/`
   Agent-facing skill files and related tooling.
 
+### Top-level files
+
+- `src/index.tsx`
+  Root compatibility export for `@starrykit/slides-editor`.
+
 ### Test locations
 
 - `e2e/tests/`
@@ -49,10 +50,8 @@ This section is just an index of where things live.
   E2E fixture inputs.
 - `e2e/tools/`
   Regression deck generation and preparation scripts.
-- `src/core/*.test.ts`
-  Core tests.
 - `src/node/*.test.ts`
-  Node/runtime tests.
+  Node/runtime tests, including deck verification.
 - `src/cli/*.test.ts`
   CLI tests.
 

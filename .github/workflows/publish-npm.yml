@@ -177,7 +177,7 @@ jobs:
       - name: Prepare release PR version
         if: steps.release.outputs.mode == 'release_pr'
         run: |
-          node scripts/sync-release-version.mjs "${{ steps.release.outputs.version }}"
+          node .github/workflows/sync-release-version.mjs "${{ steps.release.outputs.version }}"
           pnpm install --lockfile-only
 
       - name: Build package
@@ -188,8 +188,8 @@ jobs:
         if: steps.release.outputs.mode == 'publish'
         run: |
           npm pack --dry-run
-          npm pack --dry-run --workspace @starrykit/slides-core
-          npm pack --dry-run --workspace @starrykit/slides-editor
+          npm pack --dry-run ./packages/slides-core
+          npm pack --dry-run ./packages/slides-editor
 
       - name: Commit release version
         if: steps.release.outputs.mode == 'release_pr'
@@ -217,8 +217,8 @@ jobs:
       - name: Publish package
         if: steps.release.outputs.mode == 'publish'
         run: |
-          npm publish --access public --workspace @starrykit/slides-core
-          npm publish --access public --workspace @starrykit/slides-editor
+          npm publish --access public ./packages/slides-core
+          npm publish --access public ./packages/slides-editor
           npm publish --access public
 
       - name: Skip publish

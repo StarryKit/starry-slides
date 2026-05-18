@@ -6,11 +6,7 @@
   "type": "module",
   "packageManager": "pnpm@10.33.2",
   "pnpm": {
-    "onlyBuiltDependencies": [
-      "esbuild",
-      "@parcel/watcher",
-      "@biomejs/biome"
-    ]
+    "onlyBuiltDependencies": ["esbuild", "@parcel/watcher", "@biomejs/biome"]
   },
   "homepage": "https://github.com/StarryKit/starry-slides#readme",
   "bugs": {
@@ -20,29 +16,18 @@
     "type": "git",
     "url": "git+https://github.com/StarryKit/starry-slides.git"
   },
-  "keywords": [
-    "slides",
-    "presentation",
-    "html",
-    "cli",
-    "editor"
-  ],
+  "keywords": ["slides", "presentation", "html", "cli", "editor"],
   "engines": {
     "node": ">=20.11"
   },
-  "files": [
-    "dist",
-    "skills",
-    "README.md",
-    "LICENSE"
-  ],
+  "files": ["dist", "skills", "README.md", "LICENSE"],
   "bin": {
     "starry-slides": "dist/cli/index.js"
   },
   "exports": {
     ".": {
-      "types": "./dist/editor/index.d.ts",
-      "import": "./dist/editor/index.js"
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
     }
   },
   "scripts": {
@@ -50,7 +35,7 @@
     "starry-slides": "tsx src/cli/index.ts",
     "build": "pnpm --filter @starrykit/slides-core build && pnpm --filter @starrykit/slides-editor build && pnpm build:types && pnpm build:js && pnpm build:app",
     "build:types": "tsc -p tsconfig.build.json --emitDeclarationOnly",
-    "build:js": "tsup src/editor/index.tsx src/cli/index.ts --format esm",
+    "build:js": "tsup src/index.tsx src/cli/index.ts --format esm",
     "build:app": "vite build",
     "prepare:regression-deck": "node e2e/tools/prepare-regression-deck.mjs",
     "starry:open": "pnpm starry-slides open",

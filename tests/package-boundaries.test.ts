@@ -105,8 +105,8 @@ describe("workspace package boundaries", () => {
       expect(version, `${name} must be publishable by npm`).not.toMatch(/^workspace:/);
     }
     expect(pkg.dependencies).toMatchObject({
-      "@starrykit/slides-core": "0.1.23",
-      "@starrykit/slides-editor": "0.1.23",
+      "@starrykit/slides-core": pkg.version,
+      "@starrykit/slides-editor": pkg.version,
     });
     expect(pkg.devDependencies ?? {}).not.toHaveProperty("@starrykit/slides-core");
     expect(pkg.devDependencies ?? {}).not.toHaveProperty("@starrykit/slides-editor");

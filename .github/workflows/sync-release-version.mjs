@@ -5,7 +5,7 @@ const rootDir = process.cwd();
 const version = process.argv[2];
 
 if (!version) {
-  throw new Error("Usage: node scripts/sync-release-version.mjs <version>");
+  throw new Error("Usage: node .github/workflows/sync-release-version.mjs <version>");
 }
 
 const files = [
