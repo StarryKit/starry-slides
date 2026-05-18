@@ -31,6 +31,7 @@ export interface SlidesEditorProps {
   onDeckTitleChange?: (title: string) => void;
   onDeckSwitch?: (deckId: string) => void;
   onDeckImport?: (files: FileList) => void;
+  onDeckImportPath?: () => void;
   onExportPdf?: (selection: PdfExportSelection) => void;
   onExportHtml?: () => void;
   onExportSourceFiles?: () => void;
@@ -58,6 +59,7 @@ function SlidesEditor({
   onDeckTitleChange,
   onDeckSwitch,
   onDeckImport,
+  onDeckImportPath,
   onExportPdf,
   onExportHtml,
   onExportSourceFiles,
@@ -402,6 +404,7 @@ function SlidesEditor({
       onDeckTitleChange={onDeckTitleChange}
       onDeckSwitch={onDeckSwitch}
       onDeckImport={onDeckImport}
+      onDeckImportPath={onDeckImportPath}
       onExportHtml={onExportHtml}
       onExportSourceFiles={onExportSourceFiles}
       onExportPdf={onExportPdf}
