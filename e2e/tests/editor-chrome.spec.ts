@@ -190,6 +190,67 @@ test("sidebar renders fixed thumbnail list chrome and slide actions", async ({ p
   }
 });
 
+test("sidebar thumbnail scales full-size slide content instead of cropping edges", async ({
+  page,
+}) => {
+  await gotoEditor(page);
+
+  const slideButton = page.getByLabel(`Slide ${REGRESSION_DECK_SLIDE_COUNT}`);
+  await slideButton.click();
+  await expect(coverFrame(page).getByTestId("thumbnail-bottom-right-marker")).toBeVisible();
+
+  const thumbnailImage = slideButton.getByTestId("slide-thumbnail").locator("img");
+  await expect(thumbnailImage).toBeVisible({ timeout: 10_000 });
+  await expect.poll(async () => thumbnailImage.getAttribute("src")).toContain("data:image/png");
+
+  await expect
+    .poll(async () => {
+      return thumbnailImage.evaluate(async (node) => {
+        const image = node as HTMLImageElement;
+        if (!image.complete || image.naturalWidth === 0 || image.naturalHeight === 0) {
+          return 0;
+        }
+
+        try {
+          await image.decode();
+        } catch {
+          // A complete data URL image can already be drawable even if decode races.
+        }
+
+        const canvas = document.createElement("canvas");
+        canvas.width = image.naturalWidth;
+        canvas.height = image.naturalHeight;
+
+        const context = canvas.getContext("2d");
+        if (!context) {
+          return 0;
+        }
+
+        context.drawImage(image, 0, 0);
+
+        const sampleX = Math.floor(canvas.width * 0.86);
+        const sampleY = Math.floor(canvas.height * 0.82);
+        const sampleWidth = canvas.width - sampleX;
+        const sampleHeight = canvas.height - sampleY;
+        const pixels = context.getImageData(sampleX, sampleY, sampleWidth, sampleHeight).data;
+        let magentaPixels = 0;
+
+        for (let index = 0; index < pixels.length; index += 4) {
+          const red = pixels[index] ?? 0;
+          const green = pixels[index + 1] ?? 0;
+          const blue = pixels[index + 2] ?? 0;
+          const alpha = pixels[index + 3] ?? 0;
+          if (red > 220 && green < 80 && blue > 220 && alpha > 200) {
+            magentaPixels += 1;
+          }
+        }
+
+        return magentaPixels;
+      });
+    })
+    .toBeGreaterThan(20);
+});
+
 test("sidebar context menu adds slides above and below the clicked slide", async ({ page }) => {
   await gotoEditor(page);
 

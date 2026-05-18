@@ -70,6 +70,7 @@ Scope notes:
 | Slide context menu delete removes the slide card and keeps an adjacent slide active | Sidebar context menu | Regression deck | Slide count decrements after delete; an adjacent slide remains active | Undo/redo not asserted | Reload not asserted | `editor-chrome.spec.ts` |
 | Sidebar drag reorder changes slide order and survives reload | Sidebar drag | Regression deck | First slide dragged to third position; visible ordering changes; saving badge appears; reload preserves new order | Undo/redo not asserted | Reload asserted | `editor-chrome.spec.ts` |
 | Sidebar drag shows an insertion marker while reordering | Sidebar drag | Regression deck | Insertion marker appears between slide cards while dragging | N/A | N/A | `editor-chrome.spec.ts` |
+| Sidebar thumbnail rendering scales full-size slide content into the thumbnail canvas | Sidebar thumbnail image | Regression deck slide 19 | A bottom-right edge marker is visible on the stage and decoded from lower-right thumbnail pixels, proving the thumbnail was scaled instead of cropped to the upper-left | N/A | N/A | `editor-chrome.spec.ts` |
 | PDF export opens a scope dialog and submits selected-slides or all-slides payloads | Export menu, dialog | Regression deck | Export dialog defaults to All slides; Selected slides picker renders thumbnails; intercepted request payloads match chosen scope; success toast appears | N/A | Dialog reset on reopen asserted | `editor-chrome.spec.ts` |
 
 ## Text Content Editing And Native Text Selection

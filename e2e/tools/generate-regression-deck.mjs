@@ -6,6 +6,7 @@ import {
   buildCropImageSlide,
   buildDeckLocalImageSlide,
   buildImageSlide,
+  buildThumbnailEdgeSlide,
 } from "./regression-deck/image-slide.mjs";
 import { buildAgendaSlide, buildHeroSlide } from "./regression-deck/intro-slides.mjs";
 import {
@@ -141,6 +142,11 @@ const slides = [
     file: "18-positioned-ungroup.html",
     title: "Positioned ungroup fixture",
     html: buildPositionedUngroupSlide(),
+  },
+  {
+    file: "19-thumbnail-edge.html",
+    title: "Thumbnail edge fixture",
+    html: buildThumbnailEdgeSlide(),
   },
 ];
 
