@@ -1,5 +1,5 @@
-import { type VerifyResult, verifyDeck } from "../../../core/verify-deck";
 import { resolveDeckPath } from "../../../node/deck-source";
+import { type VerifyResult, verifyDeck } from "../../../node/verify-deck";
 import { verifyRenderedOverflow } from "../../../node/view-renderer";
 
 function writeJson(value: unknown) {

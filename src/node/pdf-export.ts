@@ -3,8 +3,12 @@ import { createRequire } from "node:module";
 import os from "node:os";
 import path from "node:path";
 import { pathToFileURL } from "node:url";
+import {
+  type PdfExportSelection,
+  planPdfExport,
+  readBodyDimensionsFromHtmlSource,
+} from "@starrykit/slides-core";
 import { JSDOM, VirtualConsole } from "jsdom";
-import { type PdfExportSelection, planPdfExport, readBodyDimensionsFromHtmlSource } from "../core";
 import { type RenderedSlide, getManifestSlides } from "./view-renderer";
 
 type ChromiumLauncher = typeof import("@playwright/test").chromium;

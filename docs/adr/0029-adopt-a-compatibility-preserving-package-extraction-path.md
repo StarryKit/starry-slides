@@ -90,10 +90,9 @@ rules, not just the React UI.
   - `packages/slides-core/src/index.ts`
   - `packages/slides-editor/package.json`
   - `packages/slides-editor/src/index.tsx`
-  - `src/core/`
-  - `src/editor/`
   - `src/node/`
   - `src/cli/`
+  - `src/index.tsx`
   - `docs/adr/README.md`
   - `README.md`
   - `README.zh-CN.md`
@@ -143,4 +142,3 @@ rules, not just the React UI.
 - [ ] local rendering for preview and export still works in the open-source
       repository
 - [ ] workspace builds and tests pass in a lockstep release workflow
-

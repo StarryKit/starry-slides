@@ -3,7 +3,7 @@ import { createRequire } from "node:module";
 import path from "node:path";
 import { pathToFileURL } from "node:url";
 import { readBodyDimensionsFromHtmlSource } from "@starrykit/slides-core";
-import { type VerifyIssue, createVerifyIssue, loadVerifyDeckSource } from "../core/verify-deck";
+import { type VerifyIssue, createVerifyIssue, loadVerifyDeckSource } from "./verify-deck";
 
 type PlaywrightPage = import("@playwright/test").Page;
 type ChromiumLauncher = typeof import("@playwright/test").chromium;

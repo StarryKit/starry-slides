@@ -29,7 +29,7 @@ afterEach(() => {
   }
 });
 
-describe("verifyDeck core verifier", () => {
+describe("verifyDeck runtime verifier", () => {
   test("missing deck path returns structure.missing-deck", () => {
     const deck = path.join(createDeck(), "missing");
     const result = verifyDeck(deck);
