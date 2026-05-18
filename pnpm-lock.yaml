@@ -12,10 +12,10 @@ importers:
         specifier: ^1.54.2
         version: 1.59.1
       '@starrykit/slides-core':
-        specifier: 0.1.25
+        specifier: 0.1.26
         version: link:packages/slides-core
       '@starrykit/slides-editor':
-        specifier: 0.1.25
+        specifier: 0.1.26
         version: link:packages/slides-editor
       class-variance-authority:
         specifier: ^0.7.1
@@ -105,7 +105,7 @@ importers:
   packages/slides-editor:
     dependencies:
       '@starrykit/slides-core':
-        specifier: 0.1.25
+        specifier: 0.1.26
         version: link:../slides-core
       class-variance-authority:
         specifier: ^0.7.1
