@@ -11,9 +11,13 @@ const e2eTestSlidesDir = path.resolve(workspaceRoot, ".e2e-test-slides");
 const cliDeckDir = process.env.STARRY_SLIDES_DECK_DIR
   ? path.resolve(process.env.STARRY_SLIDES_DECK_DIR)
   : "";
+const cliDeckLibraryDir = process.env.STARRY_SLIDES_DECK_LIBRARY_DIR
+  ? path.resolve(process.env.STARRY_SLIDES_DECK_LIBRARY_DIR)
+  : "";
 const runtimeDeckDir = cliDeckDir || e2eTestSlidesDir;
 const previewDeckDir = cliDeckDir || e2eTestSlidesDir;
 const saveTargetDirs = cliDeckDir ? [cliDeckDir] : [e2eTestSlidesDir];
+const deckLibraryDir = cliDeckLibraryDir || path.dirname(runtimeDeckDir);
 
 export default defineConfig({
   build: {
@@ -32,6 +36,7 @@ export default defineConfig({
       runtimeDeckDir,
       previewDeckDir,
       saveTargetDirs,
+      deckLibraryDir,
     }),
   ],
 });

@@ -7,6 +7,7 @@ import type {
 import type { MouseEvent as ReactMouseEvent, RefObject } from "react";
 import type { BlockManipulationOverlay as BlockManipulationOverlayModel } from "../hooks/block-manipulation-types";
 import type { ImageCropOverlay as ImageCropOverlayModel } from "../hooks/use-image-crop";
+import type { DeckSwitcherOption } from "../index";
 import type { ResizeHandleCorner, ResizeHandlePosition } from "../lib/block-snap-types";
 import type { CssPropertyRow } from "../lib/collect-css-properties";
 import { EditorHeader } from "./editor-header";
@@ -20,7 +21,10 @@ interface EditorWorkspaceProps {
   slides: SlideModel[];
   activeSlide: SlideModel;
   deckTitle: string;
+  decks?: DeckSwitcherOption[];
+  currentDeckId?: string | null;
   isSaving: boolean;
+  isSwitchingDeck: boolean;
   isPresenting: boolean;
   thumbnails: Record<string, string>;
   slideWidth: number;
@@ -53,6 +57,8 @@ interface EditorWorkspaceProps {
   isManipulating: boolean;
   isToolbarSuppressed: boolean;
   onDeckTitleChange?: (title: string) => void;
+  onDeckSwitch?: (deckId: string) => void;
+  onDeckImport?: (files: FileList) => void;
   onExportPdf?: (selection: PdfExportSelection) => void;
   onExportHtml?: () => void;
   onExportSourceFiles?: () => void;
@@ -103,7 +109,10 @@ function EditorWorkspace({
   slides,
   activeSlide,
   deckTitle,
+  decks,
+  currentDeckId,
   isSaving,
+  isSwitchingDeck,
   isPresenting,
   thumbnails,
   slideWidth,
@@ -132,6 +141,8 @@ function EditorWorkspace({
   isManipulating,
   isToolbarSuppressed,
   onDeckTitleChange,
+  onDeckSwitch,
+  onDeckImport,
   onExportPdf,
   onExportHtml,
   onExportSourceFiles,
@@ -182,6 +193,11 @@ function EditorWorkspace({
           <EditorHeader
             title={deckTitle}
             onTitleChange={onDeckTitleChange}
+            decks={decks}
+            currentDeckId={currentDeckId}
+            isSwitchingDeck={isSwitchingDeck}
+            onDeckSwitch={onDeckSwitch}
+            onDeckImport={onDeckImport}
             isSaving={isSaving}
             onPresent={onPresent}
             onExportHtml={onExportHtml}

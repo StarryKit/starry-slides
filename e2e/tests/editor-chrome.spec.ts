@@ -1,3 +1,4 @@
+import fs from "node:fs/promises";
 import { expect, test } from "@playwright/test";
 import {
   AGENDA_PARAGRAPH,
@@ -6,6 +7,7 @@ import {
   coverFrame,
   getHeaderControls,
   getHistoryControls,
+  getRequiredBoundingBox,
   gotoEditor,
 } from "./helpers";
 
@@ -81,6 +83,100 @@ test("header title input renames the deck title and persists after refresh", asy
 
   await page.reload();
   await expect(page.getByLabel("Deck title")).toHaveValue(nextTitle);
+});
+
+test("header deck switcher loads another local manifest-backed deck", async ({ page }) => {
+  await gotoEditor(page);
+
+  const titleInput = page.getByLabel("Deck title");
+  const deckSwitchButton = page.getByRole("button", { name: "Switch deck" });
+  const titleBox = await getRequiredBoundingBox(titleInput, "deck title");
+  const switcherBox = await getRequiredBoundingBox(deckSwitchButton, "deck switcher trigger");
+
+  expect(Math.abs(switcherBox.x - titleBox.x - titleBox.width)).toBeLessThanOrEqual(12);
+  expect(
+    Math.abs(switcherBox.y + switcherBox.height / 2 - (titleBox.y + titleBox.height / 2))
+  ).toBeLessThanOrEqual(8);
+
+  await deckSwitchButton.click();
+  const deckMenu = page.getByRole("menu", { name: "Local decks" });
+  await expect(deckMenu).toBeVisible();
+  await expect(deckMenu.getByRole("menuitem", { name: /Import deck/ })).toBeVisible();
+  await expect(
+    deckMenu.getByRole("menuitemradio", { name: /Starry Slides Project Overview/ })
+  ).toHaveAttribute("aria-checked", "true");
+
+  await deckMenu.getByRole("menuitemradio", { name: /Switcher Fixture Deck/ }).click();
+  await expect(page.getByLabel("Deck title")).toHaveValue("Switcher Fixture Deck");
+  await expect(page.getByRole("button", { name: "Slide 1", exact: true })).toHaveAttribute(
+    "aria-current",
+    "true"
+  );
+  await expect(coverFrame(page).locator('[data-editable-id="text-2"]')).toHaveText(
+    "Switcher Fixture Deck"
+  );
+  await expect(page.getByText("Deck loaded.")).toBeVisible();
+
+  await expect
+    .poll(async () => {
+      const manifestResponse = await page.request.get(`/deck/manifest.json?v=${Date.now()}`);
+      expect(manifestResponse.ok()).toBeTruthy();
+      return (await manifestResponse.json()).deckTitle;
+    })
+    .toBe("Switcher Fixture Deck");
+
+  await page.getByRole("button", { name: "Switch deck" }).click();
+  await expect(
+    page
+      .getByRole("menu", { name: "Local decks" })
+      .getByRole("menuitemradio", { name: /Switcher Fixture Deck/ })
+  ).toHaveAttribute("aria-checked", "true");
+});
+
+test("header deck switcher imports a local manifest-backed deck", async ({ page }, testInfo) => {
+  await gotoEditor(page);
+
+  const manifest = {
+    deckTitle: "Browser Imported Deck",
+    description: "Deck imported from the header switcher.",
+    slides: [{ file: "slides/01.html", title: "Imported One" }],
+  };
+  const slideHtml = `<!DOCTYPE html>
+<html>
+  <body>
+    <main data-editable-id="slide-root">
+      <h1 data-editable-id="text-1">Browser Imported Deck</h1>
+      <p data-editable-id="text-2">Imported through the deck switcher.</p>
+    </main>
+  </body>
+</html>`;
+  const importDeckDir = testInfo.outputPath("browser-imported-deck");
+  await fs.mkdir(`${importDeckDir}/slides`, { recursive: true });
+  await fs.writeFile(`${importDeckDir}/manifest.json`, JSON.stringify(manifest), "utf8");
+  await fs.writeFile(`${importDeckDir}/slides/01.html`, slideHtml, "utf8");
+
+  const fileChooserPromise = page.waitForEvent("filechooser");
+  await page.getByRole("button", { name: "Switch deck" }).click();
+  await page
+    .getByRole("menu", { name: "Local decks" })
+    .getByRole("menuitem", { name: /Import deck/ })
+    .click();
+  const fileChooser = await fileChooserPromise;
+  await fileChooser.setFiles(importDeckDir);
+
+  await expect(page.getByLabel("Deck title")).toHaveValue("Browser Imported Deck");
+  await expect(coverFrame(page).locator('[data-editable-id="text-2"]')).toHaveText(
+    "Imported through the deck switcher."
+  );
+  await expect(page.getByText("Deck imported.")).toBeVisible();
+
+  await expect
+    .poll(async () => {
+      const manifestResponse = await page.request.get(`/deck/manifest.json?v=${Date.now()}`);
+      expect(manifestResponse.ok()).toBeTruthy();
+      return (await manifestResponse.json()).deckTitle;
+    })
+    .toBe("Browser Imported Deck");
 });
 
 test("sidebar renders fixed thumbnail list chrome and slide actions", async ({ page }) => {

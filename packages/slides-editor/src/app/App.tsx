@@ -35,11 +35,16 @@ function App() {
   const {
     deckTitle,
     slides,
+    decks,
+    currentDeckId,
     errorMessage,
     isLoading,
     isSaving,
+    isSwitchingDeck,
     saveSlides,
     saveDeckTitle,
+    switchDeck,
+    importDeck,
     exportPdf,
     exportHtml,
     exportSourceFiles,
@@ -62,11 +67,41 @@ function App() {
     <>
       <Toaster position="top-center" richColors closeButton />
       <SlidesEditor
+        key={currentDeckId ?? "current-deck"}
         slides={slides}
         deckTitle={deckTitle}
+        decks={decks}
+        currentDeckId={currentDeckId}
         isSaving={isSaving}
+        isSwitchingDeck={isSwitchingDeck}
         onSlidesChange={saveSlides}
         onDeckTitleChange={saveDeckTitle}
+        onDeckSwitch={(deckId) => {
+          const toastId = toast.loading("Switching deck...");
+          void switchDeck(deckId)
+            .then(() => {
+              toast.success("Deck loaded.", { id: toastId });
+            })
+            .catch((error) => {
+              toast.error("Deck switch failed.", {
+                id: toastId,
+                description: error instanceof Error ? error.message : String(error),
+              });
+            });
+        }}
+        onDeckImport={(files) => {
+          const toastId = toast.loading("Importing deck...");
+          void importDeck(files)
+            .then(() => {
+              toast.success("Deck imported.", { id: toastId });
+            })
+            .catch((error) => {
+              toast.error("Deck import failed.", {
+                id: toastId,
+                description: error instanceof Error ? error.message : String(error),
+              });
+            });
+        }}
         onExportPdf={(request) => {
           const toastId = toast.loading("Exporting PDF...");
           void exportPdf(request)
