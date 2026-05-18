@@ -1,6 +1,6 @@
 {
   "name": "starry-slides",
-  "version": "0.1.32",
+  "version": "0.1.33",
   "description": "Local-first CLI and browser editor for HTML slide decks.",
   "license": "Apache-2.0",
   "type": "module",
@@ -65,8 +65,8 @@
     "verify": "pnpm lint && pnpm test && pnpm build && pnpm test:packaged-cli && pnpm test:e2e"
   },
   "dependencies": {
-    "@starrykit/slides-core": "0.1.32",
-    "@starrykit/slides-editor": "0.1.32",
+    "@starrykit/slides-core": "0.1.33",
+    "@starrykit/slides-editor": "0.1.33",
     "@playwright/test": "^1.54.2",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
