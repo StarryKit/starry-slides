@@ -212,4 +212,64 @@ describe("deck runtime middleware deck discovery", () => {
       deckTitle: "Initial Deck",
     });
   });
+
+  test("imports a manifest-backed deck into the local library and selects it", async () => {
+    const library = createDeckRoot();
+    const initialDeck = path.join(library, "initial");
+    writeNamedDeck(initialDeck, "Initial Deck");
+
+    const runtime = createDeckRuntimeMiddleware({
+      runtimeDeckDir: initialDeck,
+      previewDeckDir: initialDeck,
+      saveTargetDirs: [initialDeck],
+      deckLibraryDir: library,
+    });
+
+    const importedManifest = {
+      deckTitle: "Imported Deck",
+      description: "Imported deck description",
+      slides: [{ file: "slides/01.html", title: "Imported One" }],
+    };
+    const importedSlide = "<!DOCTYPE html><html><body>Imported selected deck</body></html>";
+    const importResult = await handleRuntimeRequest(
+      runtime,
+      "POST",
+      "/__editor/import-deck",
+      JSON.stringify({
+        files: [
+          {
+            path: "picked-folder/manifest.json",
+            contentsBase64: Buffer.from(JSON.stringify(importedManifest), "utf8").toString(
+              "base64"
+            ),
+          },
+          {
+            path: "picked-folder/slides/01.html",
+            contentsBase64: Buffer.from(importedSlide, "utf8").toString("base64"),
+          },
+        ],
+      })
+    );
+
+    expect(importResult.response.statusCode).toBe(200);
+    expect(JSON.parse(importResult.response.body)).toMatchObject({
+      currentDeckId: "imported-deck",
+      decks: expect.arrayContaining([
+        expect.objectContaining({
+          id: "imported-deck",
+          title: "Imported Deck",
+          isCurrent: true,
+        }),
+      ]),
+    });
+    expect(fs.readFileSync(path.join(library, "imported-deck/slides/01.html"), "utf8")).toBe(
+      importedSlide
+    );
+
+    const manifestResult = await handleRuntimeRequest(runtime, "GET", "/deck/manifest.json");
+    expect(manifestResult.response.statusCode).toBe(200);
+    expect(JSON.parse(manifestResult.response.body)).toMatchObject({
+      deckTitle: "Imported Deck",
+    });
+  });
 });

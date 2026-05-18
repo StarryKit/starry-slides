@@ -7,6 +7,7 @@ import {
   FileCheck2,
   FileCode2,
   FileText,
+  FolderInput,
   Layers3,
   Play,
   Presentation,
@@ -30,6 +31,7 @@ interface EditorHeaderProps {
   currentDeckId?: string | null;
   onTitleChange?: (t: string) => void;
   onDeckSwitch?: (deckId: string) => void;
+  onDeckImport?: (files: FileList) => void;
   onPresent?: () => void;
   onExportPdf?: (selection: PdfExportSelection) => void;
   onExportHtml?: () => void;
@@ -80,6 +82,7 @@ export function EditorHeader({
   currentDeckId,
   onTitleChange,
   onDeckSwitch,
+  onDeckImport,
   onPresent,
   onExportPdf,
   onExportHtml,
@@ -95,8 +98,9 @@ export function EditorHeader({
   const [titleWidth, setTitleWidth] = useState(0);
   const exportRef = useRef<HTMLDivElement>(null);
   const deckRef = useRef<HTMLDivElement>(null);
+  const deckImportInputRef = useRef<HTMLInputElement>(null);
   const titleDisplay = title || "Untitled presentation";
-  const canOpenDeckMenu = decks.length > 0 && Boolean(onDeckSwitch);
+  const canOpenDeckMenu = decks.length > 0 || Boolean(onDeckImport);
 
   useEffect(() => {
     const onDoc = (e: MouseEvent) => {
@@ -162,25 +166,25 @@ export function EditorHeader({
           <img src={logoUrl} alt="Starry Slides logo" className="h-8 rounded-lg object-contain" />
         </a>
         <div className="w-px h-5 bg-foreground/10" />
-        <div className="relative min-w-0 flex-1">
-          <input
-            value={title}
-            onChange={(e) => onTitleChange?.(e.target.value)}
-            aria-label="Deck title"
-            className="max-w-full min-w-0 flex-none rounded-md bg-transparent px-2 py-1 text-[18px] font-semibold text-foreground outline-none focus:bg-foreground/[0.04]"
-            style={titleWidth ? { width: `${titleWidth}px` } : undefined}
-            placeholder="Untitled presentation"
-          />
-          <span
-            key={titleDisplay}
-            ref={measureTitleRef}
-            aria-hidden="true"
-            className="pointer-events-none invisible absolute left-0 top-0 whitespace-pre rounded-md px-2 py-1 text-[18px] font-semibold"
-          >
-            {titleDisplay}
-          </span>
-        </div>
-        {decks.length > 0 ? (
+        <div className="flex min-w-0 flex-1 items-center gap-1.5">
+          <div className="relative min-w-0 shrink">
+            <input
+              value={title}
+              onChange={(e) => onTitleChange?.(e.target.value)}
+              aria-label="Deck title"
+              className="max-w-full min-w-0 flex-none rounded-md bg-transparent px-2 py-1 text-[18px] font-semibold text-foreground outline-none focus:bg-foreground/[0.04]"
+              style={titleWidth ? { width: `${titleWidth}px` } : undefined}
+              placeholder="Untitled presentation"
+            />
+            <span
+              key={titleDisplay}
+              ref={measureTitleRef}
+              aria-hidden="true"
+              className="pointer-events-none invisible absolute left-0 top-0 whitespace-pre rounded-md px-2 py-1 text-[18px] font-semibold"
+            >
+              {titleDisplay}
+            </span>
+          </div>
           <div className="relative shrink-0" ref={deckRef}>
             <button
               type="button"
@@ -199,6 +203,22 @@ export function EditorHeader({
                 className={cn("h-3.5 w-3.5 transition-transform", deckOpen && "rotate-180")}
               />
             </button>
+            <input
+              ref={deckImportInputRef}
+              type="file"
+              multiple
+              aria-label="Import deck folder"
+              className="hidden"
+              // React's DOM types do not include Chromium's directory-picker attributes.
+              {...({ webkitdirectory: "", directory: "" } as Record<string, string>)}
+              onChange={(event) => {
+                const files = event.currentTarget.files;
+                if (files?.length) {
+                  onDeckImport?.(files);
+                }
+                event.currentTarget.value = "";
+              }}
+            />
 
             {deckOpen && (
               <div
@@ -242,10 +262,36 @@ export function EditorHeader({
                     </button>
                   );
                 })}
+                {onDeckImport ? (
+                  <>
+                    <div className="my-1 h-px bg-foreground/[0.08]" />
+                    <button
+                      type="button"
+                      role="menuitem"
+                      onClick={() => {
+                        setDeckOpen(false);
+                        deckImportInputRef.current?.click();
+                      }}
+                      className="flex w-full items-start gap-2.5 rounded-md px-2.5 py-2 text-left text-foreground/72 transition-colors hover:bg-foreground/[0.04] hover:text-foreground"
+                    >
+                      <span className="mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center">
+                        <FolderInput className="h-3.5 w-3.5" />
+                      </span>
+                      <span className="min-w-0 flex-1">
+                        <span className="block truncate text-[13px] font-medium">
+                          Import deck...
+                        </span>
+                        <span className="mt-0.5 block truncate text-[11px] text-foreground/45">
+                          Choose a folder with manifest.json
+                        </span>
+                      </span>
+                    </button>
+                  </>
+                ) : null}
               </div>
             )}
           </div>
-        ) : null}
+        </div>
         {isSaving ? (
           <span
             className="inline-flex h-5 shrink-0 items-center rounded-md border border-foreground/[0.08] bg-foreground/[0.03] px-2 text-[10px] font-medium uppercase leading-none tracking-wider text-foreground/45"

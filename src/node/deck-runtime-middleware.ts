@@ -11,6 +11,7 @@ const SAVE_ROUTE = "/__editor/save-generated-deck";
 const RESET_ROUTE = "/__editor/reset-generated-deck";
 const DECKS_ROUTE = "/__editor/decks";
 const SELECT_DECK_ROUTE = "/__editor/select-deck";
+const IMPORT_DECK_ROUTE = "/__editor/import-deck";
 const EXPORT_PDF_ROUTE = "/__editor/export-pdf";
 const EXPORT_HTML_ROUTE = "/__editor/export-html";
 const EXPORT_SOURCE_FILES_ROUTE = "/__editor/export-source-files";
@@ -59,6 +60,13 @@ interface SaveGeneratedDeckPayload {
 
 interface ExportPdfPayload {
   selection?: PdfExportSelection;
+}
+
+interface ImportDeckPayload {
+  files?: Array<{
+    path?: string;
+    contentsBase64?: string;
+  }>;
 }
 
 interface DeckFileSnapshot {
@@ -303,6 +311,66 @@ export function createDeckRuntimeMiddleware({
     writeJsonResponse(response, 200, await getDeckListResponse());
   }
 
+  async function handleImportDeckRequest(request: IncomingMessage, response: ServerResponse) {
+    const payload = JSON.parse(await readRequestBody(request)) as ImportDeckPayload;
+    const files = payload.files?.filter(
+      (file): file is { path: string; contentsBase64: string } =>
+        typeof file.path === "string" && typeof file.contentsBase64 === "string"
+    );
+
+    if (!files?.length) {
+      writeJsonResponse(response, 400, { error: "Deck files are required." });
+      return;
+    }
+
+    const manifestEntry = files
+      .map((file) => ({
+        file,
+        segments: getSafeImportPathSegments(file.path),
+      }))
+      .find((entry) => entry.segments[entry.segments.length - 1] === "manifest.json");
+    const manifestFile = manifestEntry?.file;
+    if (!manifestFile) {
+      writeJsonResponse(response, 400, { error: "Imported deck must include manifest.json." });
+      return;
+    }
+    const importRootSegments = manifestEntry.segments.slice(0, -1);
+
+    let manifestTitle = "";
+    try {
+      const manifest = JSON.parse(
+        Buffer.from(manifestFile.contentsBase64, "base64").toString("utf8")
+      ) as { deckTitle?: unknown };
+      manifestTitle = typeof manifest.deckTitle === "string" ? manifest.deckTitle : "";
+    } catch {
+      writeJsonResponse(response, 400, { error: "Imported manifest.json is invalid." });
+      return;
+    }
+
+    const deckSlug = createDeckDirectorySlug(manifestTitle || path.dirname(manifestFile.path));
+    const importedDeckDir = await createAvailableDeckDirectory(resolvedDeckLibraryDir, deckSlug);
+
+    for (const file of files) {
+      const normalizedPath = normalizeImportPath(file.path, importRootSegments);
+      if (!normalizedPath || normalizedPath.startsWith(".starry-slides/")) {
+        continue;
+      }
+
+      const targetPath = path.resolve(importedDeckDir, normalizedPath);
+      const normalizedRoot = `${importedDeckDir}${path.sep}`;
+      if (targetPath !== importedDeckDir && !targetPath.startsWith(normalizedRoot)) {
+        writeJsonResponse(response, 400, { error: "Imported deck contains an unsafe file path." });
+        return;
+      }
+
+      await fs.mkdir(path.dirname(targetPath), { recursive: true });
+      await fs.writeFile(targetPath, Buffer.from(file.contentsBase64, "base64"));
+    }
+
+    selectedDeckDir = importedDeckDir;
+    writeJsonResponse(response, 200, await getDeckListResponse());
+  }
+
   async function handleExportPdfRequest(request: IncomingMessage, response: ServerResponse) {
     const body = await readRequestBody(request);
     const payload = body ? (JSON.parse(body) as ExportPdfPayload) : {};
@@ -448,6 +516,15 @@ export function createDeckRuntimeMiddleware({
         response,
         () => handleSelectDeckRequest(request, response),
         "Failed to select deck."
+      );
+      return;
+    }
+
+    if (request.method === "POST" && request.url === IMPORT_DECK_ROUTE) {
+      await runQueuedResponse(
+        response,
+        () => handleImportDeckRequest(request, response),
+        "Failed to import deck."
       );
       return;
     }
@@ -623,6 +700,65 @@ async function readRequestBody(request: IncomingMessage): Promise<string> {
   }
 
   return Buffer.concat(chunks).toString("utf8");
+}
+
+function getSafeImportPathSegments(filePath: string) {
+  const segments = filePath
+    .replace(/\\/g, "/")
+    .split("/")
+    .filter((segment) => segment && segment !== ".");
+
+  if (segments.includes("..")) {
+    return [];
+  }
+
+  return segments;
+}
+
+function normalizeImportPath(filePath: string, rootSegments: string[]) {
+  const segments = getSafeImportPathSegments(filePath);
+  const normalizedSegments = rootSegments.every((segment, index) => segments[index] === segment)
+    ? segments.slice(rootSegments.length)
+    : segments;
+
+  return normalizedSegments.join("/");
+}
+
+function createDeckDirectorySlug(value: string) {
+  const slug = value
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+
+  return slug || "imported-deck";
+}
+
+async function createAvailableDeckDirectory(libraryDir: string, baseName: string) {
+  await fs.mkdir(libraryDir, { recursive: true });
+
+  for (let suffix = 0; suffix < 1000; suffix += 1) {
+    const directoryName = suffix === 0 ? baseName : `${baseName}-${suffix + 1}`;
+    const candidate = path.resolve(libraryDir, directoryName);
+    const normalizedLibraryDir = `${path.resolve(libraryDir)}${path.sep}`;
+
+    if (candidate !== path.resolve(libraryDir) && !candidate.startsWith(normalizedLibraryDir)) {
+      continue;
+    }
+
+    try {
+      await fs.mkdir(candidate);
+      return candidate;
+    } catch (error) {
+      if (error && typeof error === "object" && "code" in error && error.code === "EEXIST") {
+        continue;
+      }
+
+      throw error;
+    }
+  }
+
+  throw new Error("Could not create a unique deck directory.");
 }
 
 function writeJsonResponse(response: ServerResponse, statusCode: number, value: unknown) {

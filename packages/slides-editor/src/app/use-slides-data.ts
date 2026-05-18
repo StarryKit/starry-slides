@@ -20,6 +20,7 @@ interface SlidesDataResult {
   saveSlides: (slides: SlideModel[]) => void;
   saveDeckTitle: (title: string) => void;
   switchDeck: (deckId: string) => Promise<void>;
+  importDeck: (files: FileList) => Promise<void>;
   exportPdf: (selection: PdfExportSelection) => Promise<void>;
   exportHtml: () => Promise<void>;
   exportSourceFiles: () => Promise<void>;
@@ -28,6 +29,7 @@ interface SlidesDataResult {
 const GENERATED_MANIFEST_URL = "/deck/manifest.json";
 const DECKS_URL = "/__editor/decks";
 const SELECT_DECK_URL = "/__editor/select-deck";
+const IMPORT_DECK_URL = "/__editor/import-deck";
 const GENERATED_SAVE_URL = "/__editor/save-generated-deck";
 const GENERATED_EXPORT_PDF_URL = "/__editor/export-pdf";
 const GENERATED_EXPORT_HTML_URL = "/__editor/export-html";
@@ -357,6 +359,56 @@ export function useSlidesData(): SlidesDataResult {
     }
   };
 
+  const importDeck = async (files: FileList) => {
+    if (!files.length || isSwitchingDeck) {
+      return;
+    }
+
+    const selectedFiles = Array.from(files);
+    setIsSwitchingDeck(true);
+    setErrorMessage(null);
+
+    if (saveTimerRef.current) {
+      window.clearTimeout(saveTimerRef.current);
+      saveTimerRef.current = null;
+    }
+
+    try {
+      await flushSave();
+
+      const response = await fetch(IMPORT_DECK_URL, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          files: await Promise.all(
+            selectedFiles.map(async (file) => ({
+              path: file.webkitRelativePath || file.name,
+              contentsBase64: arrayBufferToBase64(await file.arrayBuffer()),
+            }))
+          ),
+        }),
+      });
+
+      if (!response.ok) {
+        const message = await readErrorMessage(response, "The app could not import that deck.");
+        setErrorMessage(message);
+        throw new Error(message || "The app could not import that deck.");
+      }
+
+      const payload = (await response.json()) as DeckListResponse;
+      setDecks(Array.isArray(payload.decks) ? payload.decks : []);
+      setCurrentDeckId(typeof payload.currentDeckId === "string" ? payload.currentDeckId : null);
+      await loadCurrentDeck();
+    } catch (error) {
+      setErrorMessage(error instanceof Error ? error.message : "The app could not import decks.");
+      throw error;
+    } finally {
+      setIsSwitchingDeck(false);
+    }
+  };
+
   const exportPdf = async (selection: PdfExportSelection) => {
     if (saveTimerRef.current) {
       window.clearTimeout(saveTimerRef.current);
@@ -434,6 +486,7 @@ export function useSlidesData(): SlidesDataResult {
     saveSlides,
     saveDeckTitle,
     switchDeck,
+    importDeck,
     exportPdf,
     exportHtml,
     exportSourceFiles,
@@ -463,4 +516,16 @@ function triggerDownload(blob: Blob, filename: string) {
   link.click();
   link.remove();
   URL.revokeObjectURL(url);
+}
+
+function arrayBufferToBase64(buffer: ArrayBuffer) {
+  let binary = "";
+  const bytes = new Uint8Array(buffer);
+  const chunkSize = 0x8000;
+
+  for (let index = 0; index < bytes.length; index += chunkSize) {
+    binary += String.fromCharCode(...bytes.slice(index, index + chunkSize));
+  }
+
+  return window.btoa(binary);
 }
