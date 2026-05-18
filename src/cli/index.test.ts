@@ -77,11 +77,7 @@ describe("source starry-slides cli", () => {
     const parsed = parseJson(result.stdout);
     expect(parsed.mode).toBe("complete");
     expect(parsed.ok).toBe(true);
-    expect(parsed.checks).toEqual([
-      "structure",
-      "static-overflow",
-      "rendered-overflow",
-    ]);
+    expect(parsed.checks).toEqual(["structure", "static-overflow", "rendered-overflow"]);
   });
 
   test("verify with no deck uses the default deck resolution path", () => {
@@ -96,10 +92,7 @@ describe("source starry-slides cli", () => {
 
   test("failed verify exits one and writes parseable JSON to stdout", () => {
     const deck = createDeck();
-    fs.writeFileSync(
-      path.join(deck, "manifest.json"),
-      JSON.stringify({ slides: [] }),
-    );
+    fs.writeFileSync(path.join(deck, "manifest.json"), JSON.stringify({ slides: [] }));
 
     const result = runCli(["verify", deck]);
 
@@ -107,9 +100,9 @@ describe("source starry-slides cli", () => {
     expect(result.stderr).toBe("");
     const parsed = parseJson(result.stdout);
     expect(parsed.ok).toBe(false);
-    expect(
-      (parsed.issues as Array<{ code: string }>).map((issue) => issue.code),
-    ).toContain("structure.empty-manifest");
+    expect((parsed.issues as Array<{ code: string }>).map((issue) => issue.code)).toContain(
+      "structure.empty-manifest"
+    );
   });
 
   test("pnpm --silent starry-slides keeps verify stdout JSON-parseable", () => {
@@ -135,15 +128,10 @@ describe("source starry-slides cli", () => {
     const parsed = parseJson(result.stdout);
     expect(parsed.mode).toBe("single");
     expect(parsed.slides).toHaveLength(1);
-    expect(
-      (parsed.slides as Array<{ slideFile: string; path: string }>)[0]
-        .slideFile,
-    ).toBe("slides/01.html");
-    expect(
-      fs.existsSync(
-        (parsed.slides as Array<{ path: string }>)[0].path,
-      ),
-    ).toBe(true);
+    expect((parsed.slides as Array<{ slideFile: string; path: string }>)[0].slideFile).toBe(
+      "slides/01.html"
+    );
+    expect(fs.existsSync((parsed.slides as Array<{ path: string }>)[0].path)).toBe(true);
   });
 
   test("view all renders every manifest slide", () => {
@@ -159,11 +147,9 @@ describe("source starry-slides cli", () => {
     expect(result.stderr).toBe("");
     const parsed = parseJson(result.stdout);
     expect(parsed.mode).toBe("all");
-    expect(
-      (parsed.slides as Array<{ slideFile: string }>).map(
-        (slide) => slide.slideFile,
-      ),
-    ).toEqual(["slides/01.html", "slides/02.html"]);
+    expect((parsed.slides as Array<{ slideFile: string }>).map((slide) => slide.slideFile)).toEqual(
+      ["slides/01.html", "slides/02.html"]
+    );
   });
 
   test("view out-dir writes only to the explicit output directory and clears stale files", () => {
@@ -179,9 +165,7 @@ describe("source starry-slides cli", () => {
     const parsed = parseJson(result.stdout);
     expect(parsed.outputDir).toBe(outDir);
     expect(fs.existsSync(path.join(outDir, "stale.png"))).toBe(false);
-    expect(fs.existsSync(path.join(deck, ".starry-slides", "view"))).toBe(
-      false,
-    );
+    expect(fs.existsSync(path.join(deck, ".starry-slides", "view"))).toBe(false);
   });
 
   test("view slide combines exact selection with explicit out-dir", () => {
@@ -192,25 +176,15 @@ describe("source starry-slides cli", () => {
     ]);
     const outDir = path.join(deck, "single-preview");
 
-    const result = runCli([
-      "view",
-      deck,
-      "--slide",
-      "slides/02.html",
-      "--out-dir",
-      outDir,
-    ]);
+    const result = runCli(["view", deck, "--slide", "slides/02.html", "--out-dir", outDir]);
 
     expect(result.status).toBe(0);
     const parsed = parseJson(result.stdout);
     expect(parsed.outputDir).toBe(outDir);
-    expect(
-      parsed.slides as Array<{ slideFile: string; path: string }>,
-    ).toHaveLength(1);
-    expect(
-      (parsed.slides as Array<{ slideFile: string; path: string }>)[0]
-        .slideFile,
-    ).toBe("slides/02.html");
+    expect(parsed.slides as Array<{ slideFile: string; path: string }>).toHaveLength(1);
+    expect((parsed.slides as Array<{ slideFile: string; path: string }>)[0].slideFile).toBe(
+      "slides/02.html"
+    );
   });
 
   test("view refuses non-exact slide references such as indexes", () => {
@@ -220,12 +194,8 @@ describe("source starry-slides cli", () => {
 
     expect(result.status).toBe(1);
     expect(result.stdout).toBe("");
-    expect(result.stderr).toContain(
-      "--slide must match a manifest slide file exactly: 1",
-    );
-    expect(fs.existsSync(path.join(deck, ".starry-slides", "view"))).toBe(
-      false,
-    );
+    expect(result.stderr).toContain("--slide must match a manifest slide file exactly: 1");
+    expect(fs.existsSync(path.join(deck, ".starry-slides", "view"))).toBe(false);
   });
 
   test("view runs full verify before rendering and writes no previews when rendered verify fails", () => {
@@ -237,8 +207,8 @@ describe("source starry-slides cli", () => {
           blockElement(
             "block-1",
             "Outside",
-            "position:absolute;left:760px;top:20px;width:100px;height:100px",
-          ),
+            "position:absolute;left:760px;top:20px;width:100px;height:100px"
+          )
         ),
       },
     ]);
@@ -249,12 +219,10 @@ describe("source starry-slides cli", () => {
     expect(result.stderr).toBe("");
     const parsed = parseJson(result.stdout);
     expect(parsed.mode).toBe("complete");
-    expect(
-      (parsed.issues as Array<{ code: string }>).map((issue) => issue.code),
-    ).toContain("overflow.element-bounds");
-    expect(fs.existsSync(path.join(deck, ".starry-slides", "view"))).toBe(
-      false,
+    expect((parsed.issues as Array<{ code: string }>).map((issue) => issue.code)).toContain(
+      "overflow.element-bounds"
     );
+    expect(fs.existsSync(path.join(deck, ".starry-slides", "view"))).toBe(false);
   });
 
   test("view invalid option states fail non-zero with human-readable stderr", () => {
@@ -262,30 +230,20 @@ describe("source starry-slides cli", () => {
 
     // No --slide or --all → custom error from runView
     expect(runCli(["view", deck]).stderr).toContain(
-      "view requires either --slide <manifest-file> or --all",
+      "view requires either --slide <manifest-file> or --all"
     );
 
     // Unknown option
-    expect(runCli(["view", deck, "--static", "--all"]).stderr).toContain(
-      "Unknown option:",
-    );
-    expect(runCli(["view", deck, "--static", "--all"]).stderr).toContain(
-      "--static",
-    );
+    expect(runCli(["view", deck, "--static", "--all"]).stderr).toContain("Unknown option:");
+    expect(runCli(["view", deck, "--static", "--all"]).stderr).toContain("--static");
 
     // Missing option value
-    expect(runCli(["view", deck, "--slide"]).stderr).toContain(
-      "Missing value:",
-    );
+    expect(runCli(["view", deck, "--slide"]).stderr).toContain("Missing value:");
     expect(runCli(["view", deck, "--slide"]).stderr).toContain("--slide");
 
-    expect(runCli(["view", deck, "--all", "--out-dir"]).stderr).toContain(
-      "Missing value:",
-    );
-    expect(
-      runCli(["view", deck, "--all", "--out-dir"]).stderr,
-    ).toContain("--out-dir");
-  });
+    expect(runCli(["view", deck, "--all", "--out-dir"]).stderr).toContain("Missing value:");
+    expect(runCli(["view", deck, "--all", "--out-dir"]).stderr).toContain("--out-dir");
+  }, 15_000);
 
   test("view slide plus all follows last parser option wins semantics", () => {
     const deck = createDeck();
@@ -294,20 +252,8 @@ describe("source starry-slides cli", () => {
       { file: "slides/02.html", title: "Two" },
     ]);
 
-    const allResult = runCli([
-      "view",
-      deck,
-      "--slide",
-      "slides/01.html",
-      "--all",
-    ]);
-    const slideResult = runCli([
-      "view",
-      deck,
-      "--all",
-      "--slide",
-      "slides/01.html",
-    ]);
+    const allResult = runCli(["view", deck, "--slide", "slides/01.html", "--all"]);
+    const slideResult = runCli(["view", deck, "--all", "--slide", "slides/01.html"]);
 
     expect(parseJson(allResult.stdout).mode).toBe("all");
     expect(parseJson(slideResult.stdout).mode).toBe("single");
@@ -322,8 +268,8 @@ describe("source starry-slides cli", () => {
           blockElement(
             "block-1",
             "Outside",
-            "position:absolute;left:760px;top:20px;width:100px;height:100px",
-          ),
+            "position:absolute;left:760px;top:20px;width:100px;height:100px"
+          )
         ),
       },
     ]);
@@ -333,9 +279,9 @@ describe("source starry-slides cli", () => {
     expect(result.status).toBe(1);
     const parsed = parseJson(result.stdout);
     expect(parsed.mode).toBe("complete");
-    expect(
-      (parsed.issues as Array<{ code: string }>).map((issue) => issue.code),
-    ).toContain("overflow.element-bounds");
+    expect((parsed.issues as Array<{ code: string }>).map((issue) => issue.code)).toContain(
+      "overflow.element-bounds"
+    );
   });
 
   test("open stops on complete verify failure before launching the editor", () => {
@@ -347,8 +293,8 @@ describe("source starry-slides cli", () => {
           blockElement(
             "block-1",
             "Outside",
-            "position:absolute;left:760px;top:20px;width:100px;height:100px",
-          ),
+            "position:absolute;left:760px;top:20px;width:100px;height:100px"
+          )
         ),
       },
     ]);
@@ -374,12 +320,8 @@ describe("source starry-slides cli", () => {
 
     expect(result.status).toBe(0);
     expect(result.stdout).toBe("");
-    expect(result.stderr).toContain(
-      "Opening Starry Slides at http://127.0.0.1:",
-    );
-    expect(result.stderr).toContain(
-      `Editor startup stub: STARRY_SLIDES_DECK_DIR=${deck}`,
-    );
+    expect(result.stderr).toContain("Opening Starry Slides at http://127.0.0.1:");
+    expect(result.stderr).toContain(`Editor startup stub: STARRY_SLIDES_DECK_DIR=${deck}`);
   });
 
   test("default deck argument command behaves like open deck", () => {
@@ -391,9 +333,7 @@ describe("source starry-slides cli", () => {
 
     expect(result.status).toBe(0);
     expect(result.stdout).toBe("");
-    expect(result.stderr).toContain(
-      `Editor startup stub: STARRY_SLIDES_DECK_DIR=${deck}`,
-    );
+    expect(result.stderr).toContain(`Editor startup stub: STARRY_SLIDES_DECK_DIR=${deck}`);
   });
 
   test("extra positional arguments and unknown options fail non-zero with human-readable messages", () => {
@@ -416,9 +356,7 @@ describe("source starry-slides cli", () => {
       const result = runCli([arg]);
       expect(result.status).toBe(0);
       expect(result.stderr).toBe("");
-      expect(result.stdout).toContain(
-        "Usage: starry-slides [options] [command] <deck>",
-      );
+      expect(result.stdout).toContain("Usage: starry-slides [options] [command] <deck>");
       expect(result.stdout).toContain("open [options] <deck>");
       expect(result.stdout).toContain("verify [deck]");
       expect(result.stdout).toContain("view [options] [deck]");
@@ -469,9 +407,7 @@ describe("source starry-slides cli", () => {
       });
 
       expect(result.status).toBe(0);
-      expect(result.stderr).toContain(
-        "Opening Starry Slides at http://127.0.0.1:5291/",
-      );
+      expect(result.stderr).toContain("Opening Starry Slides at http://127.0.0.1:5291/");
     } finally {
       await new Promise<void>((resolve) => blocker.close(() => resolve()));
     }

@@ -566,10 +566,7 @@ test("edge handle resizes only horizontally", async ({ page }) => {
   await page.keyboard.up("Alt");
   await page.mouse.up();
 
-  const afterHorizontal = await getRequiredBoundingBox(
-    blockCard,
-    "block after right-edge resize"
-  );
+  const afterHorizontal = await getRequiredBoundingBox(blockCard, "block after right-edge resize");
   expect(afterHorizontal.width).toBeGreaterThan(before.width + 60);
   expect(Math.abs(afterHorizontal.x - before.x)).toBeLessThanOrEqual(2);
   expect(Math.abs(afterHorizontal.y - before.y)).toBeLessThanOrEqual(2);

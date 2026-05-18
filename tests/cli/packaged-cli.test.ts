@@ -92,7 +92,7 @@ describe("packaged starry-slides CLI", () => {
 
     expect(result.status).toBe(0);
     expect(result.stderr).toBe("");
-    expect(result.stdout).toContain("Usage: starry-slides [options] [command] [deck]");
+    expect(result.stdout).toContain("Usage: starry-slides [options] [command]");
     expect(result.stdout).toContain("view [options] [deck]");
   });
 

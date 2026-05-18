@@ -1,4 +1,4 @@
-import { type VerifyResult, createVerifyResult, verifyDeck } from "../../../core/verify-deck";
+import { type VerifyResult, verifyDeck } from "../../../core/verify-deck";
 import { resolveDeckPath } from "../../../node/deck-source";
 import { verifyRenderedOverflow } from "../../../node/view-renderer";
 

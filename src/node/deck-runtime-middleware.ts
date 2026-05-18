@@ -1,8 +1,8 @@
 import fs from "node:fs/promises";
 import type { IncomingMessage, ServerResponse } from "node:http";
 import path from "node:path";
+import { type PdfExportSelection, createSafeExportFilenameBase } from "@starrykit/slides-core";
 import type { Plugin, PreviewServer, ViteDevServer } from "vite";
-import { type PdfExportSelection, createSafeExportFilenameBase } from "../core";
 import { exportHtml } from "./html-export";
 import { exportPdf } from "./pdf-export";
 import { exportSourceFiles } from "./source-files-export";

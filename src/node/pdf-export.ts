@@ -4,11 +4,7 @@ import os from "node:os";
 import path from "node:path";
 import { pathToFileURL } from "node:url";
 import { JSDOM, VirtualConsole } from "jsdom";
-import {
-  type PdfExportSelection,
-  planPdfExport,
-  readBodyDimensionsFromHtmlSource,
-} from "../core";
+import { type PdfExportSelection, planPdfExport, readBodyDimensionsFromHtmlSource } from "../core";
 import { type RenderedSlide, getManifestSlides } from "./view-renderer";
 
 type ChromiumLauncher = typeof import("@playwright/test").chromium;

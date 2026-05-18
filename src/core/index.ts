@@ -1,14 +1,4 @@
-// ADR-0008: @starrykit/slides owns core document modules as an internal library.
-export * from "./slide-contract";
-export * from "./slide-document";
-export * from "./slide-html-base";
-export * from "./slide-html-document";
-export * from "./layout";
-export * from "./slide-operations";
-export * from "./deck-slide-operations";
-export * from "./history";
-export * from "./generated-deck";
-export * from "./pdf-export";
-export * from "./html-export";
-export * from "./presentation";
-export * from "./export-filenames";
+// Backward-compatibility re-export.
+// Sources live in @starrykit/slides-core per ADR-0029.
+export * from "@starrykit/slides-core";
+export * from "./verify-deck";

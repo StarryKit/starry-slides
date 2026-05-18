@@ -6,11 +6,7 @@
   "type": "module",
   "packageManager": "pnpm@10.33.2",
   "pnpm": {
-    "onlyBuiltDependencies": [
-      "esbuild",
-      "@parcel/watcher",
-      "@biomejs/biome"
-    ]
+    "onlyBuiltDependencies": ["esbuild", "@parcel/watcher", "@biomejs/biome"]
   },
   "homepage": "https://github.com/StarryKit/starry-slides#readme",
   "bugs": {
@@ -20,21 +16,11 @@
     "type": "git",
     "url": "git+https://github.com/StarryKit/starry-slides.git"
   },
-  "keywords": [
-    "slides",
-    "presentation",
-    "html",
-    "cli",
-    "editor"
-  ],
+  "keywords": ["slides", "presentation", "html", "cli", "editor"],
   "engines": {
     "node": ">=20.11"
   },
-  "files": [
-    "dist",
-    "README.md",
-    "LICENSE"
-  ],
+  "files": ["dist", "skills", "README.md", "LICENSE"],
   "bin": {
     "starry-slides": "dist/cli/index.js"
   },
@@ -47,7 +33,7 @@
   "scripts": {
     "dev": "vite",
     "starry-slides": "tsx src/cli/index.ts",
-    "build": "pnpm build:types && pnpm build:js && pnpm build:app",
+    "build": "pnpm --filter @starrykit/slides-core build && pnpm --filter @starrykit/slides-editor build && pnpm build:types && pnpm build:js && pnpm build:app",
     "build:types": "tsc -p tsconfig.build.json --emitDeclarationOnly",
     "build:js": "tsup src/editor/index.tsx src/cli/index.ts --format esm",
     "build:app": "vite build",
@@ -64,6 +50,8 @@
     "verify": "pnpm lint && pnpm test && pnpm build && pnpm test:packaged-cli && pnpm test:e2e"
   },
   "dependencies": {
+    "@starrykit/slides-core": "0.1.23",
+    "@starrykit/slides-editor": "0.1.23",
     "@playwright/test": "^1.54.2",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",

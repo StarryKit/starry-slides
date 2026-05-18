@@ -4,7 +4,7 @@ import {
   type HtmlExportSlide,
   createSingleHtmlExportDocument,
   planHtmlExportSlides,
-} from "../core";
+} from "@starrykit/slides-core";
 import { getManifestSlides } from "./view-renderer";
 
 export interface HtmlExportResultSlide {

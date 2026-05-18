@@ -358,9 +358,10 @@ test("context menu ungroups a block inside a positioned non-editable container w
   if (!blockBox) throw new Error("positioned-block bounding box not available");
   await page.mouse.click(blockBox.x + 10, blockBox.y + 10);
   const menu = await openSelectionContextMenu(page);
-  await expect(
-    menu.getByRole("menuitem", { name: "Ungroup", exact: true })
-  ).not.toHaveAttribute("data-disabled", "");
+  await expect(menu.getByRole("menuitem", { name: "Ungroup", exact: true })).not.toHaveAttribute(
+    "data-disabled",
+    ""
+  );
   await menu.getByRole("menuitem", { name: "Ungroup", exact: true }).click();
 
   // After ungroup, the block is gone; children are promoted to the positioned-col container.
@@ -375,9 +376,7 @@ test("context menu ungroups a block inside a positioned non-editable container w
   // Verify children stay in the parent container (not the slide root)
   await expect
     .poll(async () =>
-      promotedList.evaluate(
-        (node) => node.parentElement?.className === "positioned-col"
-      )
+      promotedList.evaluate((node) => node.parentElement?.className === "positioned-col")
     )
     .toBe(true);
 
