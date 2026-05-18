@@ -1,12 +1,16 @@
 {
   "name": "starry-slides",
-  "version": "0.1.26",
+  "version": "0.1.27",
   "description": "Local-first CLI and browser editor for HTML slide decks.",
   "license": "Apache-2.0",
   "type": "module",
   "packageManager": "pnpm@10.33.2",
   "pnpm": {
-    "onlyBuiltDependencies": ["esbuild", "@parcel/watcher", "@biomejs/biome"]
+    "onlyBuiltDependencies": [
+      "esbuild",
+      "@parcel/watcher",
+      "@biomejs/biome"
+    ]
   },
   "homepage": "https://github.com/StarryKit/starry-slides#readme",
   "bugs": {
@@ -16,11 +20,22 @@
     "type": "git",
     "url": "git+https://github.com/StarryKit/starry-slides.git"
   },
-  "keywords": ["slides", "presentation", "html", "cli", "editor"],
+  "keywords": [
+    "slides",
+    "presentation",
+    "html",
+    "cli",
+    "editor"
+  ],
   "engines": {
     "node": ">=20.11"
   },
-  "files": ["dist", "skills", "README.md", "LICENSE"],
+  "files": [
+    "dist",
+    "skills",
+    "README.md",
+    "LICENSE"
+  ],
   "bin": {
     "starry-slides": "dist/cli/index.js"
   },
@@ -50,8 +65,8 @@
     "verify": "pnpm lint && pnpm test && pnpm build && pnpm test:packaged-cli && pnpm test:e2e"
   },
   "dependencies": {
-    "@starrykit/slides-core": "0.1.26",
-    "@starrykit/slides-editor": "0.1.26",
+    "@starrykit/slides-core": "0.1.27",
+    "@starrykit/slides-editor": "0.1.27",
     "@playwright/test": "^1.54.2",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
