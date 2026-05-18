@@ -92,7 +92,7 @@ Manifest example:
 Each slide HTML file uses its `body` element as the slide root.
 
 - Root size may be specified only by directly setting a fixed numeric `width`
-  and `height` on the `body` in CSS, such as `width: 1920px` and
+  and `height` on the `body`, such as `width: 1920px` and
   `height: 1080px`.
 - If `body` size is not specified, the default root size is `1920 x 1080`.
 - Any other sizing method is not part of the contract and is treated as not
@@ -100,6 +100,31 @@ Each slide HTML file uses its `body` element as the slide root.
   content-driven sizing, inherited sizing, and other indirect sizing methods.
 - Root overflow is forbidden. The `body` must not allow visible or scrolling
   overflow and must not produce scroll overflow during normal rendering.
+
+#### Root styles and external CSS
+
+Styles that define the slide root itself are contract-critical. Decks that must
+round-trip through the editor should author these `body` styles directly on the
+slide root in a form the editor normalization path can preserve, preferably as
+inline `style` attributes:
+
+- fixed `width` and `height`
+- `margin`
+- `overflow`
+- root positioning such as `position: relative`
+- root `background` / `background-color` / `background-image`
+
+A linked stylesheet may make a slide render correctly in a browser or CLI
+preview, but root-critical styles that exist only in external CSS are not
+sufficient for editor fidelity. In that case, editor normalization may apply
+default inline root values, such as a white background, causing visual drift
+after round-trip editing.
+
+Use external stylesheets for reusable presentation details that are not part of
+the root contract: typography, component classes, cards, badges, grids, layout
+helpers inside the slide, and other non-root styling. Do not rely on external CSS
+alone for root backgrounds or required fixed slide dimensions when the deck must
+round-trip through the editor.
 
 ### 2. Editable Element Attributes
 
@@ -133,17 +158,14 @@ Editable type validity:
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
+    <link rel="stylesheet" href="../assets/shared.css" />
     <style>
-      * { box-sizing: border-box; }
+      /* Non-root reusable styles may also live in ../assets/shared.css. */
+      * {
+        box-sizing: border-box;
+      }
       html {
         margin: 0;
-      }
-      body {
-        margin: 0;
-        width: 1920px;
-        height: 1080px;
-        overflow: hidden;
-        font-family: sans-serif;
       }
       .slide {
         min-height: 100%;
@@ -151,10 +173,20 @@ Editable type validity:
         display: grid;
         align-content: start;
         gap: 32px;
+        font-family: sans-serif;
       }
     </style>
   </head>
-  <body>
+  <body
+    style="
+      margin: 0;
+      width: 1920px;
+      height: 1080px;
+      overflow: hidden;
+      position: relative;
+      background-color: #ffffff;
+    "
+  >
     <main class="slide">
       <h1 data-editable="text" data-editable-id="text-1" data-role="title">
         Future of Team Workflows
