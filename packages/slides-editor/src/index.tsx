@@ -23,12 +23,25 @@ import { hasDirectEditableChildren } from "./lib/editor-selection-structure";
 export interface SlidesEditorProps {
   slides: SlideModel[];
   deckTitle?: string;
+  decks?: DeckSwitcherOption[];
+  currentDeckId?: string | null;
   isSaving?: boolean;
+  isSwitchingDeck?: boolean;
   onSlidesChange?: (slides: SlideModel[]) => void;
   onDeckTitleChange?: (title: string) => void;
+  onDeckSwitch?: (deckId: string) => void;
   onExportPdf?: (selection: PdfExportSelection) => void;
   onExportHtml?: () => void;
   onExportSourceFiles?: () => void;
+}
+
+export interface DeckSwitcherOption {
+  id: string;
+  title: string;
+  description?: string;
+  directoryName: string;
+  relativePath: string;
+  isCurrent: boolean;
 }
 
 const EMPTY_LOCKED_ELEMENT_IDS: string[] = [];
@@ -36,9 +49,13 @@ const EMPTY_LOCKED_ELEMENT_IDS: string[] = [];
 function SlidesEditor({
   slides: loadedSlides,
   deckTitle,
+  decks,
+  currentDeckId,
   isSaving = false,
+  isSwitchingDeck = false,
   onSlidesChange,
   onDeckTitleChange,
+  onDeckSwitch,
   onExportPdf,
   onExportHtml,
   onExportSourceFiles,
@@ -348,7 +365,10 @@ function SlidesEditor({
       slides={slides}
       activeSlide={activeSlide}
       deckTitle={resolvedDeckTitle}
+      decks={decks}
+      currentDeckId={currentDeckId}
       isSaving={isSaving}
+      isSwitchingDeck={isSwitchingDeck}
       isPresenting={isPresenting}
       thumbnails={thumbnails}
       slideWidth={slideWidth}
@@ -378,6 +398,7 @@ function SlidesEditor({
       isManipulating={isManipulating || isMarqueeSelecting}
       isToolbarSuppressed={isToolbarSuppressed}
       onDeckTitleChange={onDeckTitleChange}
+      onDeckSwitch={onDeckSwitch}
       onExportHtml={onExportHtml}
       onExportSourceFiles={onExportSourceFiles}
       onExportPdf={onExportPdf}

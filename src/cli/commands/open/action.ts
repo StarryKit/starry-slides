@@ -8,8 +8,13 @@ function writeJson(value: unknown) {
   process.stdout.write(`${JSON.stringify(value, null, 2)}\n`);
 }
 
-export async function runOpen(deckPathArg: string, preferredPort?: number) {
+export async function runOpen(
+  deckPathArg: string,
+  preferredPort?: number,
+  deckLibraryArg?: string
+) {
   const deckPath = resolveDeckPath(deckPathArg);
+  const deckLibraryDir = deckLibraryArg ? resolveDeckPath(deckLibraryArg) : undefined;
   const result = await runFullVerify(deckPath);
   if (!result.ok) {
     writeJson(result);
@@ -22,10 +27,13 @@ export async function runOpen(deckPathArg: string, preferredPort?: number) {
   if (process.env.STARRY_SLIDES_TEST_STUB_OPEN === "1") {
     console.error(`Opening Starry Slides at ${url}`);
     console.error(`Editor startup stub: STARRY_SLIDES_DECK_DIR=${deckPath}`);
+    if (deckLibraryDir) {
+      console.error(`Editor startup stub: STARRY_SLIDES_DECK_LIBRARY_DIR=${deckLibraryDir}`);
+    }
     return;
   }
 
-  const server = await startEditorServer({ deckPath, port });
+  const server = await startEditorServer({ deckPath, deckLibraryDir, port });
   const closeServer = () => {
     void server.close().finally(() => process.exit(0));
   };

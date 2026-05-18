@@ -15,6 +15,7 @@ import {
 import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import logoUrl from "../assets/logo-starry-slides.png";
+import type { DeckSwitcherOption } from "../index";
 import { cn } from "../lib/utils";
 
 export interface PdfExportSlideOption {
@@ -25,7 +26,10 @@ export interface PdfExportSlideOption {
 
 interface EditorHeaderProps {
   title: string;
+  decks?: DeckSwitcherOption[];
+  currentDeckId?: string | null;
   onTitleChange?: (t: string) => void;
+  onDeckSwitch?: (deckId: string) => void;
   onPresent?: () => void;
   onExportPdf?: (selection: PdfExportSelection) => void;
   onExportHtml?: () => void;
@@ -33,6 +37,7 @@ interface EditorHeaderProps {
   pdfSlides?: PdfExportSlideOption[];
   pdfThumbnails?: Record<string, string>;
   isSaving: boolean;
+  isSwitchingDeck?: boolean;
 }
 
 type ExportId = "html" | "source-files" | "pdf" | "pptx" | "gslides";
@@ -71,7 +76,10 @@ const GITHUB_REPO_URL = "https://github.com/StarryKit/starry-slides";
 
 export function EditorHeader({
   title,
+  decks = [],
+  currentDeckId,
   onTitleChange,
+  onDeckSwitch,
   onPresent,
   onExportPdf,
   onExportHtml,
@@ -79,16 +87,25 @@ export function EditorHeader({
   pdfSlides = [],
   pdfThumbnails = {},
   isSaving,
+  isSwitchingDeck = false,
 }: EditorHeaderProps) {
-  const [open, setOpen] = useState(false);
+  const [exportOpen, setExportOpen] = useState(false);
+  const [deckOpen, setDeckOpen] = useState(false);
   const [pdfDialogOpen, setPdfDialogOpen] = useState(false);
   const [titleWidth, setTitleWidth] = useState(0);
-  const ref = useRef<HTMLDivElement>(null);
+  const exportRef = useRef<HTMLDivElement>(null);
+  const deckRef = useRef<HTMLDivElement>(null);
   const titleDisplay = title || "Untitled presentation";
+  const canOpenDeckMenu = decks.length > 0 && Boolean(onDeckSwitch);
 
   useEffect(() => {
     const onDoc = (e: MouseEvent) => {
-      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+      if (exportRef.current && !exportRef.current.contains(e.target as Node)) {
+        setExportOpen(false);
+      }
+      if (deckRef.current && !deckRef.current.contains(e.target as Node)) {
+        setDeckOpen(false);
+      }
     };
     document.addEventListener("mousedown", onDoc);
     return () => document.removeEventListener("mousedown", onDoc);
@@ -104,7 +121,7 @@ export function EditorHeader({
   }, []);
 
   const handleExport = (e: (typeof EXPORTS)[number]) => {
-    setOpen(false);
+    setExportOpen(false);
 
     if (e.soon) {
       toast(`${e.label} is not available yet.`, {
@@ -163,6 +180,72 @@ export function EditorHeader({
             {titleDisplay}
           </span>
         </div>
+        {decks.length > 0 ? (
+          <div className="relative shrink-0" ref={deckRef}>
+            <button
+              type="button"
+              aria-label="Switch deck"
+              aria-expanded={deckOpen}
+              aria-haspopup="menu"
+              disabled={!canOpenDeckMenu || isSwitchingDeck}
+              onClick={() => {
+                if (canOpenDeckMenu && !isSwitchingDeck) {
+                  setDeckOpen((open) => !open);
+                }
+              }}
+              className="flex h-7 w-7 items-center justify-center rounded-md text-foreground/45 transition-colors hover:bg-foreground/[0.04] hover:text-foreground disabled:cursor-not-allowed disabled:opacity-35"
+            >
+              <ChevronDown
+                className={cn("h-3.5 w-3.5 transition-transform", deckOpen && "rotate-180")}
+              />
+            </button>
+
+            {deckOpen && (
+              <div
+                role="menu"
+                aria-label="Local decks"
+                className="absolute left-0 z-50 mt-1.5 w-[300px] rounded-lg border border-foreground/[0.08] bg-white p-1.5 shadow-[0_4px_20px_rgba(0,0,0,0.06),0_12px_40px_rgba(0,0,0,0.08)] animate-fade-in"
+              >
+                <div className="px-2.5 py-1.5 text-[10px] font-medium uppercase tracking-wider text-foreground/40">
+                  Local decks
+                </div>
+                {decks.map((deck) => {
+                  const current = deck.isCurrent || deck.id === currentDeckId;
+                  return (
+                    <button
+                      key={deck.id}
+                      type="button"
+                      role="menuitemradio"
+                      aria-checked={current}
+                      disabled={current || isSwitchingDeck}
+                      onClick={() => {
+                        setDeckOpen(false);
+                        onDeckSwitch?.(deck.id);
+                      }}
+                      className={cn(
+                        "flex w-full items-start gap-2.5 rounded-md px-2.5 py-2 text-left transition-colors",
+                        current
+                          ? "bg-foreground/[0.045] text-foreground"
+                          : "text-foreground/72 hover:bg-foreground/[0.04] hover:text-foreground",
+                        isSwitchingDeck && "cursor-wait opacity-60"
+                      )}
+                    >
+                      <span className="mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center">
+                        {current ? <Check className="h-3.5 w-3.5" /> : null}
+                      </span>
+                      <span className="min-w-0 flex-1">
+                        <span className="block truncate text-[13px] font-medium">{deck.title}</span>
+                        <span className="mt-0.5 block truncate text-[11px] text-foreground/45">
+                          {deck.relativePath === "." ? deck.directoryName : deck.relativePath}
+                        </span>
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        ) : null}
         {isSaving ? (
           <span
             className="inline-flex h-5 shrink-0 items-center rounded-md border border-foreground/[0.08] bg-foreground/[0.03] px-2 text-[10px] font-medium uppercase leading-none tracking-wider text-foreground/45"
@@ -175,18 +258,20 @@ export function EditorHeader({
 
       {/* Right: Export + Present */}
       <div className="flex items-center gap-2">
-        <div className="relative" ref={ref}>
+        <div className="relative" ref={exportRef}>
           <button
             type="button"
-            onClick={() => setOpen((o) => !o)}
+            onClick={() => setExportOpen((o) => !o)}
             className="h-8 px-3 rounded-md flex items-center gap-1.5 text-[13px] text-foreground/70 hover:bg-foreground/[0.04] hover:text-foreground transition-colors"
           >
             <Download className="w-3.5 h-3.5" />
             <span>Export</span>
-            <ChevronDown className={cn("w-3 h-3 transition-transform", open && "rotate-180")} />
+            <ChevronDown
+              className={cn("w-3 h-3 transition-transform", exportOpen && "rotate-180")}
+            />
           </button>
 
-          {open && (
+          {exportOpen && (
             <div className="absolute right-0 mt-1.5 w-[280px] bg-white rounded-xl border border-foreground/[0.08] shadow-[0_4px_20px_rgba(0,0,0,0.06),0_12px_40px_rgba(0,0,0,0.08)] p-1.5 animate-fade-in z-50">
               <div className="text-[10px] uppercase tracking-wider text-foreground/40 px-2.5 py-1.5 font-medium">
                 Export formats

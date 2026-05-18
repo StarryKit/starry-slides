@@ -83,6 +83,43 @@ test("header title input renames the deck title and persists after refresh", asy
   await expect(page.getByLabel("Deck title")).toHaveValue(nextTitle);
 });
 
+test("header deck switcher loads another local manifest-backed deck", async ({ page }) => {
+  await gotoEditor(page);
+
+  await page.getByRole("button", { name: "Switch deck" }).click();
+  const deckMenu = page.getByRole("menu", { name: "Local decks" });
+  await expect(deckMenu).toBeVisible();
+  await expect(
+    deckMenu.getByRole("menuitemradio", { name: /Starry Slides Project Overview/ })
+  ).toHaveAttribute("aria-checked", "true");
+
+  await deckMenu.getByRole("menuitemradio", { name: /Switcher Fixture Deck/ }).click();
+  await expect(page.getByLabel("Deck title")).toHaveValue("Switcher Fixture Deck");
+  await expect(page.getByRole("button", { name: "Slide 1", exact: true })).toHaveAttribute(
+    "aria-current",
+    "true"
+  );
+  await expect(coverFrame(page).locator('[data-editable-id="text-2"]')).toHaveText(
+    "Switcher Fixture Deck"
+  );
+  await expect(page.getByText("Deck loaded.")).toBeVisible();
+
+  await expect
+    .poll(async () => {
+      const manifestResponse = await page.request.get(`/deck/manifest.json?v=${Date.now()}`);
+      expect(manifestResponse.ok()).toBeTruthy();
+      return (await manifestResponse.json()).deckTitle;
+    })
+    .toBe("Switcher Fixture Deck");
+
+  await page.getByRole("button", { name: "Switch deck" }).click();
+  await expect(
+    page
+      .getByRole("menu", { name: "Local decks" })
+      .getByRole("menuitemradio", { name: /Switcher Fixture Deck/ })
+  ).toHaveAttribute("aria-checked", "true");
+});
+
 test("sidebar renders fixed thumbnail list chrome and slide actions", async ({ page }) => {
   await gotoEditor(page);
 

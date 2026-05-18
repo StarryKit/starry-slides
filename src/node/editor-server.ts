@@ -20,9 +20,11 @@ const MIME_TYPES: Record<string, string> = {
 
 export async function startEditorServer({
   deckPath,
+  deckLibraryDir,
   port,
 }: {
   deckPath: string;
+  deckLibraryDir?: string;
   port: number;
 }): Promise<EditorServer> {
   const appDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
@@ -30,6 +32,7 @@ export async function startEditorServer({
     runtimeDeckDir: deckPath,
     previewDeckDir: deckPath,
     saveTargetDirs: [deckPath],
+    deckLibraryDir,
   });
 
   const server = http.createServer((request, response) => {

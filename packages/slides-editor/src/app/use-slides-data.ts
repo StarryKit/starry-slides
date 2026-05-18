@@ -11,17 +11,23 @@ interface SlidesDataResult {
   deckTitle: string;
   deckDescription: string;
   slides: SlideModel[];
+  decks: LocalDeckOption[];
+  currentDeckId: string | null;
   errorMessage: string | null;
   isLoading: boolean;
   isSaving: boolean;
+  isSwitchingDeck: boolean;
   saveSlides: (slides: SlideModel[]) => void;
   saveDeckTitle: (title: string) => void;
+  switchDeck: (deckId: string) => Promise<void>;
   exportPdf: (selection: PdfExportSelection) => Promise<void>;
   exportHtml: () => Promise<void>;
   exportSourceFiles: () => Promise<void>;
 }
 
 const GENERATED_MANIFEST_URL = "/deck/manifest.json";
+const DECKS_URL = "/__editor/decks";
+const SELECT_DECK_URL = "/__editor/select-deck";
 const GENERATED_SAVE_URL = "/__editor/save-generated-deck";
 const GENERATED_EXPORT_PDF_URL = "/__editor/export-pdf";
 const GENERATED_EXPORT_HTML_URL = "/__editor/export-html";
@@ -35,12 +41,29 @@ interface SavePayloadSlide {
   hidden?: boolean;
 }
 
+export interface LocalDeckOption {
+  id: string;
+  title: string;
+  description?: string;
+  directoryName: string;
+  relativePath: string;
+  isCurrent: boolean;
+}
+
+interface DeckListResponse {
+  decks?: LocalDeckOption[];
+  currentDeckId?: string | null;
+}
+
 export function useSlidesData(): SlidesDataResult {
   const [deckTitle, setDeckTitle] = useState("Generated deck");
   const [deckDescription, setDeckDescription] = useState("Generated deck for Starry Slides.");
   const [slides, setSlides] = useState<SlideModel[]>([]);
+  const [decks, setDecks] = useState<LocalDeckOption[]>([]);
+  const [currentDeckId, setCurrentDeckId] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isSwitchingDeck, setIsSwitchingDeck] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const manifestRef = useRef<SlideDeckManifest | null>(null);
   const loadedSlidesRef = useRef<SlideModel[]>([]);
@@ -51,49 +74,15 @@ export function useSlidesData(): SlidesDataResult {
   const isSaveInFlightRef = useRef(false);
   const savePromiseRef = useRef<Promise<void> | null>(null);
   const clientLoadedAtRef = useRef(Date.now());
+  const loadRequestIdRef = useRef(0);
 
   useEffect(() => {
     let cancelled = false;
-    loadSlidesFromManifest({
-      manifestUrl: `${GENERATED_MANIFEST_URL}?v=${Date.now()}`,
-    })
-      .then((importedDeck) => {
-        if (cancelled) {
-          return;
-        }
-
-        if (!importedDeck) {
-          setDeckTitle("Generated deck");
-          setDeckDescription("Generated deck for Starry Slides.");
-          setSlides([]);
-          setErrorMessage("No slides were found at /deck/manifest.json.");
-          setIsLoading(false);
-          return;
-        }
-
-        manifestRef.current = importedDeck.manifest;
-        const importedTitle = importedDeck.manifest.deckTitle || "Generated deck";
-        const importedDescription =
-          importedDeck.manifest.description || "Generated deck for Starry Slides.";
-        latestDeckTitleRef.current = importedTitle;
-        setDeckTitle(importedTitle);
-        setDeckDescription(importedDescription);
-        setSlides(importedDeck.slides);
-        loadedSlidesRef.current = importedDeck.slides;
-        setErrorMessage(null);
-        setIsLoading(false);
-      })
-      .catch(() => {
-        if (cancelled) {
-          return;
-        }
-
-        setDeckTitle("Generated deck");
-        setDeckDescription("Generated deck for Starry Slides.");
-        setSlides([]);
-        setErrorMessage("The app could not load the generated deck.");
-        setIsLoading(false);
-      });
+    void loadCurrentDeck({
+      shouldApply: () => !cancelled,
+    }).catch(() => {
+      // loadCurrentDeck already updates the visible error state.
+    });
 
     return () => {
       cancelled = true;
@@ -102,6 +91,92 @@ export function useSlidesData(): SlidesDataResult {
       }
     };
   }, []);
+
+  const refreshDecks = async () => {
+    const response = await fetch(DECKS_URL, { cache: "no-store" });
+    if (!response.ok) {
+      throw new Error("The app could not list local decks.");
+    }
+
+    const payload = (await response.json()) as DeckListResponse;
+    setDecks(Array.isArray(payload.decks) ? payload.decks : []);
+    setCurrentDeckId(typeof payload.currentDeckId === "string" ? payload.currentDeckId : null);
+    return payload;
+  };
+
+  const loadCurrentDeck = async ({
+    shouldApply,
+  }: {
+    shouldApply?: () => boolean;
+  } = {}) => {
+    const requestId = loadRequestIdRef.current + 1;
+    loadRequestIdRef.current = requestId;
+
+    try {
+      await refreshDecks();
+    } catch {
+      if (shouldApply?.() === false || loadRequestIdRef.current !== requestId) {
+        return;
+      }
+      setDecks([]);
+      setCurrentDeckId(null);
+    }
+
+    try {
+      const importedDeck = await loadSlidesFromManifest({
+        manifestUrl: `${GENERATED_MANIFEST_URL}?v=${Date.now()}`,
+      });
+
+      if (shouldApply?.() === false || loadRequestIdRef.current !== requestId) {
+        return;
+      }
+
+      if (!importedDeck) {
+        manifestRef.current = null;
+        latestSlidesRef.current = null;
+        loadedSlidesRef.current = [];
+        latestDeckTitleRef.current = null;
+        setDeckTitle("Generated deck");
+        setDeckDescription("Generated deck for Starry Slides.");
+        setSlides([]);
+        setErrorMessage("No slides were found at /deck/manifest.json.");
+        return;
+      }
+
+      manifestRef.current = importedDeck.manifest;
+      const importedTitle = importedDeck.manifest.deckTitle || "Generated deck";
+      const importedDescription =
+        importedDeck.manifest.description || "Generated deck for Starry Slides.";
+      latestDeckTitleRef.current = importedTitle;
+      latestSlidesRef.current = null;
+      clientLoadedAtRef.current = Date.now();
+      setDeckTitle(importedTitle);
+      setDeckDescription(importedDescription);
+      setSlides(importedDeck.slides);
+      loadedSlidesRef.current = importedDeck.slides;
+      setErrorMessage(null);
+      void refreshDecks().catch(() => undefined);
+    } catch {
+      if (shouldApply?.() === false || loadRequestIdRef.current !== requestId) {
+        return;
+      }
+
+      manifestRef.current = null;
+      latestSlidesRef.current = null;
+      loadedSlidesRef.current = [];
+      latestDeckTitleRef.current = null;
+      setDeckTitle("Generated deck");
+      setDeckDescription("Generated deck for Starry Slides.");
+      setSlides([]);
+      const message = "The app could not load the selected deck.";
+      setErrorMessage(message);
+      throw new Error(message);
+    } finally {
+      if (shouldApply?.() !== false && loadRequestIdRef.current === requestId) {
+        setIsLoading(false);
+      }
+    }
+  };
 
   const flushSave = async (): Promise<void> => {
     const manifest = manifestRef.current;
@@ -240,6 +315,48 @@ export function useSlidesData(): SlidesDataResult {
     }, SAVE_DEBOUNCE_MS);
   };
 
+  const switchDeck = async (deckId: string) => {
+    if (!deckId || deckId === currentDeckId || isSwitchingDeck) {
+      return;
+    }
+
+    setIsSwitchingDeck(true);
+    setErrorMessage(null);
+
+    if (saveTimerRef.current) {
+      window.clearTimeout(saveTimerRef.current);
+      saveTimerRef.current = null;
+    }
+
+    try {
+      await flushSave();
+
+      const response = await fetch(SELECT_DECK_URL, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ deckId }),
+      });
+
+      if (!response.ok) {
+        const message = await readErrorMessage(response, "The app could not select that deck.");
+        setErrorMessage(message);
+        throw new Error(message || "The app could not select that deck.");
+      }
+
+      const payload = (await response.json()) as DeckListResponse;
+      setDecks(Array.isArray(payload.decks) ? payload.decks : []);
+      setCurrentDeckId(typeof payload.currentDeckId === "string" ? payload.currentDeckId : deckId);
+      await loadCurrentDeck();
+    } catch (error) {
+      setErrorMessage(error instanceof Error ? error.message : "The app could not switch decks.");
+      throw error;
+    } finally {
+      setIsSwitchingDeck(false);
+    }
+  };
+
   const exportPdf = async (selection: PdfExportSelection) => {
     if (saveTimerRef.current) {
       window.clearTimeout(saveTimerRef.current);
@@ -308,15 +425,33 @@ export function useSlidesData(): SlidesDataResult {
     deckTitle,
     deckDescription,
     slides,
+    decks,
+    currentDeckId,
     errorMessage,
     isLoading,
     isSaving,
+    isSwitchingDeck,
     saveSlides,
     saveDeckTitle,
+    switchDeck,
     exportPdf,
     exportHtml,
     exportSourceFiles,
   };
+}
+
+async function readErrorMessage(response: Response, fallback: string) {
+  const text = await response.text();
+  if (!text) {
+    return fallback;
+  }
+
+  try {
+    const payload = JSON.parse(text) as { error?: unknown };
+    return typeof payload.error === "string" && payload.error.trim() ? payload.error : fallback;
+  } catch {
+    return text;
+  }
 }
 
 function triggerDownload(blob: Blob, filename: string) {
