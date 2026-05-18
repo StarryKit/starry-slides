@@ -102,19 +102,62 @@ jobs:
       - name: Decide release action
         id: release
         run: |
-          if [ "${{ steps.npm.outputs.published }}" != "true" ] || [ "${{ steps.npm.outputs.core_published }}" != "true" ] || [ "${{ steps.npm.outputs.editor_published }}" != "true" ]; then
+          if [ "${{ steps.npm.outputs.published }}" != "true" ] && [ "${{ steps.npm.outputs.core_published }}" != "true" ] && [ "${{ steps.npm.outputs.editor_published }}" != "true" ]; then
             echo "mode=publish" >> "$GITHUB_OUTPUT"
             echo "version=${{ steps.pkg.outputs.version }}" >> "$GITHUB_OUTPUT"
             exit 0
           fi
 
           if [[ "${{ steps.pkg.outputs.head_subject }}" == chore\(release\):* ]]; then
-            echo "mode=skip" >> "$GITHUB_OUTPUT"
-            echo "version=${{ steps.pkg.outputs.version }}" >> "$GITHUB_OUTPUT"
-            exit 0
+            if [ "${{ steps.npm.outputs.published }}" = "true" ] && [ "${{ steps.npm.outputs.core_published }}" = "true" ] && [ "${{ steps.npm.outputs.editor_published }}" = "true" ]; then
+              echo "mode=skip" >> "$GITHUB_OUTPUT"
+              echo "version=${{ steps.pkg.outputs.version }}" >> "$GITHUB_OUTPUT"
+              exit 0
+            fi
           fi
 
-          base_version="${{ steps.npm.outputs.latest_version }}"
+          latest_versions=()
+
+          if [ -n "${{ steps.npm.outputs.latest_version }}" ]; then
+            latest_versions+=("${{ steps.npm.outputs.latest_version }}")
+          fi
+
+          if npm view "@starrykit/slides-core" dist-tags.latest >/dev/null 2>&1; then
+            latest_versions+=("$(npm view "@starrykit/slides-core" dist-tags.latest 2>/dev/null || true)")
+          fi
+
+          if npm view "@starrykit/slides-editor" dist-tags.latest >/dev/null 2>&1; then
+            latest_versions+=("$(npm view "@starrykit/slides-editor" dist-tags.latest 2>/dev/null || true)")
+          fi
+
+          base_version="${latest_versions[0]}"
+
+          for version in "${latest_versions[@]}"; do
+            if [ -z "$version" ]; then
+              continue
+            fi
+
+            if [ -z "$base_version" ]; then
+              base_version="$version"
+              continue
+            fi
+
+            if node -e '
+              const [a, b] = process.argv.slice(1);
+              const parse = (value) => value.split(".").map(Number);
+              const [am, an, ap] = parse(a);
+              const [bm, bn, bp] = parse(b);
+              if ([am, an, ap, bm, bn, bp].some((part) => Number.isNaN(part))) {
+                throw new Error(`Invalid semver comparison: ${a} vs ${b}`);
+              }
+              const left = [am, an, ap];
+              const right = [bm, bn, bp];
+              const isGreater = left[0] > right[0] || (left[0] === right[0] && (left[1] > right[1] || (left[1] === right[1] && left[2] > right[2])));
+              process.exit(isGreater ? 0 : 1);
+            ' "$version" "$base_version"; then
+              base_version="$version"
+            fi
+          done
 
           if [ -z "$base_version" ]; then
             base_version="${{ steps.pkg.outputs.version }}"
