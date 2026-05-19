@@ -32,6 +32,7 @@ interface EditorHeaderProps {
   onTitleChange?: (t: string) => void;
   onDeckSwitch?: (deckId: string) => void;
   onDeckImport?: (files: FileList) => void;
+  onDeckImportPath?: () => void;
   onPresent?: () => void;
   onExportPdf?: (selection: PdfExportSelection) => void;
   onExportHtml?: () => void;
@@ -83,6 +84,7 @@ export function EditorHeader({
   onTitleChange,
   onDeckSwitch,
   onDeckImport,
+  onDeckImportPath,
   onPresent,
   onExportPdf,
   onExportHtml,
@@ -100,7 +102,7 @@ export function EditorHeader({
   const deckRef = useRef<HTMLDivElement>(null);
   const deckImportInputRef = useRef<HTMLInputElement>(null);
   const titleDisplay = title || "Untitled presentation";
-  const canOpenDeckMenu = decks.length > 0 || Boolean(onDeckImport);
+  const canOpenDeckMenu = decks.length > 0 || Boolean(onDeckImportPath || onDeckImport);
 
   useEffect(() => {
     const onDoc = (e: MouseEvent) => {
@@ -262,7 +264,7 @@ export function EditorHeader({
                     </button>
                   );
                 })}
-                {onDeckImport ? (
+                {onDeckImportPath || onDeckImport ? (
                   <>
                     <div className="my-1 h-px bg-foreground/[0.08]" />
                     <button
@@ -270,6 +272,11 @@ export function EditorHeader({
                       role="menuitem"
                       onClick={() => {
                         setDeckOpen(false);
+                        if (onDeckImportPath) {
+                          onDeckImportPath();
+                          return;
+                        }
+
                         deckImportInputRef.current?.click();
                       }}
                       className="flex w-full items-start gap-2.5 rounded-md px-2.5 py-2 text-left text-foreground/72 transition-colors hover:bg-foreground/[0.04] hover:text-foreground"
@@ -279,10 +286,10 @@ export function EditorHeader({
                       </span>
                       <span className="min-w-0 flex-1">
                         <span className="block truncate text-[13px] font-medium">
-                          Import deck...
+                          Open deck path...
                         </span>
                         <span className="mt-0.5 block truncate text-[11px] text-foreground/45">
-                          Choose a folder with manifest.json
+                          Use an existing folder with manifest.json
                         </span>
                       </span>
                     </button>

@@ -272,4 +272,83 @@ describe("deck runtime middleware deck discovery", () => {
       deckTitle: "Imported Deck",
     });
   });
+
+  test("opens a manifest-backed deck from its existing path without copying it", async () => {
+    const library = createDeckRoot();
+    const initialDeck = path.join(library, "initial");
+    const externalDeck = createDeckRoot("starry-slides-external-deck-");
+    writeNamedDeck(initialDeck, "Initial Deck");
+    writeNamedDeck(externalDeck, "External Deck");
+
+    const runtime = createDeckRuntimeMiddleware({
+      runtimeDeckDir: initialDeck,
+      previewDeckDir: initialDeck,
+      saveTargetDirs: [initialDeck],
+      deckLibraryDir: library,
+    });
+
+    const importResult = await handleRuntimeRequest(
+      runtime,
+      "POST",
+      "/__editor/import-deck",
+      JSON.stringify({ path: externalDeck })
+    );
+
+    expect(importResult.response.statusCode).toBe(200);
+    expect(JSON.parse(importResult.response.body)).toMatchObject({
+      currentDeckId: "__current__",
+      decks: expect.arrayContaining([
+        expect.objectContaining({
+          id: "__current__",
+          title: "External Deck",
+          isCurrent: true,
+        }),
+      ]),
+    });
+    expect(fs.existsSync(path.join(library, path.basename(externalDeck)))).toBe(false);
+
+    const nextSlideHtml = "<!DOCTYPE html><html><body>Updated external deck</body></html>";
+    const saveResult = await handleRuntimeRequest(
+      runtime,
+      "POST",
+      "/__editor/save-generated-deck",
+      JSON.stringify({
+        manifest: {
+          deckTitle: "External Deck Updated",
+          description: "Saved into external deck",
+          slides: [{ file: "slides/01.html", title: "One" }],
+        },
+        slides: [{ file: "slides/01.html", htmlSource: nextSlideHtml, title: "One" }],
+      })
+    );
+
+    expect(saveResult.response.statusCode).toBe(200);
+    expect(fs.readFileSync(path.join(externalDeck, "slides/01.html"), "utf8")).toBe(nextSlideHtml);
+    expect(
+      JSON.parse(fs.readFileSync(path.join(initialDeck, "manifest.json"), "utf8"))
+    ).toMatchObject({
+      deckTitle: "Initial Deck",
+    });
+  });
+
+  test("picks an existing manifest-backed deck path through the picker route", async () => {
+    const library = createDeckRoot();
+    const initialDeck = path.join(library, "initial");
+    const externalDeck = createDeckRoot("starry-slides-picked-deck-");
+    writeNamedDeck(initialDeck, "Initial Deck");
+    writeNamedDeck(externalDeck, "Picked Deck");
+
+    const runtime = createDeckRuntimeMiddleware({
+      runtimeDeckDir: initialDeck,
+      previewDeckDir: initialDeck,
+      saveTargetDirs: [initialDeck],
+      deckLibraryDir: library,
+      deckPathPicker: async () => externalDeck,
+    });
+
+    const pickResult = await handleRuntimeRequest(runtime, "POST", "/__editor/pick-deck-path");
+
+    expect(pickResult.response.statusCode).toBe(200);
+    expect(JSON.parse(pickResult.response.body)).toEqual({ path: externalDeck });
+  });
 });
