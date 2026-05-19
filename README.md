@@ -98,14 +98,6 @@ https://github.com/zarazhangrui/frontend-slides
 ## GIVE US A STAR 🌟
 to support the development of the project
 
-<a href="https://www.star-history.com/?repos=StarryKit%2Fstarry-slides&type=date&legend=top-left">
- <picture>
-   <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/chart?repos=StarryKit/starry-slides&type=date&theme=dark&legend=top-left" />
-   <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/chart?repos=StarryKit/starry-slides&type=date&legend=top-left" />
-   <img alt="Star History Chart" src="https://api.star-history.com/chart?repos=StarryKit/starry-slides&type=date&legend=top-left" />
- </picture>
-</a>
-
 ## Documentation
 
 - [CLI Usage](./skills/starry-slides/references/STARRY-SLIDES-CLI-USAGE.md): installation, commands, and examples for the `starry-slides` CLI.
