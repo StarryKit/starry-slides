@@ -32,8 +32,8 @@ This section is just an index of where things live.
 - `docs/skills-references/`
   Authoritative contract, CLI usage, and discovery documents referenced by the
   installed skill shell.
-- `e2e/`
-  Browser E2E tests, fixtures, and deck-generation tools.
+- `packages/slides-editor/e2e/`
+  Editor-owned browser E2E tests, fixtures, and deck-generation tools.
 - `skills/`
   Agent-facing skill files and related tooling.
 
@@ -44,12 +44,13 @@ This section is just an index of where things live.
 
 ### Test locations
 
-- `e2e/tests/`
-  Playwright browser E2E specs.
-- `e2e/fixtures/`
-  E2E fixture inputs.
-- `e2e/tools/`
-  Regression deck generation and preparation scripts.
+- `packages/slides-editor/e2e/tests/`
+  Playwright browser E2E specs for editor behavior and editor-host integration
+  flows.
+- `packages/slides-editor/e2e/fixtures/`
+  Editor E2E fixture inputs.
+- `packages/slides-editor/e2e/tools/`
+  Editor regression deck generation and preparation scripts.
 - `src/node/*.test.ts`
   Node/runtime tests, including deck verification.
 - `src/cli/*.test.ts`
@@ -100,7 +101,8 @@ This section is just an index of where things live.
 
 ### E2E maintenance rule
 
-- If any file under `e2e/tests/` is added, deleted, or materially changed,
+- If any file under `packages/slides-editor/e2e/tests/` is added, deleted, or
+  materially changed,
   update `docs/e2e.md` in the same change.
 - This includes new coverage, removed coverage, and materially narrowed or
   expanded assertions.

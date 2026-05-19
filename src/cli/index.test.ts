@@ -11,6 +11,7 @@ import {
   textElement,
   writeDeck,
 } from "../../tests/helpers/deck-fixtures";
+import { findAvailablePort } from "../node/ports";
 
 const repo = process.cwd();
 const decks: Array<{ cleanup: () => void }> = [];
@@ -413,14 +414,15 @@ describe("source starry-slides cli", () => {
     }
   });
 
-  test("open defaults to port 5173 when no --port is specified", () => {
+  test("open defaults to the first available port near 5173 when no --port is specified", async () => {
     const deck = writeValidDeck();
+    const expectedPort = await findAvailablePort(5173);
 
     const result = runCli(["open", deck], {
-      env: { STARRY_SLIDES_TEST_STUB_OPEN: "1", PORT: "5173" },
+      env: { STARRY_SLIDES_TEST_STUB_OPEN: "1" },
     });
 
     expect(result.status).toBe(0);
-    expect(result.stderr).toContain("http://127.0.0.1:5173/");
+    expect(result.stderr).toContain(`http://127.0.0.1:${expectedPort}/`);
   });
 });

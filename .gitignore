@@ -9,6 +9,8 @@ coverage
 .vscode
 /generated
 .e2e-test-slides
+.e2e-switcher-slides
+browser-imported-deck*/
 playwright-report/
 test-results/
 

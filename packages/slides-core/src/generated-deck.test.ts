@@ -14,7 +14,10 @@ import {
 
 const regressionDeckConfig = JSON.parse(
   fs.readFileSync(
-    path.resolve(import.meta.dirname, "../../../e2e/fixtures/regression-deck/config.json"),
+    path.resolve(
+      import.meta.dirname,
+      "../../../packages/slides-editor/e2e/fixtures/regression-deck/config.json"
+    ),
     "utf8"
   )
 ) as {
@@ -142,7 +145,11 @@ describe("generated deck import", () => {
 
     execFileSync(
       "node",
-      [path.join(workspaceRoot, "e2e/tools/prepare-regression-deck.mjs"), "--out-dir", outputRoot],
+      [
+        path.join(workspaceRoot, "packages/slides-editor/e2e/tools/prepare-regression-deck.mjs"),
+        "--out-dir",
+        outputRoot,
+      ],
       {
         cwd: workspaceRoot,
         stdio: "pipe",

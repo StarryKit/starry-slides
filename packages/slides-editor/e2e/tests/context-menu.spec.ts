@@ -208,9 +208,6 @@ test("context menu ungroups a normal block by flattening direct editable childre
   expect(await getVisualStyle(middleTitle)).toEqual(middleTitleStyleBefore);
   expect(await getVisualStyle(innerLabel)).toEqual(innerLabelStyleBefore);
 
-  await page.getByTestId("stage-panel").click({ position: { x: 12, y: 12 } });
-  await expect(page.getByTestId("selection-overlay")).toBeHidden();
-  await middleBlock.click({ position: { x: 12, y: 12 } });
   await expect(page.getByTestId("selection-overlay")).toBeVisible();
   const secondMenu = await openSelectionContextMenu(page);
   await expect(

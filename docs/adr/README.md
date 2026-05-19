@@ -58,3 +58,5 @@ Update this directory whenever a change affects:
 | [0027](./0027-adopt-v1-deck-contract-and-track-cli-editor-refactors.md)         | Adopt V1 deck contract and track CLI and editor refactors                       | accepted              |
 | [0028](./0028-adopt-notify-only-runtime-updates-and-remote-skill-references.md) | Adopt notify-only runtime updates and remote Skill references                   | proposed              |
 | [0029](./0029-adopt-a-compatibility-preserving-package-extraction-path.md)      | Adopt a compatibility-preserving package extraction path                        | proposed              |
+| [0030](./0030-adopt-private-product-incubation-for-core-and-editor.md)          | Adopt private product incubation for core and editor                            | accepted              |
+| [0031](./0031-adopt-ownership-based-test-colocation.md)                         | Adopt ownership-based test colocation                                           | accepted              |

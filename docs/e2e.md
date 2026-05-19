@@ -1,7 +1,7 @@
 # E2E Coverage Matrix
 
 This document records the browser-level E2E coverage that currently exists in
-`e2e/tests/`.
+`packages/slides-editor/e2e/tests/`.
 
 This file is the source of truth for repository E2E coverage inventory. When an
 E2E test is added, removed, or materially changed, this file must be updated in
@@ -11,6 +11,8 @@ Scope notes:
 
 - This matrix is derived from the current Playwright specs, not from ADR text
   or intended future coverage.
+- The current Playwright specs are editor-owned tests. Some specs exercise
+  editor-host integration through the local test runtime endpoints.
 - The current regression deck and helpers assume the V1 deck contract:
   `manifest.json` uses `deckTitle` and `description`, each slide uses `body`
   as the root, and editable selectors use `data-editable-id`.
