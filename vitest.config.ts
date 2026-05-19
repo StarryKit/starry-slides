@@ -14,7 +14,7 @@ export default defineConfig({
   test: {
     environment: "jsdom",
     include: ["src/**/*.test.ts", "packages/**/*.test.ts", "tests/**/*.test.ts"],
-    exclude: ["**/node_modules/**", "tests/cli/packaged-cli.test.ts"],
+    exclude: ["**/node_modules/**", "src/cli/packaged-cli.test.ts"],
     fileParallelism: false,
   },
 });

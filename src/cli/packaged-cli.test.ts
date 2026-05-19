@@ -3,7 +3,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { afterEach, beforeAll, describe, expect, test } from "vitest";
 import packageJson from "../../package.json";
-import { createTempDeck, writeDeck } from "../helpers/deck-fixtures";
+import { createTempDeck, writeDeck } from "../../tests/helpers/deck-fixtures";
 
 const repo = process.cwd();
 const distCli = path.join(repo, "dist", "cli", "index.js");

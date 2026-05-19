@@ -19,7 +19,7 @@ function generateDeck({ workspaceRoot, outputRoot, deckTitle, description, summa
   execFileSync(
     "node",
     [
-      path.join(workspaceRoot, "e2e/tools/generate-regression-deck.mjs"),
+      path.join(workspaceRoot, "packages/slides-editor/e2e/tools/generate-regression-deck.mjs"),
       "--deck-title",
       deckTitle,
       "--description",
@@ -39,7 +39,7 @@ function generateDeck({ workspaceRoot, outputRoot, deckTitle, description, summa
 }
 
 function main() {
-  const workspaceRoot = path.resolve(new URL("../..", import.meta.url).pathname);
+  const workspaceRoot = path.resolve(new URL("../../../..", import.meta.url).pathname);
   const outputRoot = path.resolve(process.cwd(), getArg("--out-dir", ".e2e-test-slides"));
 
   generateDeck({

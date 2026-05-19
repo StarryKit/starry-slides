@@ -1,4 +1,6 @@
 import fs from "node:fs/promises";
+import os from "node:os";
+import path from "node:path";
 import { expect, test } from "@playwright/test";
 import {
   AGENDA_PARAGRAPH,
@@ -133,7 +135,7 @@ test("header deck switcher loads another local manifest-backed deck", async ({ p
   ).toHaveAttribute("aria-checked", "true");
 });
 
-test("header deck switcher imports a local manifest-backed deck", async ({ page }, testInfo) => {
+test("header deck switcher imports a local manifest-backed deck", async ({ page }) => {
   await gotoEditor(page);
 
   const manifest = {
@@ -150,33 +152,37 @@ test("header deck switcher imports a local manifest-backed deck", async ({ page 
     </main>
   </body>
 </html>`;
-  const importDeckDir = testInfo.outputPath("browser-imported-deck");
-  await fs.mkdir(`${importDeckDir}/slides`, { recursive: true });
-  await fs.writeFile(`${importDeckDir}/manifest.json`, JSON.stringify(manifest), "utf8");
-  await fs.writeFile(`${importDeckDir}/slides/01.html`, slideHtml, "utf8");
+  const importDeckDir = await fs.mkdtemp(path.join(os.tmpdir(), "starry-slides-import-"));
+  try {
+    await fs.mkdir(`${importDeckDir}/slides`, { recursive: true });
+    await fs.writeFile(`${importDeckDir}/manifest.json`, JSON.stringify(manifest), "utf8");
+    await fs.writeFile(`${importDeckDir}/slides/01.html`, slideHtml, "utf8");
 
-  const fileChooserPromise = page.waitForEvent("filechooser");
-  await page.getByRole("button", { name: "Switch deck" }).click();
-  await page
-    .getByRole("menu", { name: "Local decks" })
-    .getByRole("menuitem", { name: /Import deck/ })
-    .click();
-  const fileChooser = await fileChooserPromise;
-  await fileChooser.setFiles(importDeckDir);
+    const fileChooserPromise = page.waitForEvent("filechooser");
+    await page.getByRole("button", { name: "Switch deck" }).click();
+    await page
+      .getByRole("menu", { name: "Local decks" })
+      .getByRole("menuitem", { name: /Import deck/ })
+      .click();
+    const fileChooser = await fileChooserPromise;
+    await fileChooser.setFiles(importDeckDir);
 
-  await expect(page.getByLabel("Deck title")).toHaveValue("Browser Imported Deck");
-  await expect(coverFrame(page).locator('[data-editable-id="text-2"]')).toHaveText(
-    "Imported through the deck switcher."
-  );
-  await expect(page.getByText("Deck imported.")).toBeVisible();
+    await expect(page.getByLabel("Deck title")).toHaveValue("Browser Imported Deck");
+    await expect(coverFrame(page).locator('[data-editable-id="text-2"]')).toHaveText(
+      "Imported through the deck switcher."
+    );
+    await expect(page.getByText("Deck imported.")).toBeVisible();
 
-  await expect
-    .poll(async () => {
-      const manifestResponse = await page.request.get(`/deck/manifest.json?v=${Date.now()}`);
-      expect(manifestResponse.ok()).toBeTruthy();
-      return (await manifestResponse.json()).deckTitle;
-    })
-    .toBe("Browser Imported Deck");
+    await expect
+      .poll(async () => {
+        const manifestResponse = await page.request.get(`/deck/manifest.json?v=${Date.now()}`);
+        expect(manifestResponse.ok()).toBeTruthy();
+        return (await manifestResponse.json()).deckTitle;
+      })
+      .toBe("Browser Imported Deck");
+  } finally {
+    await fs.rm(importDeckDir, { recursive: true, force: true });
+  }
 });
 
 test("sidebar renders fixed thumbnail list chrome and slide actions", async ({ page }) => {

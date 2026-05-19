@@ -6,11 +6,7 @@
   "type": "module",
   "packageManager": "pnpm@10.33.2",
   "pnpm": {
-    "onlyBuiltDependencies": [
-      "esbuild",
-      "@parcel/watcher",
-      "@biomejs/biome"
-    ]
+    "onlyBuiltDependencies": ["esbuild", "@parcel/watcher", "@biomejs/biome"]
   },
   "homepage": "https://github.com/StarryKit/starry-slides#readme",
   "bugs": {
@@ -20,22 +16,11 @@
     "type": "git",
     "url": "git+https://github.com/StarryKit/starry-slides.git"
   },
-  "keywords": [
-    "slides",
-    "presentation",
-    "html",
-    "cli",
-    "editor"
-  ],
+  "keywords": ["slides", "presentation", "html", "cli", "editor"],
   "engines": {
     "node": ">=20.11"
   },
-  "files": [
-    "dist",
-    "skills",
-    "README.md",
-    "LICENSE"
-  ],
+  "files": ["dist", "skills", "README.md", "LICENSE"],
   "bin": {
     "starry-slides": "dist/cli/index.js"
   },
@@ -52,7 +37,7 @@
     "build:types": "tsc -p tsconfig.build.json --emitDeclarationOnly",
     "build:js": "tsup src/index.tsx src/cli/index.ts --format esm",
     "build:app": "vite build",
-    "prepare:regression-deck": "node e2e/tools/prepare-regression-deck.mjs",
+    "prepare:regression-deck": "node packages/slides-editor/e2e/tools/prepare-regression-deck.mjs",
     "starry:open": "pnpm starry-slides open",
     "test:e2e:prepare": "pnpm prepare:regression-deck",
     "lint": "biome check .",

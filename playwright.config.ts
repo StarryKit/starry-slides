@@ -3,7 +3,8 @@ import { defineConfig, devices } from "@playwright/test";
 const e2ePort = Number(process.env.PLAYWRIGHT_PORT ?? 4173);
 
 export default defineConfig({
-  testDir: "./e2e/tests",
+  testDir: "./packages/slides-editor/e2e/tests",
+  outputDir: "./test-results",
   fullyParallel: false,
   workers: 1,
   reporter: "list",
