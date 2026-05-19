@@ -14,6 +14,8 @@
 
 Starry Slides 是一个基于 AI Agent 的幻灯片/演示文稿编辑器，让你的 Agent 使用 HTML 作为源文件生成完全可编辑的 PPT。
 
+> 我们正在开发产品版；开源版会持续修复 Bug，Editor 更新也会周期性同步到这里。
+
 ## Features
 
 <table>

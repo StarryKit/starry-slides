@@ -17,6 +17,8 @@
 
 Starry Slides is a slide/presentation editor that gives your agent ability to generate fully editable slides with HTML as the source file.
 
+> We are building the product version now. The open-source version still receives bug fixes, and Editor updates will be synced back here periodically.
+
 ## Features
 
 <table>
