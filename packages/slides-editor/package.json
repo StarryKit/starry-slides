@@ -22,7 +22,10 @@
       "import": "./dist/index.js"
     }
   },
-  "files": ["dist", "src/styles"],
+  "files": [
+    "dist",
+    "src/styles"
+  ],
   "scripts": {
     "build": "tsc -p tsconfig.json && tsup src/index.tsx --format esm --external react --external react-dom"
   },

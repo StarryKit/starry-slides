@@ -6,7 +6,11 @@
   "type": "module",
   "packageManager": "pnpm@10.33.2",
   "pnpm": {
-    "onlyBuiltDependencies": ["esbuild", "@parcel/watcher", "@biomejs/biome"]
+    "onlyBuiltDependencies": [
+      "esbuild",
+      "@parcel/watcher",
+      "@biomejs/biome"
+    ]
   },
   "homepage": "https://github.com/StarryKit/starry-slides#readme",
   "bugs": {
@@ -16,11 +20,22 @@
     "type": "git",
     "url": "git+https://github.com/StarryKit/starry-slides.git"
   },
-  "keywords": ["slides", "presentation", "html", "cli", "editor"],
+  "keywords": [
+    "slides",
+    "presentation",
+    "html",
+    "cli",
+    "editor"
+  ],
   "engines": {
     "node": ">=20.11"
   },
-  "files": ["dist", "skills", "README.md", "LICENSE"],
+  "files": [
+    "dist",
+    "skills",
+    "README.md",
+    "LICENSE"
+  ],
   "bin": {
     "starry-slides": "dist/cli/index.js"
   },
