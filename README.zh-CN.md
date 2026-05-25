@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="./packages/slides-editor/src/assets/logo-starry-slides.png" alt="Starry Slides" width="420" />
+  <img src="./packages/slides-editor/src/assets/starry-slides-wordmark-on-purple.svg" alt="Starry Slides" width="420" />
 </p>
 
 <p align="center">
