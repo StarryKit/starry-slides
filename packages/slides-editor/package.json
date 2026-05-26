@@ -1,6 +1,6 @@
 {
   "name": "@starrykit/slides-editor",
-  "version": "0.1.36",
+  "version": "0.1.37",
   "description": "Embeddable React editor UI for Starry Slides — host-driven through props and callbacks.",
   "license": "MIT",
   "homepage": "https://github.com/StarryKit/starry-slides#readme",
@@ -30,7 +30,7 @@
     "build": "tsc -p tsconfig.json && tsup src/index.tsx --format esm --external react --external react-dom"
   },
   "dependencies": {
-    "@starrykit/slides-core": "0.1.36",
+    "@starrykit/slides-core": "0.1.37",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "html-to-image": "^1.11.11",
