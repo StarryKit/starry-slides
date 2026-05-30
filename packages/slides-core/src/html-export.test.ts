@@ -1,5 +1,9 @@
 import { describe, expect, test } from "vitest";
-import { createSingleHtmlExportDocument, planHtmlExportSlides } from "./html-export.js";
+import {
+  STARRY_SLIDES_EXPORT_ICON_PNG_BASE64,
+  createSingleHtmlExportDocument,
+  planHtmlExportSlides,
+} from "./html-export.js";
 
 const slideA = {
   file: "slides/01.html",
@@ -60,5 +64,13 @@ describe("single HTML export", () => {
     expect(document).toContain('<link rel="apple-touch-icon" href="data:image/png;base64,');
     expect(document).toContain('<meta property="og:image" content="data:image/png;base64,');
     expect(document).toContain('<meta name="theme-color" content="#6D5DF6"');
+  });
+
+  test("uses a document-style PNG icon for standalone HTML previews", () => {
+    const iconBytes = Buffer.from(STARRY_SLIDES_EXPORT_ICON_PNG_BASE64, "base64");
+
+    expect(iconBytes.subarray(0, 8).toString("hex")).toBe("89504e470d0a1a0a");
+    expect(iconBytes.readUInt32BE(16)).toBe(1024);
+    expect(iconBytes.readUInt32BE(20)).toBe(1024);
   });
 });

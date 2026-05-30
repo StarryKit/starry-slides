@@ -214,9 +214,9 @@ starry-slides export html <deck> --out ./deck.html
 导出的 HTML 可以脱离原 deck 目录和本地 dev server 直接打开。命令会把 JSON
 结果写到 stdout。
 
-导出的 HTML 还会包含内嵌的 Starry Slides icon metadata，包括 favicon、
-apple touch icon、Open Graph image 和 theme color。在 macOS 上通过 CLI
-写入本地文件时，runtime 会 best-effort 写入 Finder custom icon；如果系统
+导出的 HTML 还会包含内嵌的 Starry Slides 文档式 icon metadata，包括
+favicon、apple touch icon、Open Graph image 和 theme color。在 macOS 上通过
+CLI 写入本地文件时，runtime 会 best-effort 写入 Finder custom icon；如果系统
 命令不可用或写入失败，HTML 导出仍会成功。
 
 Example result:
