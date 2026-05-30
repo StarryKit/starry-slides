@@ -2,6 +2,7 @@
 
 import { Command, CommanderError, InvalidArgumentError } from "commander/esm.mjs";
 import { transformCommanderErrorOutput } from "./cli-output";
+import { registerExportCommand } from "./commands/export";
 import { registerDefaultOpen, registerOpenCommand } from "./commands/open";
 import { registerVerifyCommand } from "./commands/verify";
 import { registerViewCommand } from "./commands/view";
@@ -27,6 +28,7 @@ function createProgram() {
   });
 
   registerDefaultOpen(program);
+  registerExportCommand(program);
   registerOpenCommand(program);
   registerVerifyCommand(program);
   registerViewCommand(program);

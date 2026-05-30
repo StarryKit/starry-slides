@@ -142,6 +142,22 @@ HTML export becomes the second real export format after PDF, so future export
 work should reuse the ADR-0016 split: core plans and validates, runtime writes,
 CLI/editor expose.
 
+### 2026-05-30 补充：单页 HTML 必须内联 deck-local 资源
+
+单页 HTML 导出不能依赖原 deck 目录或本地 dev server。Node runtime 在写出 HTML
+前，需要把 slide HTML 中引用的 deck-local CSS、CSS `url(...)` 资源、图片、
+音频、视频、`poster` 和 `source` 等媒体文件改写为 `data:` URL。外部 URL 与
+已经内联的 `data:` / `blob:` URL 保持不变。
+
+core 继续负责 presenter 文档生成；Node runtime 负责文件系统资源读取和
+内联。这个分工保持 ADR-0016 的 export split：core 生成格式，runtime 写文件
+并处理本地文件系统细节。
+
+导出的 HTML 还应包含内嵌的文档式 Starry Slides icon metadata，用于浏览器
+标签页、收藏、移动端快捷入口和分享预览。macOS CLI 写入本地文件时，Node
+runtime 可以 best-effort 写入 Finder custom icon；该步骤属于本机文件系统增
+强，失败时不能影响 HTML 导出。
+
 ## Alternatives considered
 
 ### Open browser fullscreen with the existing editor iframe

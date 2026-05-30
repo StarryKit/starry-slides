@@ -30,6 +30,7 @@ The CLI currently supports these command forms:
 - `starry-slides verify [deck]`
 - `starry-slides view [deck] --all`
 - `starry-slides view [deck] --slide <manifest-file>`
+- `starry-slides export html [deck] --out <file>`
 - `starry-slides open [deck]`
 - `starry-slides [deck]`
 
@@ -189,6 +190,48 @@ Example verify failure result from `view`:
       "level": "error",
       "code": "overflow.element-bounds",
       "message": "editable element exceeds slide bounds"
+    }
+  ]
+}
+```
+
+## `export html`
+
+使用 `export html` 将 deck 导出成一个单页 presenter HTML 文件：
+
+```bash
+starry-slides export html <deck> --out ./deck.html
+```
+
+它会把 manifest 中参与展示的 slide 写入同一个 HTML 文件，并内联 deck-local
+资源：
+
+- 本地 `<link rel="stylesheet">` 会转换为内联 `<style>`
+- CSS 中的本地 `url(...)` 会转换为 `data:` URL
+- 本地图片、音频、视频、`poster`、`source` 等媒体资源会转换为 `data:` URL
+- `http:`, `https:`, `data:`, `blob:` 等外部或已内联资源保持不变
+
+导出的 HTML 可以脱离原 deck 目录和本地 dev server 直接打开。命令会把 JSON
+结果写到 stdout。
+
+导出的 HTML 还会包含内嵌的 Starry Slides 文档式 icon metadata，包括
+favicon、apple touch icon、Open Graph image 和 theme color。在 macOS 上通过
+CLI 写入本地文件时，runtime 会 best-effort 写入 Finder custom icon；如果系统
+命令不可用或写入失败，HTML 导出仍会成功。
+
+Example result:
+
+```json
+{
+  "deck": "/absolute/path/to/deck",
+  "mode": "all",
+  "outFile": "/absolute/path/to/deck.html",
+  "path": "/absolute/path/to/deck.html",
+  "slides": [
+    {
+      "index": 0,
+      "slideFile": "slides/01-title.html",
+      "title": "Title"
     }
   ]
 }
