@@ -219,6 +219,11 @@ favicon、apple touch icon、Open Graph image 和 theme color。在 macOS 上通
 CLI 写入本地文件时，runtime 会 best-effort 写入 Finder custom icon；如果系统
 命令不可用或写入失败，HTML 导出仍会成功。
 
+导出的 HTML 还包含一个静态 Quick Look logo poster。macOS Finder 的 “Get
+Info” 预览区域通常不会读取 HTML favicon 或 Open Graph metadata，但会渲染
+HTML 的静态首屏；runtime 会在浏览器打开时隐藏这个 poster，让正常播放界面直
+接显示。
+
 Example result:
 
 ```json
