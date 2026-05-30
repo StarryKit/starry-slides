@@ -153,6 +153,10 @@ core 继续负责 presenter 文档生成；Node runtime 负责文件系统资源
 内联。这个分工保持 ADR-0016 的 export split：core 生成格式，runtime 写文件
 并处理本地文件系统细节。
 
+导出的 HTML 还应包含内嵌 icon metadata，用于浏览器标签页、收藏、移动端快捷
+入口和分享预览。macOS CLI 写入本地文件时，Node runtime 可以 best-effort 写入
+Finder custom icon；该步骤属于本机文件系统增强，失败时不能影响 HTML 导出。
+
 ## Alternatives considered
 
 ### Open browser fullscreen with the existing editor iframe

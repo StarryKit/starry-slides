@@ -49,4 +49,16 @@ describe("single HTML export", () => {
     expect(document).toContain("One \\u003C/script\\u003E safe");
     expect(document).not.toContain("One </script> safe");
   });
+
+  test("embeds Starry Slides icon metadata for standalone HTML previews", () => {
+    const document = createSingleHtmlExportDocument({
+      title: "Preview Deck",
+      slides: [slideA],
+    });
+
+    expect(document).toContain('<link rel="icon" type="image/png" href="data:image/png;base64,');
+    expect(document).toContain('<link rel="apple-touch-icon" href="data:image/png;base64,');
+    expect(document).toContain('<meta property="og:image" content="data:image/png;base64,');
+    expect(document).toContain('<meta name="theme-color" content="#6D5DF6"');
+  });
 });

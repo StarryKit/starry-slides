@@ -59,6 +59,14 @@ export function createSingleHtmlExportDocument({
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>${escapeHtml(title)}</title>
+    <meta name="theme-color" content="#6D5DF6" />
+    <meta property="og:title" content="${escapeHtml(title)}" />
+    <meta property="og:type" content="website" />
+    <meta property="og:image" content="${STARRY_SLIDES_EXPORT_ICON_DATA_URL}" />
+    <meta name="twitter:card" content="summary" />
+    <meta name="twitter:image" content="${STARRY_SLIDES_EXPORT_ICON_DATA_URL}" />
+    <link rel="icon" type="image/png" href="${STARRY_SLIDES_EXPORT_ICON_DATA_URL}" />
+    <link rel="apple-touch-icon" href="${STARRY_SLIDES_EXPORT_ICON_DATA_URL}" />
     <style>${STANDALONE_PRESENTER_CSS}</style>
   </head>
   <body>
@@ -110,6 +118,10 @@ function escapeHtml(value: string): string {
     .replace(/>/g, "&gt;")
     .replace(/"/g, "&quot;");
 }
+
+export const STARRY_SLIDES_EXPORT_ICON_PNG_BASE64 =
+  "iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAIAAAD8GO2jAAACPklEQVR4nOyWz0uUQRjHn5l5W3cTFyVJCvqhJYIUWOHWQRLq0EE7KnXoUHaN+hM6dohuhrcQwSiQDEJCCCHw5EFFVkVccf3F+uug7grrOz+cRVndeWfeeVcQL355L+/M8zyfeZ535pnXefdqF05TGE5Z5wCrHJ+5CyF4+JhELkIQLSX51LgoDtD22rkXC54iWZjjnZ8oZwWjfv43qhEUo+s1uKFRDajPoLIKRcvhxzcKvkKAVhZ5OIKetOBHzUSOVFxCdkBrO2l+RiCYOIc/P9nvXtYQI+EIIE9F1IFbdTh49Jw/htY2UlqGNla51kDN4Obt4uqeYxC4Vo0YN8yqwJDebiMl/v5iYFCkFIx4CKaZST47KUyzR1mLkwKGh/jiPF9K6hkiz0AnAgwNsLUVITdMXzelrg7Ajb4WQCYNsvQDfYfVlxl8+egmptQ8EAJT+YytYmcber7S+VkuCl3XU6Lrs1tRiZ63k7sPDtcnbVCxgLIodHxwZuL8/yCXmPy43JRPW0hjE1YP7cGbsAGOO5WEQa7xzn3c3UnjozlGqATevHfkYQSPhKFGqqnXTNb35VsnWp5Dv+jQR8+vzHVtAK1kKrEmXHUV5Yvu1cHKEtPqfvK7D46rpg5ns+ZpAVubMDjBvAdFBdA9fYTaelRbb2yCmYzo6dL3djXl+Jj5zBi0l4VkwthFVEBqWfT3Mmq5aQqi93+nu2mjgeYbDP9j4yPs8hV732YULS9wbfPwA0ilt+UjwC67zfmf3dkD9gEAAP//PYc02AAAAAZJREFUAwBFzL8tpJ9CRwAAAABJRU5ErkJggg==";
+export const STARRY_SLIDES_EXPORT_ICON_DATA_URL = `data:image/png;base64,${STARRY_SLIDES_EXPORT_ICON_PNG_BASE64}`;
 
 const STANDALONE_PRESENTER_CSS = `
 html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#111;color:#f8fafc;font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}

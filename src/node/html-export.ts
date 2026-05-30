@@ -6,6 +6,7 @@ import {
   planHtmlExportSlides,
 } from "@starrykit/slides-core";
 import { inlineDeckLocalAssets } from "./html-export-assets";
+import { applyMacosCustomIcon } from "./macos-file-icon";
 import { getManifestSlides } from "./view-renderer";
 
 export interface HtmlExportResultSlide {
@@ -50,6 +51,7 @@ export async function exportHtml({
 
   fs.mkdirSync(path.dirname(outputPath), { recursive: true });
   fs.writeFileSync(outputPath, html, "utf8");
+  applyMacosCustomIcon(outputPath);
 
   return {
     deck,
