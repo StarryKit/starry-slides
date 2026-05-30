@@ -169,6 +169,38 @@ describe("source starry-slides cli", () => {
     expect(fs.existsSync(path.join(deck, ".starry-slides", "view"))).toBe(false);
   });
 
+  test("export html writes a self-contained single HTML file", () => {
+    const deck = createDeck();
+    fs.mkdirSync(path.join(deck, "assets"), { recursive: true });
+    fs.writeFileSync(path.join(deck, "assets", "shared.css"), ".hero{color:red}");
+    fs.writeFileSync(path.join(deck, "assets", "photo.png"), Buffer.from([0x89, 0x50, 0x4e, 0x47]));
+    writeDeck(deck, [
+      {
+        file: "slides/01.html",
+        title: "One",
+        html: `<!DOCTYPE html><html><head>
+          <link rel="stylesheet" href="../assets/shared.css">
+        </head><body style="margin:0;position:relative;width:800px;height:600px;overflow:hidden">
+          <main class="hero"><img src="../assets/photo.png" alt="Photo"></main>
+        </body></html>`,
+      },
+    ]);
+    const outFile = path.join(deck, "exported.html");
+
+    const result = runCli(["export", "html", deck, "--out", outFile]);
+
+    expect(result.status).toBe(0);
+    expect(result.stderr).toBe("");
+    const parsed = parseJson(result.stdout);
+    expect(parsed.path).toBe(outFile);
+    expect(parsed.slides).toHaveLength(1);
+    const html = fs.readFileSync(outFile, "utf8");
+    expect(html).toContain("data:image/png;base64");
+    expect(html).toContain(".hero{color:red}");
+    expect(html).not.toContain("../assets/photo.png");
+    expect(html).not.toContain("../assets/shared.css");
+  });
+
   test("view slide combines exact selection with explicit out-dir", () => {
     const deck = createDeck();
     writeDeck(deck, [
@@ -359,6 +391,7 @@ describe("source starry-slides cli", () => {
       expect(result.stderr).toBe("");
       expect(result.stdout).toContain("Usage: starry-slides [options] [command] <deck>");
       expect(result.stdout).toContain("open [options] <deck>");
+      expect(result.stdout).toContain("export");
       expect(result.stdout).toContain("verify [deck]");
       expect(result.stdout).toContain("view [options] [deck]");
     }

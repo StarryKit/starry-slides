@@ -5,6 +5,7 @@ import {
   createSingleHtmlExportDocument,
   planHtmlExportSlides,
 } from "@starrykit/slides-core";
+import { inlineDeckLocalAssets } from "./html-export-assets";
 import { getManifestSlides } from "./view-renderer";
 
 export interface HtmlExportResultSlide {
@@ -35,7 +36,11 @@ export async function exportHtml({
     file: slide.file,
     ...(slide.title ? { title: slide.title } : {}),
     ...(slide.hidden ? { hidden: slide.hidden } : {}),
-    htmlSource: fs.readFileSync(slide.filePath, "utf8"),
+    htmlSource: inlineDeckLocalAssets({
+      deckPath: deck,
+      slideFile: slide.file,
+      htmlSource: fs.readFileSync(slide.filePath, "utf8"),
+    }),
   }));
   const html = createSingleHtmlExportDocument({
     title: path.basename(deck),
