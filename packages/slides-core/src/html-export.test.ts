@@ -1,6 +1,9 @@
 import { describe, expect, test } from "vitest";
 import {
+  STARRY_SLIDES_EXPORT_ICON_DATA_URL,
   STARRY_SLIDES_EXPORT_ICON_PNG_BASE64,
+  STARRY_SLIDES_QUICKLOOK_POSTER_DATA_URL,
+  STARRY_SLIDES_QUICKLOOK_POSTER_PNG_BASE64,
   createSingleHtmlExportDocument,
   planHtmlExportSlides,
 } from "./html-export.js";
@@ -72,5 +75,21 @@ describe("single HTML export", () => {
     expect(iconBytes.subarray(0, 8).toString("hex")).toBe("89504e470d0a1a0a");
     expect(iconBytes.readUInt32BE(16)).toBe(1024);
     expect(iconBytes.readUInt32BE(20)).toBe(1024);
+  });
+
+  test("includes a static Quick Look poster that the browser runtime hides", () => {
+    const document = createSingleHtmlExportDocument({
+      title: "Preview Deck",
+      slides: [slideA],
+    });
+    const posterBytes = Buffer.from(STARRY_SLIDES_QUICKLOOK_POSTER_PNG_BASE64, "base64");
+
+    expect(document).toContain("document.documentElement.classList.add('starry-runtime')");
+    expect(document).toContain('class="starry-quicklook-poster"');
+    expect(document).toContain(`src="${STARRY_SLIDES_QUICKLOOK_POSTER_DATA_URL}"`);
+    expect(document).not.toContain(`class="starry-quicklook-poster" aria-hidden="true">
+      <img src="${STARRY_SLIDES_EXPORT_ICON_DATA_URL}"`);
+    expect(document).toContain(".starry-runtime .starry-quicklook-poster{display:none!important}");
+    expect(posterBytes.subarray(0, 8).toString("hex")).toBe("89504e470d0a1a0a");
   });
 });

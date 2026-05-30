@@ -158,6 +158,11 @@ core 继续负责 presenter 文档生成；Node runtime 负责文件系统资源
 runtime 可以 best-effort 写入 Finder custom icon；该步骤属于本机文件系统增
 强，失败时不能影响 HTML 导出。
 
+macOS Finder 的 Quick Look / Get Info 预览不可靠读取 HTML favicon、Open
+Graph metadata 或 Finder custom icon。为改善该预览，导出的 HTML 可以在
+首屏放置一个静态 Quick Look logo poster，并由浏览器 runtime 立即隐藏它。
+这个 poster 属于导出文档的静态 fallback，不应影响正常 presenter runtime。
+
 ## Alternatives considered
 
 ### Open browser fullscreen with the existing editor iframe
